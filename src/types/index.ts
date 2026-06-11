@@ -1,0 +1,414 @@
+// ─── Auth ────────────────────────────────────────────────────────────────────
+export type UserRole = 'SUPER_ADMIN' | 'ADMIN' | 'MANAGER';
+
+export interface User {
+  id: string;
+  name: string;
+  email: string;
+  role: UserRole;
+  tenantCode?: string;
+  tenantId?: string;
+  phone?: string;
+  photo?: string;
+}
+
+export interface AuthTokens {
+  accessToken: string;
+  refreshToken: string;
+}
+
+export interface LoginResponse {
+  user: User;
+  accessToken: string;
+  refreshToken: string;
+}
+
+// ─── API Response ─────────────────────────────────────────────────────────────
+export interface ApiResponse<T> {
+  success: boolean;
+  data: T;
+  message: string;
+}
+
+export interface ApiError {
+  success: false;
+  statusCode: number;
+  message: string;
+  timestamp: string;
+  path: string;
+}
+
+export interface PaginatedData<T> {
+  items: T[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
+
+// ─── Tenant / Plan ────────────────────────────────────────────────────────────
+export type TenantStatus = 'ACTIVE' | 'SUSPENDED' | 'EXPIRED';
+export type PlanName = 'STARTER' | 'PROFESSIONAL' | 'ENTERPRISE';
+
+export interface Plan {
+  id: string;
+  name: PlanName;
+  price: number;
+  managerLimit: number;
+  technicianLimit: number;
+  ticketLimit: number;
+  storageLimitGb: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface Subscription {
+  id: string;
+  tenantId: string;
+  planId: string;
+  plan?: Plan;
+  startDate: string;
+  endDate: string;
+  isActive: boolean;
+  createdAt: string;
+}
+
+export interface Tenant {
+  id: string;
+  companyName: string;
+  tenantCode: string;
+  email: string;
+  phone: string;
+  address: string;
+  adminName: string;
+  adminEmail: string;
+  status: TenantStatus;
+  plan?: Plan;
+  subscription?: Subscription;
+  createdAt: string;
+  updatedAt: string;
+  deletedAt?: string;
+}
+
+export interface CreateTenantDto {
+  companyName: string;
+  tenantCode: string;
+  email: string;
+  phone: string;
+  address: string;
+  adminName: string;
+  adminEmail: string;
+  adminPassword: string;
+  plan?: PlanName;
+}
+
+// ─── Billing / Activity ───────────────────────────────────────────────────────
+export interface Billing {
+  id: string;
+  tenant: Tenant;
+  amount: number;
+  status: 'PAID' | 'PENDING';
+  dueDate: string;
+  paidAt?: string;
+  createdAt: string;
+}
+
+export interface BillingReport {
+  billings: Billing[];
+  summary: { totalPaid: number; totalPending: number };
+}
+
+export interface ActivityLog {
+  id: string;
+  userId: string;
+  user?: User;
+  entity: string;
+  action: string;
+  details?: Record<string, unknown>;
+  createdAt: string;
+}
+
+// ─── People ───────────────────────────────────────────────────────────────────
+export interface Manager {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  isActive: boolean;
+  createdAt: string;
+}
+
+export interface Technician {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  isActive: boolean;
+  rating?: number;
+  photo?: string;
+  location?: { lat: number; lng: number };
+  createdAt: string;
+}
+
+export interface Customer {
+  id: string;
+  name: string;
+  email?: string;
+  phone: string;
+  address?: string;
+  createdAt: string;
+}
+
+// ─── Skill ────────────────────────────────────────────────────────────────────
+export interface Skill {
+  id: string;
+  name: string;
+  description?: string;
+  isActive: boolean;
+  createdAt: string;
+}
+
+export interface TechnicianSkill {
+  skillId: string;
+  skill: Skill;
+  experienceLevel: string;
+  certificationNumber?: string;
+  certificationExpiryDate?: string;
+}
+
+// ─── Service ──────────────────────────────────────────────────────────────────
+export interface ServiceCategory {
+  id: string;
+  name: string;
+  isActive: boolean;
+  createdAt: string;
+}
+
+export interface ServiceCharge {
+  subCategoryId: string;
+  serviceCharge: number;
+  inspectionCharge: number;
+  emergencyCharge: number;
+}
+
+export interface ServiceSubCategory {
+  id: string;
+  categoryId: string;
+  category?: ServiceCategory;
+  name: string;
+  isActive: boolean;
+  serviceCharges?: ServiceCharge[];
+  createdAt: string;
+}
+
+// ─── Ticket ───────────────────────────────────────────────────────────────────
+export type TicketStatus =
+  | 'NEW_TICKET' | 'ASSIGNED' | 'ACCEPTED' | 'TRAVELLING'
+  | 'REACHED_LOCATION' | 'IN_PROGRESS' | 'PENDING'
+  | 'COMPLETED' | 'INVOICE_GENERATED' | 'TICKET_CLOSED' | 'CANCELLED';
+
+export interface StatusLog {
+  id: string;
+  status: TicketStatus;
+  notes?: string;
+  createdAt: string;
+  updatedBy?: User;
+}
+
+export interface Ticket {
+  id: string;
+  ticketNumber: string;
+  status: TicketStatus;
+  customer: Customer;
+  technician?: Technician;
+  serviceCategory?: ServiceCategory;
+  subCategory?: ServiceSubCategory;
+  scheduledAt?: string;
+  notes?: string;
+  statusLogs: StatusLog[];
+  payment?: Payment;
+  invoice?: Invoice;
+  feedback?: Feedback;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// ─── Payment / Invoice ────────────────────────────────────────────────────────
+export type PaymentStatus = 'PENDING' | 'COLLECTED' | 'VERIFIED' | 'FAILED';
+export type PaymentMethod = 'CASH' | 'UPI' | 'CARD' | 'ONLINE';
+
+export interface Payment {
+  id: string;
+  ticketId: string;
+  ticket?: Ticket;
+  amount: number;
+  status: PaymentStatus;
+  method?: PaymentMethod;
+  collectedAt?: string;
+  verifiedAt?: string;
+  createdAt: string;
+}
+
+export interface Invoice {
+  id: string;
+  ticketId: string;
+  ticket?: Ticket;
+  invoiceNumber: string;
+  amount: number;
+  gstAmount?: number;
+  totalAmount: number;
+  pdfUrl?: string;
+  createdAt: string;
+}
+
+// ─── Feedback / Attendance ────────────────────────────────────────────────────
+export interface Feedback {
+  id: string;
+  ticketId: string;
+  customer?: Customer;
+  technician?: Technician;
+  rating: number;
+  review?: string;
+  createdAt: string;
+}
+
+export interface Attendance {
+  id: string;
+  technician: Technician;
+  date: string;
+  checkInTime?: string;
+  checkOutTime?: string;
+  checkInLat?: number;
+  checkInLng?: number;
+}
+
+// ─── Offers ───────────────────────────────────────────────────────────────────
+export type DiscountType = 'PERCENTAGE' | 'FLAT';
+export type OfferType = 'SERVICE' | 'CATEGORY' | 'GENERAL';
+
+export interface Offer {
+  id: string;
+  title: string;
+  description?: string;
+  offerType: OfferType;
+  discountType: DiscountType;
+  discountValue: number;
+  serviceId?: string;
+  categoryId?: string;
+  startDate: string;
+  endDate: string;
+  isRecurring: boolean;
+  daysOfWeek?: string[];
+  isActive: boolean;
+  createdAt: string;
+}
+
+// ─── Dashboards ───────────────────────────────────────────────────────────────
+export interface SuperAdminDashboard {
+  totalTenants: number;
+  activeTenants: number;
+  expiredTenants: number;
+  suspendedTenants: number;
+  totalRevenue: number;
+  activeUsers: number;
+}
+
+export interface PlanUsage {
+  managers: { used: number; limit: number };
+  technicians: { used: number; limit: number };
+  tickets: { used: number; limit: number };
+  storage: { used: number; limit: number };
+}
+
+export interface AdminDashboard {
+  totalTickets: number;
+  openTickets: number;
+  totalTechnicians: number;
+  totalCustomers: number;
+  monthlyRevenue: number;
+  planUsage: PlanUsage;
+}
+
+export interface ManagerDashboard {
+  totalTickets: number;
+  newTickets: number;
+  assignedTickets: number;
+  inProgressTickets: number;
+  pendingTickets: number;
+  completedTickets: number;
+  totalTechnicians: number;
+  pendingPayments: number;
+}
+
+// ─── Settings ─────────────────────────────────────────────────────────────────
+export interface CompanySettings {
+  id: string;
+  companyName: string;
+  email: string;
+  phone: string;
+  address: string;
+  logoUrl?: string;
+}
+
+export interface TenantSettings {
+  id: string;
+  gstEnabled: boolean;
+  gstPercent?: number;
+  invoicePrefix?: string;
+  invoiceNumberFormat?: string;
+  upiId?: string;
+  upiAccountName?: string;
+  upiQrImageUrl?: string;
+}
+
+export interface AppSettings {
+  id: string;
+  platformFee: number;
+  taxPercentage: number;
+  shippingCharge: number;
+  handlingCharge: number;
+  shippingEnabled: boolean;
+  handlingEnabled: boolean;
+  dailyDiscount: number;
+  weeklyDiscount: number;
+  monthlyDiscount: number;
+  dailyDiscountEnabled: boolean;
+  weeklyDiscountEnabled: boolean;
+  monthlyDiscountEnabled: boolean;
+}
+
+// ─── Reports ──────────────────────────────────────────────────────────────────
+export interface RevenueReport {
+  payments: Array<{
+    id: string;
+    ticketNumber: string;
+    amount: number;
+    method: PaymentMethod;
+    date: string;
+    customer: string;
+  }>;
+  total: number;
+  byMethod: Partial<Record<PaymentMethod, number>>;
+}
+
+export interface TicketReport {
+  byStatus: Partial<Record<TicketStatus, number>>;
+}
+
+export interface TechnicianReportRow {
+  id: string;
+  name: string;
+  totalTickets: number;
+  attendanceDays: number;
+  rating: number;
+}
+
+export interface AuditLog {
+  id: string;
+  userId: string;
+  user?: User;
+  entity: string;
+  action: string;
+  changes?: Record<string, unknown>;
+  createdAt: string;
+}

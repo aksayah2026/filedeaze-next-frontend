@@ -1,0 +1,202 @@
+// UI REDESIGN — logic unchanged
+'use client';
+
+import { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { ColumnDef } from '@tanstack/react-table';
+import { toast } from 'sonner';
+import api from '@/lib/axios';
+import { Payment } from '@/types';
+import { DataTable } from '@/components/ui/DataTable';
+import { Button } from '@/components/ui/Button';
+import { Input } from '@/components/ui/Input';
+import { Select } from '@/components/ui/Select';
+import { PaymentStatusBadge } from '@/components/ui/Badge';
+import { CheckCircle, DollarSign, Filter } from 'lucide-react';
+import dayjs from 'dayjs';
+
+export default function PaymentsPage() {
+  const qc = useQueryClient();
+  const today = dayjs().format('YYYY-MM-DD');
+  const monthStart = dayjs().startOf('month').format('YYYY-MM-DD');
+  const [status, setStatus] = useState('');
+  const [from, setFrom] = useState(monthStart);
+  const [to, setTo] = useState(today);
+  const [params, setParams] = useState({ status: '', from: monthStart, to: today });
+
+  const { data = [], isLoading } = useQuery<Payment[]>({
+    queryKey: ['payments', params],
+    queryFn: async () => {
+      const res = await api.get('/web/manager/payments', {
+        params: Object.fromEntries(Object.entries(params).filter(([, v]) => v)),
+      });
+      const d = res.data.data;
+      return Array.isArray(d) ? d : (d?.items ?? d?.payments ?? d?.data ?? []);
+    },
+  });
+
+  const verifyMutation = useMutation({
+    mutationFn: (id: string) => api.patch(`/web/manager/payments/${id}/verify`),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['payments'] }); toast.success('Payment verified'); },
+    onError: () => toast.error('Failed'),
+  });
+
+  const totalVerified = data.filter(p => p.status === 'VERIFIED').reduce((sum, p) => sum + p.amount, 0);
+
+  const columns: ColumnDef<Payment, unknown>[] = [
+    {
+      accessorKey: 'ticket.ticketNumber',
+      header: 'Ticket',
+      cell: ({ row }) => (
+        <span className="font-medium text-gray-800">
+          {row.original.ticket?.ticketNumber ?? row.original.ticketId}
+        </span>
+      ),
+    },
+    {
+      accessorKey: 'amount',
+      header: 'Amount',
+      cell: ({ row }) => (
+        <span className="tabular-nums font-semibold text-gray-900">
+          ₹{row.original.amount.toLocaleString()}
+        </span>
+      ),
+    },
+    {
+      accessorKey: 'status',
+      header: 'Status',
+      cell: ({ row }) => <PaymentStatusBadge status={row.original.status} />,
+    },
+    {
+      accessorKey: 'method',
+      header: 'Method',
+      cell: ({ row }) => (
+        <span className="text-gray-600">{row.original.method ?? '—'}</span>
+      ),
+    },
+    {
+      accessorKey: 'createdAt',
+      header: 'Date',
+      cell: ({ row }) => (
+        <span className="text-xs text-gray-400 tabular-nums">
+          {dayjs(row.original.createdAt).format('DD MMM YYYY')}
+        </span>
+      ),
+    },
+    {
+      id: 'actions',
+      header: '',
+      cell: ({ row }) =>
+        row.original.status === 'COLLECTED' ? (
+          <Button
+            size="sm"
+            variant="secondary"
+            onClick={() => verifyMutation.mutate(row.original.id)}
+            loading={verifyMutation.isPending}
+          >
+            <CheckCircle size={13} />
+            Verify
+          </Button>
+        ) : null,
+    },
+  ];
+
+  return (
+    <div className="space-y-6">
+      {/* Page header */}
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h2 className="text-2xl font-semibold tracking-tight text-gray-900">Payments</h2>
+          <p className="mt-0.5 text-sm text-gray-500">Track and verify collected payments</p>
+        </div>
+
+        {/* Stat card */}
+        <div className="flex items-center gap-4 rounded-xl border border-green-100 bg-white shadow-sm overflow-hidden">
+          <div className="self-stretch w-1.5 bg-green-500 shrink-0" />
+          <div className="flex items-center gap-3 px-4 py-3">
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-green-50 shrink-0">
+              <DollarSign size={18} className="text-green-600" />
+            </div>
+            <div>
+              <p className="text-xs font-medium uppercase tracking-widest text-green-600">
+                Total Verified
+              </p>
+              <p className="text-xl font-bold tabular-nums text-gray-900">
+                ₹{totalVerified.toLocaleString()}
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Filter bar */}
+      <div className="flex flex-wrap items-end gap-3 rounded-xl border border-gray-100 bg-white p-4 shadow-sm">
+        <div className="flex items-center gap-1.5 text-xs font-medium uppercase tracking-widest text-gray-400 self-center mr-1">
+          <Filter size={13} />
+          Filters
+        </div>
+        <Select
+          options={[
+            { value: '', label: 'All Status' },
+            { value: 'PENDING', label: 'Pending' },
+            { value: 'COLLECTED', label: 'Collected' },
+            { value: 'VERIFIED', label: 'Verified' },
+          ]}
+          value={status}
+          onChange={e => setStatus(e.target.value)}
+          className="w-40"
+        />
+        <div className="flex flex-col gap-1">
+          <label className="text-xs font-medium text-gray-500">From</label>
+          <Input type="date" value={from} onChange={e => setFrom(e.target.value)} />
+        </div>
+        <div className="flex flex-col gap-1">
+          <label className="text-xs font-medium text-gray-500">To</label>
+          <Input type="date" value={to} onChange={e => setTo(e.target.value)} />
+        </div>
+        <Button variant="secondary" onClick={() => setParams({ status, from, to })}>
+          Apply
+        </Button>
+      </div>
+
+      {/* Table */}
+      <div className="rounded-xl border border-gray-100 bg-white shadow-sm overflow-hidden">
+        {isLoading ? (
+          <div className="divide-y divide-gray-50">
+            {/* Skeleton header */}
+            <div className="flex gap-4 bg-gray-50 px-4 py-3">
+              {[120, 80, 90, 80, 90, 60].map((w, i) => (
+                <div key={i} className="h-3 rounded bg-gray-200 animate-pulse" style={{ width: w }} />
+              ))}
+            </div>
+            {/* Skeleton rows */}
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} className="flex gap-4 px-4 py-3.5">
+                {[120, 80, 90, 80, 90, 60].map((w, j) => (
+                  <div
+                    key={j}
+                    className="h-3 rounded animate-pulse"
+                    style={{
+                      width: w,
+                      backgroundColor: `rgb(${229 - i * 3}, ${231 - i * 3}, ${235 - i * 3})`,
+                    }}
+                  />
+                ))}
+              </div>
+            ))}
+          </div>
+        ) : data.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-16 text-center">
+            <div className="flex h-14 w-14 items-center justify-center rounded-full bg-gray-100 mb-4">
+              <DollarSign size={24} className="text-gray-400" />
+            </div>
+            <p className="text-sm font-medium text-gray-700">No payments found</p>
+            <p className="mt-1 text-xs text-gray-400">Try adjusting your filters</p>
+          </div>
+        ) : (
+          <DataTable data={data} columns={columns} isLoading={false} />
+        )}
+      </div>
+    </div>
+  );
+}

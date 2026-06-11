@@ -1,0 +1,40 @@
+'use client';
+
+import { useParams } from 'next/navigation';
+import { useQuery } from '@tanstack/react-query';
+import { ColumnDef } from '@tanstack/react-table';
+import api from '@/lib/axios';
+import { Ticket } from '@/types';
+import { DataTable } from '@/components/ui/DataTable';
+import { TicketStatusBadge } from '@/components/ui/Badge';
+import { PageSpinner } from '@/components/ui/Spinner';
+import Link from 'next/link';
+import { Button } from '@/components/ui/Button';
+import { Eye } from 'lucide-react';
+import dayjs from 'dayjs';
+
+export default function CustomerHistoryPage() {
+  const { id } = useParams<{ id: string }>();
+
+  const { data: history = [], isLoading } = useQuery<Ticket[]>({
+    queryKey: ['customer-history', id],
+    queryFn: async () => (await api.get(`/web/manager/customers/${id}/history`)).data.data,
+  });
+
+  const columns: ColumnDef<Ticket, unknown>[] = [
+    { accessorKey: 'ticketNumber', header: 'Ticket #' },
+    { accessorKey: 'status', header: 'Status', cell: ({ row }) => <TicketStatusBadge status={row.original.status} /> },
+    { accessorKey: 'technician.name', header: 'Technician', cell: ({ row }) => row.original.technician?.name ?? '—' },
+    { accessorKey: 'createdAt', header: 'Date', cell: ({ row }) => dayjs(row.original.createdAt).format('DD MMM YYYY') },
+    { id: 'actions', header: '', cell: ({ row }) => <Link href={`/manager/tickets/${row.original.id}`}><Button variant="ghost" size="sm"><Eye size={14} /></Button></Link> },
+  ];
+
+  if (isLoading) return <PageSpinner />;
+
+  return (
+    <div>
+      <h2 className="text-xl font-semibold text-gray-800 mb-6">Customer Ticket History</h2>
+      <DataTable data={history} columns={columns} />
+    </div>
+  );
+}

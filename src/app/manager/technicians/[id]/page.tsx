@@ -1,0 +1,147 @@
+'use client';
+
+import { useState, useEffect } from 'react';
+import { useParams } from 'next/navigation';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useForm } from 'react-hook-form';
+import { toast } from 'sonner';
+import api from '@/lib/axios';
+import { Technician, TechnicianSkill, Skill } from '@/types';
+import { Input } from '@/components/ui/Input';
+import { Button } from '@/components/ui/Button';
+import { Badge } from '@/components/ui/Badge';
+import { Modal } from '@/components/ui/Modal';
+import { Select } from '@/components/ui/Select';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
+import { PageSpinner } from '@/components/ui/Spinner';
+import { MapPin, Route, Star, Trash2, Plus, Key } from 'lucide-react';
+import dayjs from 'dayjs';
+
+export default function TechnicianDetailPage() {
+  const { id } = useParams<{ id: string }>();
+  const qc = useQueryClient();
+  const [showResetPw, setShowResetPw] = useState(false);
+  const [showAddSkill, setShowAddSkill] = useState(false);
+  const [removeSkillId, setRemoveSkillId] = useState<string | null>(null);
+  const [routeDate, setRouteDate] = useState(dayjs().format('YYYY-MM-DD'));
+
+  const { data: tech, isLoading } = useQuery<Technician>({ queryKey: ['technician', id], queryFn: async () => (await api.get(`/web/manager/technicians/${id}`)).data.data });
+  const { data: skills = [] } = useQuery<TechnicianSkill[]>({ queryKey: ['tech-skills', id], queryFn: async () => (await api.get(`/web/manager/technicians/${id}/skills`)).data.data.skills ?? [] });
+  const { data: allSkills = [] } = useQuery<Skill[]>({ queryKey: ['skills'], queryFn: async () => (await api.get('/web/manager/skills')).data.data });
+  const { data: location } = useQuery({ queryKey: ['tech-location', id], queryFn: async () => (await api.get(`/web/manager/technicians/${id}/location`)).data.data, refetchInterval: 30_000 });
+  const { data: route } = useQuery({ queryKey: ['tech-route', id, routeDate], queryFn: async () => (await api.get(`/web/manager/technicians/${id}/route`, { params: { date: routeDate } })).data.data });
+
+  const { register: ri, handleSubmit: hi, reset: resetI, formState: { isSubmitting: si } } = useForm<Pick<Technician, 'name' | 'phone' | 'isActive'>>();
+  const { register: rp, handleSubmit: hp, reset: resetP, formState: { isSubmitting: sp } } = useForm<{ newPassword: string }>();
+  const { register: rs, handleSubmit: hs, reset: resetS, formState: { isSubmitting: ss } } = useForm<{ skillId: string; experienceLevel: string; certificationNumber: string; certificationExpiryDate: string }>();
+
+  useEffect(() => { if (tech) resetI({ name: tech.name, phone: tech.phone, isActive: tech.isActive }); }, [tech, resetI]);
+
+  const updateMutation = useMutation({ mutationFn: (d: Pick<Technician, 'name' | 'phone' | 'isActive'>) => api.patch(`/web/manager/technicians/${id}`, d), onSuccess: () => { qc.invalidateQueries({ queryKey: ['technician', id] }); toast.success('Updated'); }, onError: () => toast.error('Failed') });
+  const resetPwMutation = useMutation({ mutationFn: (d: { newPassword: string }) => api.patch(`/web/manager/technicians/${id}/reset-password`, d), onSuccess: () => { toast.success('Password reset'); setShowResetPw(false); resetP(); }, onError: () => toast.error('Failed') });
+  const addSkillMutation = useMutation({
+    mutationFn: (d: { skillId: string; experienceLevel: string; certificationNumber: string; certificationExpiryDate: string }) =>
+      api.post(`/web/manager/technicians/${id}/skills`, {
+        skillId: d.skillId,
+        ...(d.experienceLevel && { experienceLevel: d.experienceLevel }),
+        ...(d.certificationNumber && { certificationNumber: d.certificationNumber }),
+        ...(d.certificationExpiryDate && { certificationExpiryDate: d.certificationExpiryDate }),
+      }),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['tech-skills', id] }); toast.success('Skill added'); setShowAddSkill(false); resetS(); },
+    onError: () => toast.error('Failed'),
+  });
+  const removeSkillMutation = useMutation({ mutationFn: (skillId: string) => api.delete(`/web/manager/technicians/${id}/skills/${skillId}`), onSuccess: () => { qc.invalidateQueries({ queryKey: ['tech-skills', id] }); toast.success('Skill removed'); setRemoveSkillId(null); }, onError: () => toast.error('Failed') });
+
+  if (isLoading || !tech) return <PageSpinner />;
+
+  const skillOptions = allSkills.filter(s => !skills.find(ts => ts.skillId === s.id)).map(s => ({ value: s.id, label: s.name }));
+
+  return (
+    <div className="space-y-5 max-w-3xl">
+      <div className="flex items-center gap-3">
+        <h2 className="text-xl font-semibold text-gray-800">{tech.name}</h2>
+        <Badge variant={tech.isActive ? 'success' : 'default'}>{tech.isActive ? 'Active' : 'Inactive'}</Badge>
+        {tech.rating && <div className="flex items-center gap-1 text-sm"><Star size={13} className="fill-yellow-400 text-yellow-400" />{tech.rating.toFixed(1)}</div>}
+      </div>
+
+      <div className="bg-white rounded-xl p-5 border border-gray-100 shadow-sm">
+        <h3 className="font-medium text-gray-700 mb-4">Edit Info</h3>
+        <form onSubmit={hi(d => updateMutation.mutate(d))} className="grid grid-cols-2 gap-4">
+          <Input label="Name" {...ri('name')} />
+          <Input label="Phone" {...ri('phone')} />
+          <div className="flex items-center gap-2 col-span-2">
+            <input type="checkbox" id="isActive" {...ri('isActive')} className="h-4 w-4" />
+            <label htmlFor="isActive" className="text-sm text-gray-700">Active</label>
+          </div>
+          <div className="col-span-2 flex justify-between">
+            <Button variant="outline" size="sm" type="button" onClick={() => setShowResetPw(true)}><Key size={14} /> Reset Password</Button>
+            <Button type="submit" loading={si}>Save</Button>
+          </div>
+        </form>
+      </div>
+
+      <div className="bg-white rounded-xl p-5 border border-gray-100 shadow-sm">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="font-medium text-gray-700 flex items-center gap-2"><MapPin size={15} /> Live Location</h3>
+        </div>
+        {location ? (
+          <div className="grid grid-cols-2 gap-3 text-sm">
+            <div><span className="text-gray-500">Latitude:</span> <span className="font-mono">{location.lat}</span></div>
+            <div><span className="text-gray-500">Longitude:</span> <span className="font-mono">{location.lng}</span></div>
+          </div>
+        ) : <p className="text-sm text-gray-400">Location not available</p>}
+      </div>
+
+      <div className="bg-white rounded-xl p-5 border border-gray-100 shadow-sm">
+        <div className="flex items-center gap-2 mb-4">
+          <Route size={15} className="text-gray-600" />
+          <h3 className="font-medium text-gray-700">Route History</h3>
+          <Input type="date" value={routeDate} onChange={e => setRouteDate(e.target.value)} className="ml-auto w-40" />
+        </div>
+        {Array.isArray(route) && route.length > 0 ? (
+          <pre className="text-xs bg-gray-50 rounded-lg p-3 overflow-auto max-h-40">{JSON.stringify(route, null, 2)}</pre>
+        ) : <p className="text-sm text-gray-400">No route data for this date</p>}
+      </div>
+
+      <div className="bg-white rounded-xl p-5 border border-gray-100 shadow-sm">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="font-medium text-gray-700">Skills</h3>
+          <Button variant="outline" size="sm" onClick={() => setShowAddSkill(true)}><Plus size={13} /> Add Skill</Button>
+        </div>
+        {skills.length === 0 ? <p className="text-sm text-gray-400">No skills assigned</p> : (
+          <div className="space-y-2">
+            {skills.map(ts => (
+              <div key={ts.skillId} className="flex items-center justify-between rounded-lg bg-gray-50 px-3 py-2 text-sm">
+                <div>
+                  <span className="font-medium">{ts.skill.name}</span>
+                  <span className="ml-2 text-gray-400">• {ts.experienceLevel}</span>
+                  {ts.certificationNumber && <span className="ml-2 text-gray-400 text-xs">{ts.certificationNumber}</span>}
+                </div>
+                <Button variant="ghost" size="sm" onClick={() => setRemoveSkillId(ts.skillId)} className="text-red-400"><Trash2 size={13} /></Button>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <Modal open={showResetPw} onClose={() => { setShowResetPw(false); resetP(); }} title="Reset Password" size="sm">
+        <form onSubmit={hp(d => resetPwMutation.mutate(d))} className="space-y-4">
+          <Input label="New Password" type="password" {...rp('newPassword', { required: true, minLength: 6 })} />
+          <div className="flex justify-end gap-3"><Button variant="secondary" type="button" onClick={() => { setShowResetPw(false); resetP(); }}>Cancel</Button><Button type="submit" loading={sp}>Reset</Button></div>
+        </form>
+      </Modal>
+
+      <Modal open={showAddSkill} onClose={() => { setShowAddSkill(false); resetS(); }} title="Add Skill" size="sm">
+        <form onSubmit={hs(d => addSkillMutation.mutate(d))} className="space-y-4">
+          <Select label="Skill" options={skillOptions} placeholder="Select skill" {...rs('skillId', { required: true })} />
+          <Select label="Experience Level" options={[{ value: 'BEGINNER', label: 'Beginner' }, { value: 'INTERMEDIATE', label: 'Intermediate' }, { value: 'EXPERT', label: 'Expert' }]} placeholder="Select level" {...rs('experienceLevel')} />
+          <Input label="Certification Number" placeholder="CERT-2024-001" {...rs('certificationNumber')} />
+          <Input label="Certification Expiry Date" type="date" {...rs('certificationExpiryDate')} />
+          <div className="flex justify-end gap-3"><Button variant="secondary" type="button" onClick={() => { setShowAddSkill(false); resetS(); }}>Cancel</Button><Button type="submit" loading={ss}>Add</Button></div>
+        </form>
+      </Modal>
+
+      <ConfirmDialog open={!!removeSkillId} onClose={() => setRemoveSkillId(null)} onConfirm={() => removeSkillId && removeSkillMutation.mutate(removeSkillId)} message="Remove this skill?" loading={removeSkillMutation.isPending} confirmLabel="Remove" />
+    </div>
+  );
+}
