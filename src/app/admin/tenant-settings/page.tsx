@@ -25,7 +25,15 @@ export default function TenantSettingsPage() {
   const gstEnabled = watch('gstEnabled');
 
   const updateMutation = useMutation({
-    mutationFn: (d: Omit<TenantSettings, 'id'>) => api.patch('/web/admin/tenant-settings', d),
+    mutationFn: (d: Omit<TenantSettings, 'id'>) => api.patch('/web/admin/tenant-settings', {
+      gstEnabled: d.gstEnabled,
+      gstPercent: d.gstPercent,
+      invoicePrefix: d.invoicePrefix,
+      invoiceNumberFormat: d.invoiceNumberFormat,
+      upiId: d.upiId,
+      upiAccountName: d.upiAccountName,
+      upiQrImageUrl: d.upiQrImageUrl,
+    }),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['tenant-settings'] }); toast.success('Settings saved'); },
     onError: () => toast.error('Failed'),
   });

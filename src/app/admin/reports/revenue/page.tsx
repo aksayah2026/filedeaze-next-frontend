@@ -1,8 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import api from '@/lib/axios';
 import { RevenueReport } from '@/types';
 import { Input } from '@/components/ui/Input';
@@ -10,10 +10,30 @@ import { Button } from '@/components/ui/Button';
 import { DataTable } from '@/components/ui/DataTable';
 import { PageSpinner } from '@/components/ui/Spinner';
 import { ColumnDef } from '@tanstack/react-table';
-import { Search } from 'lucide-react';
+import { Download, Search, TrendingUp } from 'lucide-react';
 import dayjs from 'dayjs';
 
 type Payment = RevenueReport['payments'][number];
+
+const METHOD_COLORS: Record<string, string> = {
+  CASH: '#10b981',
+  UPI: '#3b82f6',
+  CARD: '#8b5cf6',
+  ONLINE: '#f59e0b',
+};
+
+function exportCsv(payments: Payment[]) {
+  const headers = ['Ticket', 'Customer', 'Amount', 'Method', 'Date'];
+  const rows = payments.map(p => [p.ticketNumber, p.customer, p.amount, p.method, dayjs(p.date).format('DD MMM YYYY')]);
+  const csv = [headers, ...rows].map(r => r.map(c => `"${c}"`).join(',')).join('\n');
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `revenue-report-${dayjs().format('YYYY-MM-DD')}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
 
 export default function RevenueReportPage() {
   const today = dayjs().format('YYYY-MM-DD');
@@ -21,50 +41,103 @@ export default function RevenueReportPage() {
   const [from, setFrom] = useState(monthStart);
   const [to, setTo] = useState(today);
   const [params, setParams] = useState({ from: monthStart, to: today });
+  const [mounted, setMounted] = useState(false);
 
-  const { data, isLoading } = useQuery<RevenueReport>({
+  useEffect(() => setMounted(true), []);
+
+  const { data, isLoading, error } = useQuery<RevenueReport>({
     queryKey: ['revenue-report', params],
-    queryFn: async () => (await api.get('/web/admin/reports/revenue', { params })).data.data,
+    queryFn: async () => {
+      const res = await api.get('/web/admin/reports/revenue', { params });
+      const d = res.data.data;
+      return {
+        payments: Array.isArray(d?.payments) ? d.payments : [],
+        total: d?.total ?? 0,
+        byMethod: d?.byMethod ?? {},
+      };
+    },
+    staleTime: 30_000,
+    retry: 1,
   });
 
   const columns: ColumnDef<Payment, unknown>[] = [
     { accessorKey: 'ticketNumber', header: 'Ticket' },
     { accessorKey: 'customer', header: 'Customer' },
-    { accessorKey: 'amount', header: 'Amount', cell: ({ row }) => `₹${row.original.amount.toLocaleString()}` },
+    {
+      accessorKey: 'amount',
+      header: 'Amount',
+      cell: ({ row }) => <span className="tabular-nums font-medium">₹{row.original.amount.toLocaleString()}</span>,
+    },
     { accessorKey: 'method', header: 'Method' },
     { accessorKey: 'date', header: 'Date', cell: ({ row }) => dayjs(row.original.date).format('DD MMM YYYY') },
   ];
 
-  const chartData = data ? Object.entries(data.byMethod).map(([method, amount]) => ({ method, amount })) : [];
+  const chartData = Object.entries(data?.byMethod ?? {}).map(([method, amount]) => ({ method, amount: amount ?? 0 }));
+  const payments = data?.payments ?? [];
 
   return (
     <div className="space-y-6">
-      <h2 className="text-xl font-semibold text-gray-800">Revenue Report</h2>
-
-      <div className="flex gap-3 items-end">
-        <Input label="From" type="date" value={from} onChange={e => setFrom(e.target.value)} />
-        <Input label="To" type="date" value={to} onChange={e => setTo(e.target.value)} />
-        <Button variant="secondary" onClick={() => setParams({ from, to })}><Search size={14} /> Apply</Button>
+      <div className="flex items-center justify-between">
+        <h2 className="text-xl font-semibold text-gray-800">Revenue Report</h2>
+        <Button variant="secondary" onClick={() => exportCsv(payments)} disabled={!payments.length}>
+          <Download size={14} /> Export CSV
+        </Button>
       </div>
 
-      {isLoading ? <PageSpinner /> : (
+      {/* Filters */}
+      <div className="flex flex-wrap gap-3 items-end rounded-xl border border-gray-100 bg-white p-4 shadow-sm">
+        <Input label="From" type="date" value={from} onChange={e => setFrom(e.target.value)} />
+        <Input label="To" type="date" value={to} onChange={e => setTo(e.target.value)} />
+        <Button variant="secondary" onClick={() => setParams({ from, to })}>
+          <Search size={14} /> Apply
+        </Button>
+      </div>
+
+      {isLoading ? <PageSpinner /> : error ? (
+        <div className="rounded-xl border border-red-100 bg-red-50 p-6 text-sm text-red-600">
+          Failed to load revenue report. Please try again.
+        </div>
+      ) : (
         <>
-          <div className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm">
-            <div className="flex justify-between items-center mb-3">
-              <h3 className="text-sm font-medium text-gray-700">Revenue by Payment Method</h3>
-              <p className="text-lg font-bold text-emerald-600">Total: ₹{data?.total.toLocaleString()}</p>
+          {/* Total */}
+          <div className="inline-flex items-center gap-3 rounded-xl border border-emerald-100 bg-emerald-50 px-5 py-3">
+            <TrendingUp size={18} className="text-emerald-600" />
+            <div>
+              <p className="text-xs font-medium uppercase tracking-widest text-emerald-600">Total Revenue</p>
+              <p className="text-2xl font-bold tabular-nums text-gray-900">
+                ₹{(data?.total ?? 0).toLocaleString()}
+              </p>
             </div>
-            <ResponsiveContainer width="100%" height={220}>
-              <BarChart data={chartData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                <XAxis dataKey="method" tick={{ fontSize: 12 }} />
-                <YAxis tick={{ fontSize: 12 }} />
-                <Tooltip formatter={(v) => [`₹${Number(v).toLocaleString()}`, 'Amount']} />
-                <Bar dataKey="amount" fill="#3b82f6" radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
           </div>
-          <DataTable data={data?.payments ?? []} columns={columns} />
+
+          {/* Chart — only render after mount to avoid SSR mismatch */}
+          {mounted && chartData.length > 0 && (
+            <div className="bg-white rounded-xl p-5 border border-gray-100 shadow-sm">
+              <h3 className="text-sm font-medium text-gray-700 mb-4">Revenue by Payment Method</h3>
+              <ResponsiveContainer width="100%" height={220}>
+                <BarChart data={chartData} margin={{ top: 4, right: 16, bottom: 4, left: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" vertical={false} />
+                  <XAxis dataKey="method" tick={{ fontSize: 12 }} axisLine={false} tickLine={false} />
+                  <YAxis tick={{ fontSize: 12 }} axisLine={false} tickLine={false} />
+                  <Tooltip
+                    formatter={(value: number) => [`₹${value.toLocaleString()}`, 'Amount']}
+                    contentStyle={{ borderRadius: 8, border: '1px solid #e5e7eb', fontSize: 13 }}
+                  />
+                  <Bar dataKey="amount" radius={[6, 6, 0, 0]} maxBarSize={64}>
+                    {chartData.map((entry) => (
+                      <Cell key={entry.method} fill={METHOD_COLORS[entry.method] ?? '#6366f1'} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          )}
+
+          {chartData.length === 0 && !isLoading && (
+            <p className="text-sm text-gray-400">No revenue data for this period.</p>
+          )}
+
+          <DataTable data={payments} columns={columns} isLoading={false} />
         </>
       )}
     </div>

@@ -30,6 +30,7 @@ const reportsNav = [
 const adminMiscNav = [
   { href: '/admin/audit-logs',           label: 'Audit Logs',        icon: FileText },
   { href: '/admin/platform-settings',    label: 'Platform Settings', icon: Settings },
+  { href: '/admin/subscription',         label: 'Subscription',      icon: CreditCard },
 ];
 
 // Operations — shared by admin + manager (manager routes)

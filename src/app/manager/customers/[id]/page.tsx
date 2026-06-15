@@ -18,7 +18,10 @@ export default function CustomerHistoryPage() {
 
   const { data: history = [], isLoading } = useQuery<Ticket[]>({
     queryKey: ['customer-history', id],
-    queryFn: async () => (await api.get(`/web/manager/customers/${id}/history`)).data.data,
+    queryFn: async () => {
+      const res = await api.get(`/web/manager/customers/${id}/history`);
+      return res.data.data.tickets ?? [];
+    },
   });
 
   const columns: ColumnDef<Ticket, unknown>[] = [

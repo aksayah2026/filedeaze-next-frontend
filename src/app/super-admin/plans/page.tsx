@@ -12,6 +12,7 @@ import { DataTable } from '@/components/ui/DataTable';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
+import { Badge } from '@/components/ui/Badge';
 import { Modal } from '@/components/ui/Modal';
 
 type Form = {
@@ -52,6 +53,12 @@ export default function PlansPage() {
     onError: () => toast.error('Failed'),
   });
 
+  const toggleMutation = useMutation({
+    mutationFn: (plan: Plan) => api.patch(`/web/super-admin/plans/${plan.id}`, { isActive: !plan.isActive }),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['plans'] }); toast.success('Plan status updated'); },
+    onError: () => toast.error('Failed'),
+  });
+
   const columns: ColumnDef<Plan, unknown>[] = [
     { accessorKey: 'name', header: 'Plan' },
     { accessorKey: 'price', header: 'Price', cell: ({ row }) => `₹${row.original.price}` },
@@ -59,12 +66,49 @@ export default function PlansPage() {
     { accessorKey: 'technicianLimit', header: 'Technicians' },
     { accessorKey: 'ticketLimit', header: 'Tickets' },
     { accessorKey: 'storageLimitGb', header: 'Storage (GB)' },
-    { id: 'actions', header: '', cell: ({ row }) => <Button variant="ghost" size="sm" onClick={() => openEdit(row.original)}><Pencil size={14} /></Button> },
+    {
+      accessorKey: 'isActive',
+      header: 'Status',
+      cell: ({ row }) => (
+        <Badge variant={row.original.isActive ? 'success' : 'default'}>
+          {row.original.isActive ? 'Active' : 'Inactive'}
+        </Badge>
+      ),
+    },
+    {
+      id: 'actions',
+      header: '',
+      cell: ({ row }) => (
+        <div className="flex items-center gap-2">
+          <Button variant="ghost" size="sm" onClick={() => openEdit(row.original)}>
+            <Pencil size={14} />
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => toggleMutation.mutate(row.original)}
+            loading={toggleMutation.isPending}
+            className={row.original.isActive ? 'text-red-500' : 'text-green-600'}
+          >
+            {row.original.isActive ? 'Deactivate' : 'Activate'}
+          </Button>
+        </div>
+      ),
+    },
   ];
 
   const FormFields = () => (
     <>
-      <Select label="Plan Name" options={[{ value: 'STARTER', label: 'Starter' }, { value: 'PROFESSIONAL', label: 'Professional' }, { value: 'ENTERPRISE', label: 'Enterprise' }]} {...register('name')} error={errors.name?.message} />
+      <Select
+        label="Plan Name"
+        options={[
+          { value: 'STARTER', label: 'Starter' },
+          { value: 'PROFESSIONAL', label: 'Professional' },
+          { value: 'ENTERPRISE', label: 'Enterprise' },
+        ]}
+        {...register('name')}
+        error={errors.name?.message}
+      />
       <Input label="Price (₹)" type="number" {...register('price')} error={errors.price?.message} />
       <Input label="Manager Limit" type="number" {...register('managerLimit')} error={errors.managerLimit?.message} />
       <Input label="Technician Limit" type="number" {...register('technicianLimit')} error={errors.technicianLimit?.message} />
@@ -81,7 +125,11 @@ export default function PlansPage() {
       </div>
       <DataTable data={plans} columns={columns} isLoading={isLoading} />
 
-      <Modal open={showCreate || !!editing} onClose={() => { setShowCreate(false); setEditing(null); reset(); }} title={editing ? 'Edit Plan' : 'Create Plan'}>
+      <Modal
+        open={showCreate || !!editing}
+        onClose={() => { setShowCreate(false); setEditing(null); reset(); }}
+        title={editing ? 'Edit Plan' : 'Create Plan'}
+      >
         <form onSubmit={handleSubmit(d => saveMutation.mutate(d))} className="grid grid-cols-2 gap-4">
           <FormFields />
           <div className="col-span-2 flex justify-end gap-3">

@@ -58,6 +58,7 @@ export interface Plan {
   technicianLimit: number;
   ticketLimit: number;
   storageLimitGb: number;
+  isActive: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -105,12 +106,33 @@ export interface CreateTenantDto {
 // ─── Billing / Activity ───────────────────────────────────────────────────────
 export interface Billing {
   id: string;
-  tenant: Tenant;
+  tenantId: string;
+  subscriptionId: string;
+  tenant?: Tenant;
+  subscription?: { plan?: Plan };
   amount: number;
-  status: 'PAID' | 'PENDING';
-  dueDate: string;
+  status: 'PAID' | 'PENDING' | 'FAILED';
   paidAt?: string;
   createdAt: string;
+}
+
+export interface TenantInfo {
+  companyName: string;
+  tenantCode: string;
+  logoUrl: string | null;
+}
+
+export interface PlatformUpi {
+  upiId: string | null;
+  upiAccountName: string | null;
+  upiQrImageUrl: string | null;
+}
+
+export interface MySubscription {
+  subscription: (Subscription & { plan: Plan }) | null;
+  pendingBill: Billing | null;
+  billingHistory: Billing[];
+  paymentInfo: PlatformUpi;
 }
 
 export interface BillingReport {
@@ -124,8 +146,26 @@ export interface ActivityLog {
   user?: User;
   entity: string;
   action: string;
+  module?: string;
+  ipAddress?: string;
   details?: Record<string, unknown>;
   createdAt: string;
+}
+
+// ─── Super Admin Reports ──────────────────────────────────────────────────────
+export interface SuperAdminRevenueReport {
+  total: number;
+  byPlan: Partial<Record<PlanName, number>>;
+  byTenant: Array<{ tenantId: string; tenantName: string; amount: number }>;
+  payments: Array<{
+    id: string;
+    tenantName: string;
+    planName: string;
+    amount: number;
+    status: string;
+    paidAt?: string;
+    createdAt: string;
+  }>;
 }
 
 // ─── People ───────────────────────────────────────────────────────────────────
@@ -215,6 +255,13 @@ export interface StatusLog {
   updatedBy?: User;
 }
 
+export interface TicketImage {
+  id: string;
+  type: 'BEFORE' | 'AFTER' | 'RAISED' | 'SIGNATURE';
+  imageUrl: string;
+  createdAt: string;
+}
+
 export interface Ticket {
   id: string;
   ticketNumber: string;
@@ -226,6 +273,7 @@ export interface Ticket {
   scheduledAt?: string;
   notes?: string;
   statusLogs: StatusLog[];
+  images?: TicketImage[];
   payment?: Payment;
   invoice?: Invoice;
   feedback?: Feedback;

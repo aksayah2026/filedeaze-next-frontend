@@ -22,11 +22,15 @@ export default function CompanySettingsPage() {
   const { register, handleSubmit, reset, formState: { isSubmitting } } = useForm<Omit<CompanySettings, 'id' | 'logoUrl'>>();
 
   useEffect(() => {
-    if (data) reset({ companyName: data.companyName, email: data.email, phone: data.phone, address: data.address });
+    if (data) reset({ companyName: data.companyName, phone: data.phone, address: data.address });
   }, [data, reset]);
 
   const updateMutation = useMutation({
-    mutationFn: (d: Omit<CompanySettings, 'id' | 'logoUrl'>) => api.patch('/web/admin/company-settings', d),
+    mutationFn: (d: Omit<CompanySettings, 'id' | 'logoUrl'>) => api.patch('/web/admin/company-settings', {
+      companyName: d.companyName,
+      phone: d.phone,
+      address: d.address,
+    }),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['company-settings'] }); toast.success('Settings saved'); },
     onError: () => toast.error('Failed'),
   });
@@ -52,7 +56,10 @@ export default function CompanySettingsPage() {
         <h3 className="font-medium text-gray-700 mb-4">Details</h3>
         <form onSubmit={handleSubmit(d => updateMutation.mutate(d))} className="grid grid-cols-2 gap-4">
           <Input label="Company Name" {...register('companyName')} />
-          <Input label="Email" type="email" {...register('email')} />
+          <div className="flex flex-col gap-1">
+            <label className="text-xs font-medium text-gray-500">Email</label>
+            <p className="rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-500 select-all">{data?.email ?? '—'}</p>
+          </div>
           <Input label="Phone" {...register('phone')} />
           <Input label="Address" {...register('address')} />
           <div className="col-span-2 flex justify-end">

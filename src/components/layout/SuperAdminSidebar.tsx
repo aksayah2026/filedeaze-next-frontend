@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
-  LayoutDashboard, Building2, CreditCard, Receipt, FileText, Activity, Zap,
+  LayoutDashboard, Building2, CreditCard, Receipt, FileText, Activity, Zap, History, BarChart2,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -13,6 +13,8 @@ const nav = [
   { href: '/super-admin/plans', label: 'Plans', icon: CreditCard },
   { href: '/super-admin/subscriptions', label: 'Subscriptions', icon: Receipt },
   { href: '/super-admin/billing', label: 'Billing', icon: FileText },
+  { href: '/super-admin/payment-history', label: 'Payment History', icon: History },
+  { href: '/super-admin/revenue-reports', label: 'Revenue Reports', icon: BarChart2 },
   { href: '/super-admin/activity-logs', label: 'Activity Logs', icon: Activity },
 ];
 

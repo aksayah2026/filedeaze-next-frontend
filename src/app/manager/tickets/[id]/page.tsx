@@ -6,7 +6,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import api from '@/lib/axios';
-import { Ticket, Technician } from '@/types';
+import { Ticket, Technician, TicketImage } from '@/types';
 import { TicketStatusBadge, PaymentStatusBadge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Modal } from '@/components/ui/Modal';
@@ -132,6 +132,39 @@ export default function TicketDetailPage() {
           ))}
         </div>
       </div>
+
+      {ticket.images && ticket.images.length > 0 && (
+        <div className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm">
+          <h3 className="font-medium text-gray-700 mb-3">Work Photos</h3>
+          <div className="grid grid-cols-2 gap-4">
+            {(['BEFORE', 'AFTER'] as TicketImage['type'][]).map(type => {
+              const img = ticket.images!.find(i => i.type === type);
+              return (
+                <div key={type}>
+                  <p className="text-xs text-gray-400 mb-2 uppercase tracking-wide">{type}</p>
+                  {img ? (
+                    <a href={img.imageUrl} target="_blank" rel="noopener noreferrer">
+                      <img src={img.imageUrl} alt={type} className="rounded-lg w-full object-cover aspect-video border border-gray-100 hover:opacity-90 transition-opacity" />
+                    </a>
+                  ) : (
+                    <div className="rounded-lg bg-gray-50 border border-dashed border-gray-200 aspect-video flex items-center justify-center">
+                      <p className="text-xs text-gray-400">No photo</p>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+          {ticket.images.find(i => i.type === 'SIGNATURE') && (
+            <div className="mt-4">
+              <p className="text-xs text-gray-400 mb-2 uppercase tracking-wide">Customer Signature</p>
+              <a href={ticket.images.find(i => i.type === 'SIGNATURE')!.imageUrl} target="_blank" rel="noopener noreferrer">
+                <img src={ticket.images.find(i => i.type === 'SIGNATURE')!.imageUrl} alt="Signature" className="rounded-lg h-20 border border-gray-100 hover:opacity-90 transition-opacity" />
+              </a>
+            </div>
+          )}
+        </div>
+      )}
 
       <Modal open={showAssign} onClose={() => { setShowAssign(false); resetA(); }} title={isReassign ? 'Reassign Ticket' : 'Assign Ticket'} size="sm">
         <form onSubmit={ha(d => assignMutation.mutate(d))} className="space-y-4">
