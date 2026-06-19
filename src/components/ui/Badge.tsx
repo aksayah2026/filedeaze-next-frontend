@@ -45,6 +45,7 @@ export function TicketStatusBadge({ status }: { status: TicketStatus }) {
 
 const tenantColors: Record<TenantStatus, BadgeVariant> = {
   ACTIVE: 'success', SUSPENDED: 'danger', EXPIRED: 'warning',
+  TRIAL: 'info', PAYMENT_PENDING: 'orange',
 };
 
 export function TenantStatusBadge({ status }: { status: TenantStatus }) {

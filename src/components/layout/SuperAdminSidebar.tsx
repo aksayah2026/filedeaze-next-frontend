@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
-  LayoutDashboard, Building2, CreditCard, Receipt, FileText, Activity, Zap, History, BarChart2,
+  LayoutDashboard, Building2, CreditCard, Receipt, FileText, Activity, Zap, History, BarChart2, ClipboardCheck, Settings,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -12,10 +12,12 @@ const nav = [
   { href: '/super-admin/tenants', label: 'Tenants', icon: Building2 },
   { href: '/super-admin/plans', label: 'Plans', icon: CreditCard },
   { href: '/super-admin/subscriptions', label: 'Subscriptions', icon: Receipt },
+  { href: '/super-admin/payment-requests', label: 'Payment Requests', icon: ClipboardCheck },
   { href: '/super-admin/billing', label: 'Billing', icon: FileText },
   { href: '/super-admin/payment-history', label: 'Payment History', icon: History },
   { href: '/super-admin/revenue-reports', label: 'Revenue Reports', icon: BarChart2 },
   { href: '/super-admin/activity-logs', label: 'Activity Logs', icon: Activity },
+  { href: '/super-admin/platform-settings', label: 'Platform Settings', icon: Settings },
 ];
 
 interface SuperAdminSidebarProps { onClose?: () => void; }

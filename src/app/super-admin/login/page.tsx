@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -23,6 +24,8 @@ export default function SuperAdminLogin() {
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<Form>({ resolver: zodResolver(schema) });
   const { setAuth } = useAuth();
   const router = useRouter();
+
+  useEffect(() => { router.replace('/login'); }, [router]);
 
   const onSubmit = async (data: Form) => {
     try {

@@ -10,7 +10,7 @@ export default function RootPage() {
   const router = useRouter();
 
   useEffect(() => {
-    if (!isAuthenticated) { router.replace('/admin/login'); return; }
+    if (!isAuthenticated) { router.replace('/login'); return; }
     if (role === 'SUPER_ADMIN') router.replace('/super-admin/dashboard');
     else if (role === 'ADMIN') router.replace('/admin/dashboard');
     else router.replace('/manager/dashboard');

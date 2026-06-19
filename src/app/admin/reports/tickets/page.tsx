@@ -66,14 +66,15 @@ export default function TicketsReportPage() {
                 cy="50%"
                 outerRadius={110}
                 dataKey="value"
-                label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                label={({ name, percent }: { name?: string; percent?: number }) => `${name ?? ''} ${((percent ?? 0) * 100).toFixed(0)}%`}
                 labelLine={false}
               >
                 {chartData.map((_, i) => (
                   <Cell key={i} fill={COLORS[i % COLORS.length]} />
                 ))}
               </Pie>
-              <Tooltip formatter={(value: number) => [value, 'Tickets']} contentStyle={{ borderRadius: 8, border: '1px solid #e5e7eb', fontSize: 13 }} />
+              {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+              <Tooltip formatter={((value: any) => [Number(value ?? 0), 'Tickets']) as any} contentStyle={{ borderRadius: 8, border: '1px solid #e5e7eb', fontSize: 13 }} />
               <Legend />
             </PieChart>
           </ResponsiveContainer>

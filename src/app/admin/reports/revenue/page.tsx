@@ -119,8 +119,9 @@ export default function RevenueReportPage() {
                   <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" vertical={false} />
                   <XAxis dataKey="method" tick={{ fontSize: 12 }} axisLine={false} tickLine={false} />
                   <YAxis tick={{ fontSize: 12 }} axisLine={false} tickLine={false} />
+                  {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
                   <Tooltip
-                    formatter={(value: number) => [`₹${value.toLocaleString()}`, 'Amount']}
+                    formatter={((value: any) => [`₹${Number(value ?? 0).toLocaleString()}`, 'Amount']) as any}
                     contentStyle={{ borderRadius: 8, border: '1px solid #e5e7eb', fontSize: 13 }}
                   />
                   <Bar dataKey="amount" radius={[6, 6, 0, 0]} maxBarSize={64}>

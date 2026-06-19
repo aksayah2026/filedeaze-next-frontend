@@ -10,38 +10,16 @@ import { flushSync } from 'react-dom';
 import api from '@/lib/axios';
 import { useAuth } from '@/contexts/AuthContext';
 import { TenantInfo } from '@/types';
-import { ArrowLeft, Eye, EyeOff, Loader2 } from 'lucide-react';
-import Link from 'next/link';
+import { Eye, EyeOff, Loader2, Clock } from 'lucide-react';
 
 const schema = z.object({
-  email: z.string().email('Enter a valid email'),
-  password: z.string().min(1, 'Password is required'),
+  email: z.string().email({ message: 'Enter a valid email' }),
+  password: z.string().min(1, { message: 'Password is required' }),
 });
 type Form = z.infer<typeof schema>;
 
 function getInitials(name: string) {
-  return name
-    .split(' ')
-    .filter(Boolean)
-    .slice(0, 2)
-    .map(w => w[0].toUpperCase())
-    .join('');
-}
-
-function getAvatarColor(name: string) {
-  const colors = [
-    'from-blue-500 to-blue-700',
-    'from-violet-500 to-violet-700',
-    'from-emerald-500 to-emerald-700',
-    'from-rose-500 to-rose-700',
-    'from-amber-500 to-amber-700',
-    'from-cyan-500 to-cyan-700',
-    'from-indigo-500 to-indigo-700',
-    'from-teal-500 to-teal-700',
-  ];
-  let hash = 0;
-  for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
-  return colors[Math.abs(hash) % colors.length];
+  return name.split(' ').filter(Boolean).slice(0, 2).map(w => w[0].toUpperCase()).join('');
 }
 
 export default function TenantLoginPage() {
@@ -55,7 +33,7 @@ export default function TenantLoginPage() {
     resolver: zodResolver(schema),
   });
 
-  const { data: tenant, isLoading: loadingTenant, isError } = useQuery<TenantInfo>({
+  const { data: tenant, isLoading, isError } = useQuery<TenantInfo>({
     queryKey: ['tenant-info', tenantCode],
     queryFn: async () => (await api.get(`/auth/tenant/${tenantCode}/info`)).data.data,
     retry: false,
@@ -66,58 +44,49 @@ export default function TenantLoginPage() {
     setLoginError('');
     try {
       const res = await api.post(`/auth/tenant/${tenantCode}/login`, { email, password });
-      const { user, tokens } = res.data.data;
+      const { user, tokens, redirectPath } = res.data.data;
       flushSync(() => setAuth(user, tokens.accessToken, tokens.refreshToken));
-      if (user.role === 'ADMIN') router.push('/admin/dashboard');
-      else if (user.role === 'MANAGER') router.push('/manager/dashboard');
-      else setLoginError('You are not authorized to access this portal.');
+      if (user.role === 'ADMIN' || user.role === 'MANAGER') {
+        router.push(redirectPath ?? (user.role === 'ADMIN' ? '/admin/dashboard' : '/manager/dashboard'));
+      } else {
+        setLoginError('You are not authorized to access this portal.');
+      }
     } catch (err: unknown) {
-      const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
-      setLoginError(msg ?? 'Invalid email or password.');
+      const axiosErr = err as { response?: { data?: { message?: string } } };
+      setLoginError(axiosErr.response?.data?.message ?? 'Invalid email or password.');
     }
   };
 
-  // Invalid workspace
   if (isError) {
     return (
       <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4">
         <div className="text-center">
           <p className="text-slate-400 text-sm mb-4">Workspace &ldquo;{tenantCode}&rdquo; not found.</p>
-          <Link href="/admin" className="text-blue-400 hover:text-blue-300 text-sm transition-colors">
-            ← Try a different workspace
-          </Link>
+          <a href="/login" className="text-blue-400 hover:text-blue-300 text-sm transition-colors">← Back to login</a>
         </div>
       </div>
     );
   }
 
-  const initials = tenant ? getInitials(tenant.companyName) : '…';
-  const gradientClass = tenant ? getAvatarColor(tenant.companyName) : 'from-slate-600 to-slate-700';
-
   return (
     <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4 relative overflow-hidden">
-      {/* Background */}
       <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:64px_64px]" />
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[500px] h-[250px] bg-blue-600/8 rounded-full blur-3xl pointer-events-none" />
 
       <div className="relative w-full max-w-sm">
         {/* Company branding */}
         <div className="flex flex-col items-center mb-8">
-          {loadingTenant ? (
+          {isLoading ? (
             <div className="h-20 w-20 rounded-2xl bg-slate-800 animate-pulse mb-4" />
           ) : tenant?.logoUrl ? (
-            <img
-              src={tenant.logoUrl}
-              alt={tenant.companyName}
-              className="h-20 w-20 rounded-2xl object-contain bg-white p-2 shadow-lg mb-4"
-            />
+            <img src={tenant.logoUrl} alt={tenant.companyName} className="h-20 w-20 rounded-2xl object-contain bg-white p-2 shadow-lg mb-4" />
           ) : (
-            <div className={`h-20 w-20 rounded-2xl bg-gradient-to-br ${gradientClass} flex items-center justify-center shadow-lg mb-4`}>
-              <span className="text-white text-2xl font-bold tracking-tight">{initials}</span>
+            <div className="h-20 w-20 rounded-2xl bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center shadow-lg mb-4">
+              <span className="text-white text-2xl font-bold tracking-tight">{tenant ? getInitials(tenant.companyName) : '…'}</span>
             </div>
           )}
 
-          {loadingTenant ? (
+          {isLoading ? (
             <div className="space-y-2 flex flex-col items-center">
               <div className="h-5 w-40 bg-slate-800 rounded animate-pulse" />
               <div className="h-4 w-24 bg-slate-800 rounded animate-pulse" />
@@ -125,10 +94,29 @@ export default function TenantLoginPage() {
           ) : (
             <>
               <h1 className="text-white text-xl font-bold text-center">{tenant?.companyName}</h1>
-              <div className="flex items-center gap-1.5 mt-1.5">
-                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-                <span className="text-slate-400 text-xs font-mono">{tenantCode} workspace</span>
-              </div>
+              <p className="text-slate-500 text-xs mt-1">Admin &amp; Manager Portal</p>
+              {tenant?.status === 'TRIAL' && tenant.trialDaysLeft != null && (
+                <div className="mt-3 flex items-center gap-1.5 bg-amber-500/10 border border-amber-500/20 rounded-lg px-3 py-1.5">
+                  <Clock size={12} className="text-amber-400 shrink-0" />
+                  <span className="text-amber-400 text-xs font-medium">
+                    {tenant.trialDaysLeft > 0
+                      ? `Free trial — ${tenant.trialDaysLeft} day${tenant.trialDaysLeft !== 1 ? 's' : ''} left`
+                      : 'Trial expired — subscribe to continue'}
+                  </span>
+                </div>
+              )}
+              {tenant?.status === 'EXPIRED' && (
+                <div className="mt-3 flex items-center gap-1.5 bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-1.5">
+                  <Clock size={12} className="text-red-400 shrink-0" />
+                  <span className="text-red-400 text-xs font-medium">Subscription expired</span>
+                </div>
+              )}
+              {tenant?.status === 'PAYMENT_PENDING' && (
+                <div className="mt-3 flex items-center gap-1.5 bg-blue-500/10 border border-blue-500/20 rounded-lg px-3 py-1.5">
+                  <Clock size={12} className="text-blue-400 shrink-0" />
+                  <span className="text-blue-400 text-xs font-medium">Payment under review</span>
+                </div>
+              )}
             </>
           )}
         </div>
@@ -141,7 +129,6 @@ export default function TenantLoginPage() {
           </div>
 
           <form onSubmit={handleSubmit(onSubmit)} autoComplete="on" className="space-y-4">
-            {/* Email */}
             <div>
               <label className="text-sm font-medium text-slate-300 block mb-2">Email address</label>
               <input
@@ -154,7 +141,6 @@ export default function TenantLoginPage() {
               {errors.email && <p className="text-red-400 text-xs mt-1.5">{errors.email.message}</p>}
             </div>
 
-            {/* Password */}
             <div>
               <label className="text-sm font-medium text-slate-300 block mb-2">Password</label>
               <div className="relative">
@@ -176,43 +162,23 @@ export default function TenantLoginPage() {
               {errors.password && <p className="text-red-400 text-xs mt-1.5">{errors.password.message}</p>}
             </div>
 
-            {/* Server error */}
             {loginError && (
               <div className="bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3">
                 <p className="text-red-400 text-sm">{loginError}</p>
               </div>
             )}
 
-            {/* Submit */}
             <button
               type="submit"
               disabled={isSubmitting}
               className="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-500 disabled:bg-blue-600/50 text-white font-medium py-3 rounded-xl transition-colors text-sm mt-2"
             >
-              {isSubmitting ? (
-                <>
-                  <Loader2 size={16} className="animate-spin" />
-                  Signing in…
-                </>
-              ) : (
-                'Sign In'
-              )}
+              {isSubmitting ? <><Loader2 size={16} className="animate-spin" /> Signing in…</> : 'Sign In'}
             </button>
           </form>
         </div>
 
-        {/* Back link */}
-        <div className="mt-5 text-center">
-          <Link
-            href="/admin"
-            className="inline-flex items-center gap-1.5 text-slate-500 hover:text-slate-300 text-xs transition-colors"
-          >
-            <ArrowLeft size={12} />
-            Different workspace
-          </Link>
-        </div>
-
-        <p className="text-center text-slate-700 text-xs mt-4">Powered by FieldEaze</p>
+        <p className="text-center text-slate-700 text-xs mt-6">Powered by FieldEaze</p>
       </div>
     </div>
   );

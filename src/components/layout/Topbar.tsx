@@ -18,9 +18,7 @@ export function Topbar({ title, onMenuClick }: TopbarProps) {
       await api.post('/auth/logout', { refreshToken: rt });
     } catch {}
     clearAuth();
-    if (role === 'SUPER_ADMIN') router.push('/super-admin/login');
-    else if (role === 'ADMIN') router.push('/admin/login');
-    else router.push('/manager/login');
+    router.push('/login');
     toast.success('Logged out');
   };
 

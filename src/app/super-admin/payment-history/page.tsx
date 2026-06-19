@@ -23,7 +23,7 @@ function exportCsv(billings: Billing[]) {
     b.tenant?.subscription?.plan?.name ?? '—',
     b.amount,
     b.status,
-    dayjs(b.dueDate).format('DD MMM YYYY'),
+    b.subscription?.endDate ? dayjs(b.subscription.endDate).format('DD MMM YYYY') : '—',
     b.paidAt ? dayjs(b.paidAt).format('DD MMM YYYY') : '—',
   ]);
   const csv = [headers, ...rows].map(r => r.map(c => `"${c}"`).join(',')).join('\n');
@@ -102,9 +102,11 @@ export default function PaymentHistoryPage() {
         : <span className="text-xs text-gray-400">—</span>,
     },
     {
-      accessorKey: 'dueDate',
-      header: 'Due Date',
-      cell: ({ row }) => <span className="text-xs text-gray-500">{dayjs(row.original.dueDate).format('DD MMM YYYY')}</span>,
+      id: 'endDate',
+      header: 'Sub. End Date',
+      cell: ({ row }) => row.original.subscription?.endDate
+        ? <span className="text-xs text-gray-500">{dayjs(row.original.subscription.endDate).format('DD MMM YYYY')}</span>
+        : <span className="text-xs text-gray-400">—</span>,
     },
   ];
 

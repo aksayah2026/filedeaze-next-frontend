@@ -11,12 +11,12 @@ export default function SuperAdminLayout({ children }: { children: React.ReactNo
   const { role, isAuthenticated, isLoading } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
-  const isLogin = pathname === '/super-admin/login';
+  const isLogin = pathname === '/super-admin/login' || pathname === '/login';
 
   useEffect(() => {
     if (isLogin || isLoading) return;
-    if (!isAuthenticated) { router.replace('/super-admin/login'); return; }
-    if (role !== 'SUPER_ADMIN') { router.replace('/super-admin/login'); }
+    if (!isAuthenticated) { router.replace('/login'); return; }
+    if (role !== 'SUPER_ADMIN') { router.replace('/login'); }
   }, [isAuthenticated, isLoading, role, router, isLogin]);
 
   if (isLogin) return <>{children}</>;

@@ -6,6 +6,6 @@ import { useRouter } from 'next/navigation';
 // /admin/login redirects to the workspace discovery page at /admin
 export default function AdminLoginRedirect() {
   const router = useRouter();
-  useEffect(() => { router.replace('/admin'); }, [router]);
+  useEffect(() => { router.replace('/login'); }, [router]);
   return null;
 }

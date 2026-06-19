@@ -42,15 +42,20 @@ export default function PlansPage() {
   };
 
   const saveMutation = useMutation({
-    mutationFn: (data: Form) => editing
-      ? api.patch(`/web/super-admin/plans/${editing.id}`, data)
-      : api.post('/web/super-admin/plans', data),
+    mutationFn: (data: Form) => {
+      if (editing) {
+        // name is not allowed in UpdatePlanDto — send only editable fields
+        const { name: _n, ...updatePayload } = data;
+        return api.patch(`/web/super-admin/plans/${editing.id}`, updatePayload);
+      }
+      return api.post('/web/super-admin/plans', data);
+    },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['plans'] });
       toast.success(editing ? 'Plan updated' : 'Plan created');
       setEditing(null); setShowCreate(false); reset();
     },
-    onError: () => toast.error('Failed'),
+    onError: (err: any) => toast.error(err?.response?.data?.message ?? 'Failed'),
   });
 
   const toggleMutation = useMutation({
@@ -97,23 +102,30 @@ export default function PlansPage() {
     },
   ];
 
-  const FormFields = () => (
+  const FormFields = ({ isEdit }: { isEdit: boolean }) => (
     <>
-      <Select
-        label="Plan Name"
-        options={[
-          { value: 'STARTER', label: 'Starter' },
-          { value: 'PROFESSIONAL', label: 'Professional' },
-          { value: 'ENTERPRISE', label: 'Enterprise' },
-        ]}
-        {...register('name')}
-        error={errors.name?.message}
-      />
-      <Input label="Price (₹)" type="number" {...register('price')} error={errors.price?.message} />
-      <Input label="Manager Limit" type="number" {...register('managerLimit')} error={errors.managerLimit?.message} />
-      <Input label="Technician Limit" type="number" {...register('technicianLimit')} error={errors.technicianLimit?.message} />
-      <Input label="Ticket Limit" type="number" {...register('ticketLimit')} error={errors.ticketLimit?.message} />
-      <Input label="Storage (GB)" type="number" {...register('storageLimitGb')} error={errors.storageLimitGb?.message} />
+      {isEdit ? (
+        <div className="col-span-2">
+          <p className="text-xs text-gray-400 mb-1">Plan Name</p>
+          <p className="text-sm font-semibold text-gray-800 capitalize">{editing?.name}</p>
+        </div>
+      ) : (
+        <Select
+          label="Plan Name"
+          options={[
+            { value: 'STARTER', label: 'Starter' },
+            { value: 'PROFESSIONAL', label: 'Professional' },
+            { value: 'ENTERPRISE', label: 'Enterprise' },
+          ]}
+          {...register('name')}
+          error={errors.name?.message}
+        />
+      )}
+      <Input label="Price (₹)" type="number" {...register('price', { valueAsNumber: true })} error={errors.price?.message} />
+      <Input label="Manager Limit" type="number" {...register('managerLimit', { valueAsNumber: true })} error={errors.managerLimit?.message} />
+      <Input label="Technician Limit" type="number" {...register('technicianLimit', { valueAsNumber: true })} error={errors.technicianLimit?.message} />
+      <Input label="Ticket Limit" type="number" {...register('ticketLimit', { valueAsNumber: true })} error={errors.ticketLimit?.message} />
+      <Input label="Storage (GB)" type="number" {...register('storageLimitGb', { valueAsNumber: true })} error={errors.storageLimitGb?.message} />
     </>
   );
 
@@ -131,7 +143,7 @@ export default function PlansPage() {
         title={editing ? 'Edit Plan' : 'Create Plan'}
       >
         <form onSubmit={handleSubmit(d => saveMutation.mutate(d))} className="grid grid-cols-2 gap-4">
-          <FormFields />
+          <FormFields isEdit={!!editing} />
           <div className="col-span-2 flex justify-end gap-3">
             <Button variant="secondary" type="button" onClick={() => { setShowCreate(false); setEditing(null); reset(); }}>Cancel</Button>
             <Button type="submit" loading={isSubmitting}>{editing ? 'Save' : 'Create'}</Button>

@@ -8,6 +8,8 @@ export interface User {
   role: UserRole;
   tenantCode?: string;
   tenantId?: string;
+  tenantStatus?: TenantStatus;
+  trialEndsAt?: string | null;
   phone?: string;
   photo?: string;
 }
@@ -47,7 +49,7 @@ export interface PaginatedData<T> {
 }
 
 // ─── Tenant / Plan ────────────────────────────────────────────────────────────
-export type TenantStatus = 'ACTIVE' | 'SUSPENDED' | 'EXPIRED';
+export type TenantStatus = 'TRIAL' | 'ACTIVE' | 'EXPIRED' | 'PAYMENT_PENDING' | 'SUSPENDED';
 export type PlanName = 'STARTER' | 'PROFESSIONAL' | 'ENTERPRISE';
 
 export interface Plan {
@@ -84,6 +86,9 @@ export interface Tenant {
   adminName: string;
   adminEmail: string;
   status: TenantStatus;
+  trialEndsAt?: string | null;
+  selectedPlanId?: string | null;
+  selectedPlan?: Plan | null;
   plan?: Plan;
   subscription?: Subscription;
   createdAt: string;
@@ -103,13 +108,22 @@ export interface CreateTenantDto {
   plan?: PlanName;
 }
 
+export interface TenantBranding {
+  companyName: string;
+  logoUrl?: string;
+  primaryColor?: string;
+  secondaryColor?: string;
+  status?: TenantStatus;
+  trialDaysLeft?: number | null;
+}
+
 // ─── Billing / Activity ───────────────────────────────────────────────────────
 export interface Billing {
   id: string;
   tenantId: string;
   subscriptionId: string;
   tenant?: Tenant;
-  subscription?: { plan?: Plan };
+  subscription?: { plan?: Plan; startDate?: string; endDate?: string };
   amount: number;
   status: 'PAID' | 'PENDING' | 'FAILED';
   paidAt?: string;
@@ -120,6 +134,8 @@ export interface TenantInfo {
   companyName: string;
   tenantCode: string;
   logoUrl: string | null;
+  status?: TenantStatus;
+  trialDaysLeft?: number | null;
 }
 
 export interface PlatformUpi {
@@ -361,11 +377,19 @@ export interface SuperAdminDashboard {
   activeUsers: number;
 }
 
+export interface PlanUsageEntry {
+  current: number;
+  limit: number | string;
+}
+
 export interface PlanUsage {
-  managers: { used: number; limit: number };
-  technicians: { used: number; limit: number };
-  tickets: { used: number; limit: number };
-  storage: { used: number; limit: number };
+  plan: string;
+  usage: {
+    managers: PlanUsageEntry;
+    technicians: PlanUsageEntry;
+    tickets: PlanUsageEntry;
+    storage: PlanUsageEntry;
+  };
 }
 
 export interface AdminDashboard {
@@ -374,7 +398,7 @@ export interface AdminDashboard {
   totalTechnicians: number;
   totalCustomers: number;
   monthlyRevenue: number;
-  planUsage: PlanUsage;
+  planUsage: PlanUsage | null;
 }
 
 export interface ManagerDashboard {

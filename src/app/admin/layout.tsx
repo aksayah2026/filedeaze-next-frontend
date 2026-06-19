@@ -13,20 +13,30 @@ const isPublicAdminPath = (path: string) =>
   path === '/admin/login' ||
   /^\/admin\/[^/]+\/login$/.test(path);
 
+const SUBSCRIPTION_BLOCKED: string[] = ['EXPIRED', 'PAYMENT_PENDING'];
+
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
-  const { role, isAuthenticated, isLoading } = useAuth();
+  const { user, role, isAuthenticated, isLoading } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
   const isPublic = isPublicAdminPath(pathname);
+  const isSubscriptionPage = pathname === '/admin/subscription';
 
   useEffect(() => {
     if (isPublic || isLoading) return;
-    if (!isAuthenticated) { router.replace('/admin'); return; }
-    if (role !== 'ADMIN') { router.replace('/admin'); }
-  }, [isAuthenticated, isLoading, role, router, isPublic]);
+    if (!isAuthenticated) { router.replace('/login'); return; }
+    // Allow MANAGER on subscription page (subscription-blocked managers land here)
+    const allowedRole = role === 'ADMIN' || (isSubscriptionPage && role === 'MANAGER');
+    if (!allowedRole) { router.replace('/login'); return; }
+    // Enforce subscription — redirect to subscription page if tenant is blocked
+    if (!isSubscriptionPage && user?.tenantStatus && SUBSCRIPTION_BLOCKED.includes(user.tenantStatus)) {
+      router.replace('/admin/subscription');
+    }
+  }, [isAuthenticated, isLoading, role, router, isPublic, isSubscriptionPage, user?.tenantStatus]);
 
   if (isPublic) return <>{children}</>;
-  if (isLoading || !isAuthenticated || role !== 'ADMIN') return <PageSpinner />;
+  const allowedRole = role === 'ADMIN' || (isSubscriptionPage && role === 'MANAGER');
+  if (isLoading || !isAuthenticated || !allowedRole) return <PageSpinner />;
 
   return (
     <AppShell sidebar={(onClose) => <AdminSidebar onClose={onClose} />}>
