@@ -16,6 +16,7 @@ import dayjs from 'dayjs';
 
 interface SubscriptionInfo {
   tenantStatus: string;
+  isTrial: boolean;
   trialDaysLeft: number | null;
   trialEndsAt: string | null;
   currentPlan: Plan | null;
@@ -94,17 +95,17 @@ export default function SubscriptionPage() {
   if (isLoading) return <PageSpinner />;
 
   const {
-    tenantStatus, trialDaysLeft, trialEndsAt, currentPlan,
+    tenantStatus, isTrial: isTrialFromApi, trialDaysLeft, trialEndsAt, currentPlan,
     subscription, billingHistory, latestPaymentRequest, paymentInfo,
   } = data ?? {};
 
-  const isTrial = tenantStatus === 'TRIAL';
+  const isTrial = isTrialFromApi ?? tenantStatus === 'TRIAL';
   const isExpired = tenantStatus === 'EXPIRED';
   const isPaymentPending = tenantStatus === 'PAYMENT_PENDING';
-  const isActive = tenantStatus === 'ACTIVE';
+  const isActive = tenantStatus === 'ACTIVE' && !isTrial;
 
-  const subDaysLeft = subscription ? dayjs(subscription.endDate).diff(dayjs(), 'day') : 0;
-  const isExpiringSoon = isActive && subDaysLeft <= 7 && subDaysLeft >= 0;
+  const subDaysLeft = subscription ? dayjs(subscription.endDate).diff(dayjs(), 'day') : null;
+  const isExpiringSoon = isActive && subDaysLeft !== null && subDaysLeft <= 7 && subDaysLeft >= 0;
 
   // Allow resubmit if: trial/expired (first-time), or payment_pending after a rejection
   const isRejected = latestPaymentRequest?.status === 'REJECTED';
@@ -137,7 +138,7 @@ export default function SubscriptionPage() {
                 {isExpired && <Badge variant="danger">Subscription Expired</Badge>}
                 {isPaymentPending && <Badge variant="warning">Payment Under Review</Badge>}
                 {isActive && isExpiringSoon && <Badge variant="warning">Expires in {subDaysLeft}d</Badge>}
-                {isActive && !isExpiringSoon && <Badge variant="success">Active</Badge>}
+                {isActive && !isExpiringSoon && subscription && <Badge variant="success">Active</Badge>}
               </div>
               {subscription && (
                 <p className="text-xs text-gray-400 mt-2">
