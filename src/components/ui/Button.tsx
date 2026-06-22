@@ -6,15 +6,17 @@ import { cn } from '@/lib/utils';
 
 const variants = {
   primary:
-    'bg-[#2563EB] text-white shadow-[0_1px_3px_rgba(37,99,235,0.3)] hover:bg-[#1D4ED8] hover:shadow-[0_4px_12px_rgba(37,99,235,0.35)] active:scale-[0.98] active:shadow-[0_1px_2px_rgba(37,99,235,0.2)] disabled:bg-blue-300 disabled:shadow-none',
+    'bg-[var(--color-primary)] text-white shadow-[0_1px_3px_var(--color-primary-ring)] hover:bg-[var(--color-primary-hover)] hover:shadow-[0_4px_12px_var(--color-primary-ring)] active:scale-[0.98] active:shadow-[0_1px_2px_rgba(0,0,0,0.1)] disabled:opacity-50 disabled:shadow-none',
   secondary:
     'bg-slate-100 text-slate-700 hover:bg-slate-200 hover:text-slate-900 active:scale-[0.98] active:bg-slate-200 disabled:opacity-50',
   danger:
-    'bg-[#EF4444] text-white shadow-[0_1px_3px_rgba(239,68,68,0.25)] hover:bg-red-600 hover:shadow-[0_4px_10px_rgba(239,68,68,0.3)] active:scale-[0.98] disabled:bg-red-300 disabled:shadow-none',
+    'bg-[#EF4444] text-white shadow-[0_1px_3px_rgba(239,68,68,0.25)] hover:bg-red-650 hover:shadow-[0_4px_10px_rgba(239,68,68,0.3)] active:scale-[0.98] disabled:bg-red-300 disabled:shadow-none',
+  success:
+    'bg-[var(--color-success)] text-white shadow-[0_1px_3px_rgba(34,197,94,0.25)] hover:bg-emerald-600 active:scale-[0.98] disabled:opacity-50',
   ghost:
     'text-slate-600 hover:bg-slate-100 hover:text-slate-900 active:scale-[0.98] active:bg-slate-200 disabled:opacity-50',
   outline:
-    'border border-[#E2E8F0] bg-white text-slate-700 hover:bg-slate-50 hover:border-slate-300 active:scale-[0.98] disabled:opacity-50',
+    'border border-[#E2E8F0] bg-white text-slate-700 hover:bg-slate-50 hover:border-slate-350 active:scale-[0.98] disabled:opacity-50',
 };
 
 const sizes = {
@@ -35,8 +37,8 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       ref={ref}
       disabled={disabled || loading}
       className={cn(
-        'inline-flex items-center justify-center rounded-lg font-medium transition-all duration-150',
-        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2563EB] focus-visible:ring-offset-2',
+        'inline-flex items-center justify-center rounded-md font-medium transition-all duration-150',
+        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-2',
         'cursor-pointer disabled:cursor-not-allowed select-none',
         variants[variant],
         sizes[size],

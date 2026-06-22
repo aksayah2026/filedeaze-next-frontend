@@ -39,7 +39,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   if (isLoading || !isAuthenticated || !allowedRole) return <PageSpinner />;
 
   return (
-    <AppShell sidebar={(onClose) => <AdminSidebar onClose={onClose} />}>
+    <AppShell sidebar={(onClose, isCollapsed) => <AdminSidebar onClose={onClose} isCollapsed={isCollapsed} />}>
       {children}
     </AppShell>
   );

@@ -5,7 +5,7 @@ const sizes = { sm: 'h-4 w-4', md: 'h-6 w-6', lg: 'h-10 w-10' };
 export function Spinner({ size = 'md', className }: { size?: keyof typeof sizes; className?: string }) {
   return (
     <svg
-      className={cn('animate-spin text-[#2563EB]', sizes[size], className)}
+      className={cn('animate-spin text-[var(--color-primary)]', sizes[size], className)}
       viewBox="0 0 24 24"
       fill="none"
     >
@@ -44,7 +44,7 @@ export function SkeletonLine({ className }: { className?: string }) {
 
 export function SkeletonCard() {
   return (
-    <div className="rounded-xl border border-slate-100 bg-white p-5 space-y-3">
+    <div className="rounded-xl border border-slate-100 bg-white p-5 space-y-3 shadow-[0_1px_2px_rgba(0,0,0,0.02)]">
       <SkeletonLine className="w-24 h-3" />
       <SkeletonLine className="w-16 h-7" />
       <SkeletonLine className="w-32 h-3" />

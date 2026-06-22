@@ -23,17 +23,17 @@ export default function SuperAdminDashboardPage() {
 
       {/* KPI Grid */}
       {isLoading ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
           {Array.from({ length: 6 }).map((_, i) => <SkeletonCard key={i} />)}
         </div>
       ) : !data ? null : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
           <StatsCard
             title="Total Tenants"
             value={data.totalTenants}
             icon={Building2}
             iconBg="bg-slate-100"
-            iconColor="text-slate-600"
+            iconColor="text-slate-650"
             accentColor="bg-slate-400"
             subtitle="All registered tenants"
           />
@@ -60,7 +60,7 @@ export default function SuperAdminDashboardPage() {
             value={data.suspendedTenants}
             icon={XCircle}
             iconBg="bg-red-50"
-            iconColor="text-red-600"
+            iconColor="text-red-655"
             accentColor="bg-red-500"
             subtitle="Manually suspended accounts"
           />
@@ -78,7 +78,7 @@ export default function SuperAdminDashboardPage() {
             value={data.activeUsers}
             icon={Users}
             iconBg="bg-blue-50"
-            iconColor="text-blue-600"
+            iconColor="text-blue-650"
             accentColor="bg-blue-500"
             subtitle="Users across all tenants"
           />

@@ -31,7 +31,7 @@ export function DataTable<T>({ data, columns, isLoading }: DataTableProps<T>) {
   if (isLoading) return <PageSpinner />;
 
   return (
-    <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
+    <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-[0_1px_3px_rgba(0,0,0,0.03)]">
       <div className="overflow-x-auto table-sticky-head">
         <table className="min-w-full divide-y divide-slate-100">
           <thead className="bg-slate-50/80">
@@ -54,7 +54,7 @@ export function DataTable<T>({ data, columns, isLoading }: DataTableProps<T>) {
                         {h.column.getCanSort() && (
                           <span className={cn(
                             'transition-colors',
-                            h.column.getIsSorted() ? 'text-[#2563EB]' : 'text-slate-300'
+                            h.column.getIsSorted() ? 'text-[var(--color-primary)]' : 'text-slate-300'
                           )}>
                             {h.column.getIsSorted() === 'asc' ? (
                               <ChevronUp size={12} />
@@ -86,7 +86,7 @@ export function DataTable<T>({ data, columns, isLoading }: DataTableProps<T>) {
                   className={cn(
                     'group transition-colors duration-100',
                     idx % 2 === 0 ? 'bg-white' : 'bg-slate-50/40',
-                    'hover:bg-blue-50/40'
+                    'hover:bg-[var(--color-primary-light)]/40'
                   )}
                 >
                   {row.getVisibleCells().map(cell => (

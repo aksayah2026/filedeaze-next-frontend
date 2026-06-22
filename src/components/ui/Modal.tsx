@@ -38,8 +38,8 @@ export function Modal({ open, onClose, title, children, size = 'md' }: ModalProp
   return (
     <div
       ref={overlayRef}
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
-      style={{ background: 'rgba(15, 23, 42, 0.5)' }}
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 select-none"
+      style={{ background: 'rgba(15, 23, 42, 0.4)' }}
       onClick={e => { if (e.target === overlayRef.current) onClose(); }}
     >
       {/* Backdrop blur */}
@@ -49,7 +49,7 @@ export function Modal({ open, onClose, title, children, size = 'md' }: ModalProp
       <div
         className={cn(
           'relative w-full rounded-2xl bg-white animate-fe-scale-in',
-          'shadow-[0_20px_60px_rgba(0,0,0,0.18),0_8px_24px_rgba(0,0,0,0.10)]',
+          'shadow-[0_20px_60px_rgba(0,0,0,0.12),0_8px_24px_rgba(0,0,0,0.06)]',
           sizes[size]
         )}
       >
@@ -57,12 +57,12 @@ export function Modal({ open, onClose, title, children, size = 'md' }: ModalProp
         {title && (
           <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
             <div className="flex items-center gap-3">
-              <div className="h-1 w-4 rounded-full bg-[#2563EB]" />
-              <h2 className="text-base font-semibold text-slate-900">{title}</h2>
+              <div className="h-1.5 w-4 rounded-full bg-[var(--color-primary)]" />
+              <h2 className="text-sm font-bold text-slate-800 uppercase tracking-wide">{title}</h2>
             </div>
             <button
               onClick={onClose}
-              className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors"
+              className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-50 hover:text-slate-600 transition-colors"
             >
               <X size={16} />
             </button>

@@ -16,11 +16,11 @@ export function StatsCard({
   title,
   value,
   icon: Icon,
-  iconColor = 'text-blue-600',
-  iconBg = 'bg-blue-50',
+  iconColor = 'text-[var(--color-primary)]',
+  iconBg = 'bg-[var(--color-primary-light)]',
   subtitle,
   trend,
-  accentColor = 'bg-blue-500',
+  accentColor = 'bg-[var(--color-primary)]',
 }: StatsCardProps) {
   const trendPositive = trend && trend.value >= 0;
 
@@ -28,7 +28,7 @@ export function StatsCard({
     <div
       className={cn(
         'group relative overflow-hidden rounded-xl bg-white border border-slate-100 p-5 card-hover',
-        'shadow-[0_1px_3px_rgba(0,0,0,0.06)] animate-fe-fade-in'
+        'shadow-[0_1px_3px_rgba(0,0,0,0.03)] animate-fe-fade-in'
       )}
     >
       {/* Left accent bar */}
@@ -36,16 +36,16 @@ export function StatsCard({
 
       <div className="flex items-start justify-between">
         <div className="flex-1 min-w-0 pr-3">
-          <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">
+          <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1 select-none">
             {title}
           </p>
           <p className="text-2xl font-bold text-slate-900 tabular-nums">{value}</p>
           {subtitle && (
-            <p className="mt-1 text-xs text-slate-400">{subtitle}</p>
+            <p className="mt-1 text-xs text-slate-400 truncate">{subtitle}</p>
           )}
           {trend && (
             <div className={cn(
-              'mt-2 inline-flex items-center gap-1 text-xs font-medium',
+              'mt-2 inline-flex items-center gap-1 text-xs font-semibold',
               trendPositive ? 'text-emerald-600' : 'text-red-500'
             )}>
               {trendPositive

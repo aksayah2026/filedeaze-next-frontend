@@ -30,7 +30,7 @@ export default function ManagerLayout({ children }: { children: React.ReactNode 
   if (isLoading || !isAuthenticated || (role !== 'MANAGER' && role !== 'ADMIN')) return <PageSpinner />;
 
   return (
-    <AppShell sidebar={(onClose) => role === 'ADMIN' ? <AdminSidebar onClose={onClose} /> : <ManagerSidebar onClose={onClose} />}>
+    <AppShell sidebar={(onClose, isCollapsed) => role === 'ADMIN' ? <AdminSidebar onClose={onClose} isCollapsed={isCollapsed} /> : <ManagerSidebar onClose={onClose} isCollapsed={isCollapsed} />}>
       {children}
     </AppShell>
   );

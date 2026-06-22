@@ -23,7 +23,7 @@ export default function SuperAdminLayout({ children }: { children: React.ReactNo
   if (isLoading || !isAuthenticated || role !== 'SUPER_ADMIN') return <PageSpinner />;
 
   return (
-    <AppShell sidebar={(onClose) => <SuperAdminSidebar onClose={onClose} />}>
+    <AppShell sidebar={(onClose, isCollapsed) => <SuperAdminSidebar onClose={onClose} isCollapsed={isCollapsed} />}>
       {children}
     </AppShell>
   );

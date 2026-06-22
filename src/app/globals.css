@@ -3,11 +3,11 @@
 
 /* ── Design Token System ────────────────────────────────── */
 :root {
-  /* Brand */
+  /* Default Brand */
   --color-primary: #2563EB;
   --color-primary-hover: #1D4ED8;
   --color-primary-light: #EFF6FF;
-  --color-primary-ring: rgba(37, 99, 235, 0.2);
+  --color-primary-ring: rgba(37, 99, 235, 0.15);
 
   /* Sidebar */
   --color-sidebar: #0F172A;
@@ -42,9 +42,9 @@
   /* Shadows */
   --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.04);
   --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
-  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.07), 0 2px 4px rgba(0, 0, 0, 0.04);
-  --shadow-lg: 0 10px 30px rgba(0, 0, 0, 0.08), 0 4px 8px rgba(0, 0, 0, 0.04);
-  --shadow-xl: 0 20px 50px rgba(0, 0, 0, 0.10), 0 8px 16px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.05), 0 2px 4px rgba(0, 0, 0, 0.03);
+  --shadow-lg: 0 10px 30px rgba(0, 0, 0, 0.06), 0 4px 8px rgba(0, 0, 0, 0.03);
+  --shadow-xl: 0 20px 50px rgba(0, 0, 0, 0.08), 0 8px 16px rgba(0, 0, 0, 0.04);
 
   /* Radius */
   --radius-sm: 6px;
@@ -57,6 +57,55 @@
   /* Legacy compat */
   --background: var(--color-bg);
   --foreground: var(--color-text-primary);
+}
+
+/* ── Role Based Theme Tokens ───────────────────────────────── */
+.theme-super-admin {
+  --color-primary: #2563EB;
+  --color-primary-hover: #1D4ED8;
+  --color-primary-light: #EFF6FF;
+  --color-primary-ring: rgba(37, 99, 235, 0.15);
+  
+  --color-sidebar: #0D1B2A;
+  --color-sidebar-hover: rgba(255, 255, 255, 0.04);
+  --color-sidebar-active: #1D4ED8;
+  --color-sidebar-border: rgba(255, 255, 255, 0.08);
+}
+
+.theme-admin {
+  --color-primary: #14B8A6;
+  --color-primary-hover: #0D9488;
+  --color-primary-light: #F0FDFA;
+  --color-primary-ring: rgba(20, 184, 166, 0.15);
+  
+  --color-sidebar: #0F2D2A;
+  --color-sidebar-hover: rgba(255, 255, 255, 0.04);
+  --color-sidebar-active: #0D9488;
+  --color-sidebar-border: rgba(255, 255, 255, 0.08);
+}
+
+.theme-manager {
+  --color-primary: #22C55E;
+  --color-primary-hover: #16A34A;
+  --color-primary-light: #F0FDF4;
+  --color-primary-ring: rgba(34, 197, 94, 0.15);
+  
+  --color-sidebar: #0B2E1A;
+  --color-sidebar-hover: rgba(255, 255, 255, 0.04);
+  --color-sidebar-active: #16A34A;
+  --color-sidebar-border: rgba(255, 255, 255, 0.08);
+}
+
+.theme-default {
+  --color-primary: #2563EB;
+  --color-primary-hover: #1D4ED8;
+  --color-primary-light: #EFF6FF;
+  --color-primary-ring: rgba(37, 99, 235, 0.15);
+  
+  --color-sidebar: #0F172A;
+  --color-sidebar-hover: #1E293B;
+  --color-sidebar-active: #1E3A5F;
+  --color-sidebar-border: rgba(255, 255, 255, 0.06);
 }
 
 @theme inline {

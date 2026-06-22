@@ -14,7 +14,7 @@ export default function ManagerDashboardPage() {
   });
 
   return (
-    <div className="space-y-6 animate-fe-fade-in">
+    <div className="space-y-6 animate-fe-fade-in bg-[#F8FAFC]">
       {/* Page Header */}
       <div>
         <h2 className="text-xl font-bold text-slate-900">Dashboard</h2>
@@ -23,13 +23,13 @@ export default function ManagerDashboardPage() {
 
       {/* KPI Grid */}
       {isLoading ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           {Array.from({ length: 8 }).map((_, i) => (
             <SkeletonCard key={i} />
           ))}
         </div>
       ) : !data ? null : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           <StatsCard
             title="Total Tickets"
             value={data.totalTickets}
@@ -44,7 +44,7 @@ export default function ManagerDashboardPage() {
             value={data.newTickets}
             icon={ClipboardList}
             iconBg="bg-violet-50"
-            iconColor="text-violet-600"
+            iconColor="text-violet-650"
             accentColor="bg-violet-500"
             subtitle="Awaiting assignment"
           />
@@ -53,7 +53,7 @@ export default function ManagerDashboardPage() {
             value={data.assignedTickets}
             icon={ClipboardCheck}
             iconBg="bg-blue-50"
-            iconColor="text-blue-600"
+            iconColor="text-blue-650"
             accentColor="bg-blue-500"
             subtitle="Assigned to technicians"
           />
@@ -62,7 +62,7 @@ export default function ManagerDashboardPage() {
             value={data.inProgressTickets}
             icon={Clock}
             iconBg="bg-orange-50"
-            iconColor="text-orange-600"
+            iconColor="text-orange-655"
             accentColor="bg-orange-500"
             subtitle="Currently active tasks"
           />
@@ -71,7 +71,7 @@ export default function ManagerDashboardPage() {
             value={data.pendingTickets}
             icon={AlertCircle}
             iconBg="bg-amber-50"
-            iconColor="text-amber-600"
+            iconColor="text-amber-655"
             accentColor="bg-amber-500"
             subtitle="On hold or blocked"
           />
@@ -89,7 +89,7 @@ export default function ManagerDashboardPage() {
             value={data.totalTechnicians}
             icon={Users}
             iconBg="bg-indigo-50"
-            iconColor="text-indigo-600"
+            iconColor="text-indigo-655"
             accentColor="bg-indigo-500"
             subtitle="Active service agents"
           />
@@ -98,7 +98,7 @@ export default function ManagerDashboardPage() {
             value={`₹${data.pendingPayments.toLocaleString()}`}
             icon={DollarSign}
             iconBg="bg-rose-50"
-            iconColor="text-rose-600"
+            iconColor="text-rose-655"
             accentColor="bg-rose-500"
             subtitle="Unpaid invoices total"
           />

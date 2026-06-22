@@ -26,7 +26,7 @@ export function Pagination({ page, totalPages, total, limit, onPageChange }: Pag
   });
 
   return (
-    <div className="flex items-center justify-between px-1 py-4 mt-1">
+    <div className="flex items-center justify-between px-1 py-4 mt-1 select-none">
       <p className="text-xs text-slate-500">
         Showing{' '}
         <span className="font-semibold text-slate-700">{from}–{to}</span>
@@ -40,8 +40,8 @@ export function Pagination({ page, totalPages, total, limit, onPageChange }: Pag
           onClick={() => onPageChange(page - 1)}
           disabled={page === 1}
           className={cn(
-            'flex h-8 w-8 items-center justify-center rounded-lg border text-xs transition-all',
-            'border-[#E2E8F0] bg-white text-slate-600',
+            'flex h-8 w-8 items-center justify-center rounded-md border text-xs transition-all',
+            'border-slate-200 bg-white text-slate-600',
             'hover:bg-slate-50 hover:border-slate-300',
             'disabled:opacity-40 disabled:cursor-not-allowed'
           )}
@@ -54,10 +54,10 @@ export function Pagination({ page, totalPages, total, limit, onPageChange }: Pag
             key={p}
             onClick={() => onPageChange(p)}
             className={cn(
-              'flex h-8 w-8 items-center justify-center rounded-lg border text-xs font-medium transition-all',
+              'flex h-8 w-8 items-center justify-center rounded-md border text-xs font-semibold transition-all',
               p === page
-                ? 'border-[#2563EB] bg-[#2563EB] text-white shadow-sm'
-                : 'border-[#E2E8F0] bg-white text-slate-600 hover:bg-slate-50 hover:border-slate-300'
+                ? 'border-[var(--color-primary)] bg-[var(--color-primary)] text-white shadow-sm shadow-[var(--color-primary-ring)]'
+                : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50 hover:border-slate-300'
             )}
           >
             {p}
@@ -68,8 +68,8 @@ export function Pagination({ page, totalPages, total, limit, onPageChange }: Pag
           onClick={() => onPageChange(page + 1)}
           disabled={page === totalPages}
           className={cn(
-            'flex h-8 w-8 items-center justify-center rounded-lg border text-xs transition-all',
-            'border-[#E2E8F0] bg-white text-slate-600',
+            'flex h-8 w-8 items-center justify-center rounded-md border text-xs transition-all',
+            'border-slate-200 bg-white text-slate-600',
             'hover:bg-slate-50 hover:border-slate-300',
             'disabled:opacity-40 disabled:cursor-not-allowed'
           )}
