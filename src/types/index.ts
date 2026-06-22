@@ -253,7 +253,7 @@ export interface ServiceSubCategory {
   category?: ServiceCategory;
   name: string;
   isActive: boolean;
-  serviceCharges?: ServiceCharge[];
+  serviceCharges?: ServiceCharge;
   createdAt: string;
 }
 

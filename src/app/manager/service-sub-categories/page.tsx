@@ -63,14 +63,14 @@ export default function ServiceSubCategoriesPage() {
   const columns: ColumnDef<ServiceSubCategory, unknown>[] = [
     { accessorKey: 'name', header: 'Sub Category' },
     { accessorKey: 'category.name', header: 'Category', cell: ({ row }) => row.original.category?.name ?? '—' },
-    { accessorKey: 'serviceCharges', header: 'Service ₹', cell: ({ row }) => { const c = row.original.serviceCharges?.[0]; return c ? `₹${c.serviceCharge}` : '—'; } },
+    { accessorKey: 'serviceCharges', header: 'Service ₹', cell: ({ row }) => { const c = row.original.serviceCharges; return c ? `₹${c.serviceCharge}` : '—'; } },
     { accessorKey: 'isActive', header: 'Status', cell: ({ row }) => <Badge variant={row.original.isActive ? 'success' : 'default'}>{row.original.isActive ? 'Active' : 'Inactive'}</Badge> },
     {
       id: 'actions', header: '',
       cell: ({ row }) => (
         <div className="flex gap-2">
           <Button variant="ghost" size="sm" onClick={() => openEdit(row.original)}><Pencil size={14} /></Button>
-          <Button variant="ghost" size="sm" onClick={() => { const c = row.original.serviceCharges?.[0]; setChargingId(row.original.id); resetC({ serviceCharge: c?.serviceCharge ?? 0, inspectionCharge: c?.inspectionCharge ?? 0, emergencyCharge: c?.emergencyCharge ?? 0 }); }} title="Set Charges"><DollarSign size={14} /></Button>
+          <Button variant="ghost" size="sm" onClick={() => { const c = row.original.serviceCharges; setChargingId(row.original.id); resetC({ serviceCharge: c?.serviceCharge ?? 0, inspectionCharge: c?.inspectionCharge ?? 0, emergencyCharge: c?.emergencyCharge ?? 0 }); }} title="Set Charges"><DollarSign size={14} /></Button>
           <Button variant="ghost" size="sm" onClick={() => setDeleteId(row.original.id)} className="text-red-500"><Trash2 size={14} /></Button>
         </div>
       ),

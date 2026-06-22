@@ -35,6 +35,12 @@ type CreateForm = {
   serviceAddress: string;
 };
 
+type NewCustomerForm = {
+  name: string;
+  phone: string;
+  email: string;
+};
+
 export default function TicketsPage() {
   const qc = useQueryClient();
   const [status, setStatus] = useState('');
@@ -42,6 +48,8 @@ export default function TicketsPage() {
   const [to, setTo] = useState('');
   const [params, setParams] = useState<Record<string, string>>({});
   const [showCreate, setShowCreate] = useState(false);
+  const [showNewCustomer, setShowNewCustomer] = useState(false);
+  const [newCust, setNewCust] = useState<NewCustomerForm>({ name: '', phone: '', email: '' });
 
   const { data = [], isLoading } = useQuery<Ticket[]>({
     queryKey: ['tickets', params],
@@ -63,7 +71,7 @@ export default function TicketsPage() {
     enabled: showCreate,
   });
 
-  const { register, handleSubmit, watch, reset, formState: { isSubmitting } } = useForm<CreateForm>({
+  const { register, handleSubmit, watch, reset, setValue, formState: { isSubmitting } } = useForm<CreateForm>({
     defaultValues: { priority: 'MEDIUM' },
   });
 
@@ -97,7 +105,26 @@ export default function TicketsPage() {
       toast.error(err?.response?.data?.message ?? 'Failed to create ticket'),
   });
 
-  const closeModal = () => { setShowCreate(false); reset(); };
+  const createCustomerMutation = useMutation({
+    mutationFn: (d: NewCustomerForm) =>
+      api.post('/web/manager/customers', {
+        name: d.name.trim(),
+        phone: d.phone.trim(),
+        ...(d.email.trim() && { email: d.email.trim() }),
+      }),
+    onSuccess: (res) => {
+      const created = res.data.data as Customer;
+      qc.invalidateQueries({ queryKey: ['customers-list'] });
+      setValue('customerId', created.id);
+      setShowNewCustomer(false);
+      setNewCust({ name: '', phone: '', email: '' });
+      toast.success(`Customer "${created.name}" added`);
+    },
+    onError: (err: { response?: { data?: { message?: string } } }) =>
+      toast.error(err?.response?.data?.message ?? 'Failed to create customer'),
+  });
+
+  const closeModal = () => { setShowCreate(false); setShowNewCustomer(false); setNewCust({ name: '', phone: '', email: '' }); reset(); };
 
   const columns: ColumnDef<Ticket, unknown>[] = [
     { accessorKey: 'ticketNumber', header: 'Ticket #' },
@@ -138,12 +165,65 @@ export default function TicketsPage() {
         </div>
 
         <form onSubmit={handleSubmit(d => createMutation.mutate(d))} className="space-y-4">
-          <Select
-            label="Customer *"
-            options={customers.map(c => ({ value: c.id, label: `${c.name} — ${c.phone}` }))}
-            placeholder="Select customer"
-            {...register('customerId', { required: true })}
-          />
+          <div>
+            <Select
+              label="Customer *"
+              options={customers.map(c => ({ value: c.id, label: `${c.name} — ${c.phone ?? ''}` }))}
+              placeholder="Select customer"
+              {...register('customerId', { required: true })}
+            />
+            {!showNewCustomer ? (
+              <button
+                type="button"
+                onClick={() => setShowNewCustomer(true)}
+                className="mt-1 text-xs text-blue-600 hover:text-blue-800 flex items-center gap-1"
+              >
+                <Plus size={12} /> New Customer
+              </button>
+            ) : (
+              <div className="mt-2 p-3 border border-blue-200 rounded-lg bg-blue-50 space-y-2">
+                <Input
+                  placeholder="Name *"
+                  value={newCust.name}
+                  onChange={e => setNewCust(p => ({ ...p, name: e.target.value }))}
+                />
+                <Input
+                  placeholder="Phone *"
+                  value={newCust.phone}
+                  onChange={e => setNewCust(p => ({ ...p, phone: e.target.value }))}
+                />
+                <Input
+                  placeholder="Email (optional)"
+                  value={newCust.email}
+                  onChange={e => setNewCust(p => ({ ...p, email: e.target.value }))}
+                />
+                <div className="flex gap-2">
+                  <Button
+                    type="button"
+                    size="sm"
+                    loading={createCustomerMutation.isPending}
+                    onClick={() => {
+                      if (!newCust.name.trim() || !newCust.phone.trim()) {
+                        toast.error('Name and phone are required');
+                        return;
+                      }
+                      createCustomerMutation.mutate(newCust);
+                    }}
+                  >
+                    Add Customer
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => { setShowNewCustomer(false); setNewCust({ name: '', phone: '', email: '' }); }}
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              </div>
+            )}
+          </div>
 
           <div className="grid grid-cols-2 gap-4">
             <Select
