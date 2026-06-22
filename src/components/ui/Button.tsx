@@ -5,17 +5,22 @@ import { Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const variants = {
-  primary: 'bg-blue-600 text-white hover:bg-blue-700 disabled:bg-blue-300',
-  secondary: 'bg-gray-100 text-gray-700 hover:bg-gray-200 disabled:opacity-50',
-  danger: 'bg-red-600 text-white hover:bg-red-700 disabled:bg-red-300',
-  ghost: 'text-gray-700 hover:bg-gray-100 disabled:opacity-50',
-  outline: 'border border-gray-300 text-gray-700 hover:bg-gray-50 disabled:opacity-50',
+  primary:
+    'bg-[#2563EB] text-white shadow-[0_1px_3px_rgba(37,99,235,0.3)] hover:bg-[#1D4ED8] hover:shadow-[0_4px_12px_rgba(37,99,235,0.35)] active:scale-[0.98] active:shadow-[0_1px_2px_rgba(37,99,235,0.2)] disabled:bg-blue-300 disabled:shadow-none',
+  secondary:
+    'bg-slate-100 text-slate-700 hover:bg-slate-200 hover:text-slate-900 active:scale-[0.98] active:bg-slate-200 disabled:opacity-50',
+  danger:
+    'bg-[#EF4444] text-white shadow-[0_1px_3px_rgba(239,68,68,0.25)] hover:bg-red-600 hover:shadow-[0_4px_10px_rgba(239,68,68,0.3)] active:scale-[0.98] disabled:bg-red-300 disabled:shadow-none',
+  ghost:
+    'text-slate-600 hover:bg-slate-100 hover:text-slate-900 active:scale-[0.98] active:bg-slate-200 disabled:opacity-50',
+  outline:
+    'border border-[#E2E8F0] bg-white text-slate-700 hover:bg-slate-50 hover:border-slate-300 active:scale-[0.98] disabled:opacity-50',
 };
 
 const sizes = {
-  sm: 'px-3 py-1.5 text-xs',
-  md: 'px-4 py-2 text-sm',
-  lg: 'px-6 py-2.5 text-base',
+  sm: 'px-3 py-1.5 text-xs gap-1.5 h-7',
+  md: 'px-4 py-2 text-sm gap-2 h-9',
+  lg: 'px-5 py-2.5 text-sm gap-2 h-10',
 };
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
@@ -30,14 +35,16 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       ref={ref}
       disabled={disabled || loading}
       className={cn(
-        'inline-flex items-center justify-center gap-2 rounded-lg font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 cursor-pointer disabled:cursor-not-allowed',
+        'inline-flex items-center justify-center rounded-lg font-medium transition-all duration-150',
+        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2563EB] focus-visible:ring-offset-2',
+        'cursor-pointer disabled:cursor-not-allowed select-none',
         variants[variant],
         sizes[size],
         className
       )}
       {...props}
     >
-      {loading && <Loader2 size={14} className="animate-spin" />}
+      {loading && <Loader2 size={13} className="animate-spin shrink-0" />}
       {children}
     </button>
   )

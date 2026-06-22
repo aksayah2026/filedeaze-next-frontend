@@ -2,41 +2,60 @@ import { cn } from '@/lib/utils';
 import { TicketStatus, TenantStatus, PaymentStatus } from '@/types';
 
 const variants = {
-  default: 'bg-gray-100 text-gray-700',
-  success: 'bg-green-100 text-green-700',
-  warning: 'bg-yellow-100 text-yellow-700',
-  danger: 'bg-red-100 text-red-700',
-  info: 'bg-blue-100 text-blue-700',
-  purple: 'bg-purple-100 text-purple-700',
-  orange: 'bg-orange-100 text-orange-700',
-  cyan: 'bg-cyan-100 text-cyan-700',
-  teal: 'bg-teal-100 text-teal-700',
+  default:  { bg: 'bg-slate-100',        text: 'text-slate-600',       dot: 'bg-slate-400' },
+  success:  { bg: 'bg-emerald-50',       text: 'text-emerald-700',     dot: 'bg-emerald-500' },
+  warning:  { bg: 'bg-amber-50',         text: 'text-amber-700',       dot: 'bg-amber-500' },
+  danger:   { bg: 'bg-red-50',           text: 'text-red-700',         dot: 'bg-red-500' },
+  info:     { bg: 'bg-blue-50',          text: 'text-blue-700',        dot: 'bg-blue-500' },
+  purple:   { bg: 'bg-violet-50',        text: 'text-violet-700',      dot: 'bg-violet-500' },
+  orange:   { bg: 'bg-orange-50',        text: 'text-orange-700',      dot: 'bg-orange-500' },
+  cyan:     { bg: 'bg-cyan-50',          text: 'text-cyan-700',        dot: 'bg-cyan-500' },
+  teal:     { bg: 'bg-teal-50',          text: 'text-teal-700',        dot: 'bg-teal-500' },
 };
 
 type BadgeVariant = keyof typeof variants;
 
-interface BadgeProps { children: React.ReactNode; variant?: BadgeVariant; className?: string; }
+interface BadgeProps { children: React.ReactNode; variant?: BadgeVariant; className?: string; showDot?: boolean; }
 
-export function Badge({ children, variant = 'default', className }: BadgeProps) {
+export function Badge({ children, variant = 'default', className, showDot = true }: BadgeProps) {
+  const v = variants[variant];
   return (
-    <span className={cn('inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium', variants[variant], className)}>
+    <span
+      className={cn(
+        'inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium ring-1 ring-inset',
+        v.bg,
+        v.text,
+        // ring color derived from dot color (lighter)
+        variant === 'success'  && 'ring-emerald-200',
+        variant === 'warning'  && 'ring-amber-200',
+        variant === 'danger'   && 'ring-red-200',
+        variant === 'info'     && 'ring-blue-200',
+        variant === 'purple'   && 'ring-violet-200',
+        variant === 'orange'   && 'ring-orange-200',
+        variant === 'cyan'     && 'ring-cyan-200',
+        variant === 'teal'     && 'ring-teal-200',
+        variant === 'default'  && 'ring-slate-200',
+        className
+      )}
+    >
+      {showDot && <span className={cn('h-1.5 w-1.5 rounded-full shrink-0', v.dot)} />}
       {children}
     </span>
   );
 }
 
 const ticketColors: Record<TicketStatus, BadgeVariant> = {
-  NEW_TICKET: 'info',
-  ASSIGNED: 'warning',
-  ACCEPTED: 'cyan',
-  TRAVELLING: 'orange',
-  REACHED_LOCATION: 'purple',
-  IN_PROGRESS: 'purple',
-  PENDING: 'warning',
-  COMPLETED: 'success',
+  NEW_TICKET:        'info',
+  ASSIGNED:          'warning',
+  ACCEPTED:          'cyan',
+  TRAVELLING:        'orange',
+  REACHED_LOCATION:  'purple',
+  IN_PROGRESS:       'purple',
+  PENDING:           'warning',
+  COMPLETED:         'success',
   INVOICE_GENERATED: 'teal',
-  TICKET_CLOSED: 'default',
-  CANCELLED: 'danger',
+  TICKET_CLOSED:     'default',
+  CANCELLED:         'danger',
 };
 
 export function TicketStatusBadge({ status }: { status: TicketStatus }) {
@@ -44,16 +63,22 @@ export function TicketStatusBadge({ status }: { status: TicketStatus }) {
 }
 
 const tenantColors: Record<TenantStatus, BadgeVariant> = {
-  ACTIVE: 'success', SUSPENDED: 'danger', EXPIRED: 'warning',
-  TRIAL: 'info', PAYMENT_PENDING: 'orange',
+  ACTIVE:          'success',
+  SUSPENDED:       'danger',
+  EXPIRED:         'warning',
+  TRIAL:           'info',
+  PAYMENT_PENDING: 'orange',
 };
 
 export function TenantStatusBadge({ status }: { status: TenantStatus }) {
-  return <Badge variant={tenantColors[status]}>{status}</Badge>;
+  return <Badge variant={tenantColors[status]}>{status.replace(/_/g, ' ')}</Badge>;
 }
 
 const paymentColors: Record<PaymentStatus, BadgeVariant> = {
-  PENDING: 'warning', COLLECTED: 'info', VERIFIED: 'success', FAILED: 'danger',
+  PENDING:   'warning',
+  COLLECTED: 'info',
+  VERIFIED:  'success',
+  FAILED:    'danger',
 };
 
 export function PaymentStatusBadge({ status }: { status: PaymentStatus }) {

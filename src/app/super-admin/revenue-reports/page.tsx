@@ -11,14 +11,18 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
 import { PageSpinner } from '@/components/ui/Spinner';
-import { Download, Search, TrendingUp } from 'lucide-react';
+import { Download, Search, TrendingUp, BarChart2 } from 'lucide-react';
 import dayjs from 'dayjs';
 
 type ReportRow = SuperAdminRevenueReport['payments'][number];
 
 function exportCsv(rows: ReportRow[]) {
   const headers = ['Tenant', 'Plan', 'Amount', 'Status', 'Paid At', 'Created At'];
-  const data = rows.map(r => [r.tenantName, r.planName, r.amount, r.status, r.paidAt ? dayjs(r.paidAt).format('DD MMM YYYY') : '—', dayjs(r.createdAt).format('DD MMM YYYY')]);
+  const data = rows.map(r => [
+    r.tenantName, r.planName, r.amount, r.status,
+    r.paidAt ? dayjs(r.paidAt).format('DD MMM YYYY') : '—',
+    dayjs(r.createdAt).format('DD MMM YYYY'),
+  ]);
   const csv = [headers, ...data].map(r => r.map(c => `"${c}"`).join(',')).join('\n');
   const blob = new Blob([csv], { type: 'text/csv' });
   const url = URL.createObjectURL(blob);
@@ -67,37 +71,91 @@ export default function RevenueReportsPage() {
   const byTenantChart = data?.byTenant?.slice(0, 8) ?? [];
 
   const columns: ColumnDef<ReportRow, unknown>[] = [
-    { accessorKey: 'tenantName', header: 'Tenant' },
-    { accessorKey: 'planName', header: 'Plan' },
-    { accessorKey: 'amount', header: 'Amount', cell: ({ row }) => <span className="tabular-nums font-medium">₹{row.original.amount.toLocaleString()}</span> },
-    { accessorKey: 'status', header: 'Status' },
-    { accessorKey: 'paidAt', header: 'Paid At', cell: ({ row }) => row.original.paidAt ? dayjs(row.original.paidAt).format('DD MMM YYYY') : '—' },
-    { accessorKey: 'createdAt', header: 'Date', cell: ({ row }) => dayjs(row.original.createdAt).format('DD MMM YYYY') },
+    {
+      accessorKey: 'tenantName',
+      header: 'Tenant',
+      cell: ({ row }) => <span className="font-medium text-slate-800">{row.original.tenantName}</span>,
+    },
+    {
+      accessorKey: 'planName',
+      header: 'Plan',
+      cell: ({ row }) => {
+        const colors: Record<string, string> = {
+          STARTER: 'bg-slate-100 text-slate-700',
+          PROFESSIONAL: 'bg-blue-50 text-blue-700',
+          ENTERPRISE: 'bg-violet-50 text-violet-700',
+        };
+        return (
+          <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${colors[row.original.planName] ?? 'bg-slate-100 text-slate-600'}`}>
+            {row.original.planName}
+          </span>
+        );
+      },
+    },
+    {
+      accessorKey: 'amount',
+      header: 'Amount',
+      cell: ({ row }) => (
+        <span className="tabular-nums font-semibold text-slate-900">
+          ₹{row.original.amount.toLocaleString()}
+        </span>
+      ),
+    },
+    {
+      accessorKey: 'status',
+      header: 'Status',
+      cell: ({ row }) => (
+        <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
+          row.original.status === 'PAID'
+            ? 'bg-emerald-50 text-emerald-700'
+            : 'bg-amber-50 text-amber-700'
+        }`}>
+          {row.original.status}
+        </span>
+      ),
+    },
+    {
+      accessorKey: 'paidAt',
+      header: 'Paid At',
+      cell: ({ row }) => row.original.paidAt
+        ? <span className="text-xs text-slate-500">{dayjs(row.original.paidAt).format('DD MMM YYYY')}</span>
+        : <span className="text-slate-300">—</span>,
+    },
+    {
+      accessorKey: 'createdAt',
+      header: 'Date',
+      cell: ({ row }) => (
+        <span className="text-xs text-slate-500">{dayjs(row.original.createdAt).format('DD MMM YYYY')}</span>
+      ),
+    },
   ];
 
   const rows = data?.payments ?? [];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
+      {/* Page Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-semibold tracking-tight text-gray-900">Revenue Reports</h2>
-          <p className="mt-0.5 text-sm text-gray-500">Subscription revenue across tenants and plans</p>
+          <h2 className="text-xl font-bold text-slate-900">Revenue Reports</h2>
+          <p className="text-sm text-slate-500 mt-0.5">Subscription revenue across tenants and plans</p>
         </div>
         <Button variant="secondary" onClick={() => exportCsv(rows)} disabled={!rows.length}>
           <Download size={14} /> Export CSV
         </Button>
       </div>
 
-      {/* Filters */}
-      <div className="flex flex-wrap gap-3 items-end rounded-xl border border-gray-100 bg-white p-4 shadow-sm">
+      {/* Filter Bar */}
+      <div className="flex flex-wrap gap-3 items-end rounded-xl border border-slate-200 bg-white p-4 shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
         <Select
+          label="Tenant"
           options={tenantOptions}
           value={tenantId}
           onChange={e => setTenantId(e.target.value)}
-          className="w-56"
+          className="w-52"
         />
         <Select
+          label="Plan"
           options={[
             { value: '', label: 'All Plans' },
             { value: 'STARTER', label: 'Starter' },
@@ -108,59 +166,117 @@ export default function RevenueReportsPage() {
           onChange={e => setPlan(e.target.value)}
           className="w-40"
         />
-        <div className="flex flex-col gap-1">
-          <label className="text-xs font-medium text-gray-500">From</label>
+        <div className="flex flex-col gap-1.5">
+          <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">From</span>
           <Input type="date" value={from} onChange={e => setFrom(e.target.value)} />
         </div>
-        <div className="flex flex-col gap-1">
-          <label className="text-xs font-medium text-gray-500">To</label>
+        <div className="flex flex-col gap-1.5">
+          <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">To</span>
           <Input type="date" value={to} onChange={e => setTo(e.target.value)} />
         </div>
-        <Button variant="secondary" onClick={() => setParams({ tenantId, plan, from, to })}>
-          <Search size={14} /> Apply
-        </Button>
+        <div className="flex flex-col gap-1.5">
+          <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-500 invisible">_</span>
+          <Button variant="secondary" onClick={() => setParams({ tenantId, plan, from, to })}>
+            <Search size={14} /> Apply
+          </Button>
+        </div>
       </div>
 
       {isLoading ? <PageSpinner /> : (
         <>
-          {/* Total */}
+          {/* Total Revenue Hero */}
           {data && (
-            <div className="inline-flex items-center gap-3 rounded-xl border border-emerald-100 bg-emerald-50 px-5 py-3">
-              <TrendingUp size={18} className="text-emerald-600" />
-              <div>
-                <p className="text-xs font-medium uppercase tracking-widest text-emerald-600">Total Revenue</p>
-                <p className="text-2xl font-bold tabular-nums text-gray-900">₹{data.total.toLocaleString()}</p>
+            <div className="relative overflow-hidden rounded-xl border border-emerald-100 bg-gradient-to-r from-emerald-50 to-teal-50 px-6 py-5 shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
+              <div className="absolute right-4 top-1/2 -translate-y-1/2 opacity-10">
+                <TrendingUp size={64} className="text-emerald-600" />
+              </div>
+              <div className="flex items-center gap-4">
+                <div className="h-12 w-12 rounded-xl bg-emerald-100 flex items-center justify-center">
+                  <TrendingUp size={22} className="text-emerald-600" />
+                </div>
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-widest text-emerald-600 mb-0.5">
+                    Total Revenue
+                  </p>
+                  <p className="text-3xl font-bold tabular-nums text-slate-900">
+                    ₹{data.total.toLocaleString()}
+                  </p>
+                </div>
               </div>
             </div>
           )}
 
-          {/* Charts — gated on mounted to avoid SSR/hydration mismatch with ResizeObserver */}
+          {/* Charts */}
           {mounted && (byPlanChart.length > 0 || byTenantChart.length > 0) && (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
               {byPlanChart.length > 0 && (
-                <div className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm">
-                  <h3 className="text-sm font-medium text-gray-700 mb-3">Revenue by Plan</h3>
+                <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
+                  <div className="flex items-center gap-2 mb-4">
+                    <BarChart2 size={15} className="text-slate-400" />
+                    <h3 className="text-sm font-semibold text-slate-800">Revenue by Plan</h3>
+                  </div>
                   <ResponsiveContainer width="100%" height={200}>
-                    <BarChart data={byPlanChart}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                      <XAxis dataKey="name" tick={{ fontSize: 12 }} />
-                      <YAxis tick={{ fontSize: 12 }} />
-                      <Tooltip formatter={(v) => [`₹${Number(v).toLocaleString()}`, 'Revenue']} />
-                      <Bar dataKey="amount" fill="#8b5cf6" radius={[4, 4, 0, 0]} />
+                    <BarChart data={byPlanChart} barSize={36}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
+                      <XAxis
+                        dataKey="name"
+                        tick={{ fontSize: 11, fill: '#94A3B8' }}
+                        axisLine={false}
+                        tickLine={false}
+                      />
+                      <YAxis
+                        tick={{ fontSize: 11, fill: '#94A3B8' }}
+                        axisLine={false}
+                        tickLine={false}
+                      />
+                      <Tooltip
+                        formatter={(v) => [`₹${Number(v).toLocaleString()}`, 'Revenue']}
+                        contentStyle={{
+                          borderRadius: '10px',
+                          border: '1px solid #E2E8F0',
+                          boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
+                          fontSize: '12px',
+                        }}
+                      />
+                      <Bar dataKey="amount" fill="#2563EB" radius={[6, 6, 0, 0]} />
                     </BarChart>
                   </ResponsiveContainer>
                 </div>
               )}
+
               {byTenantChart.length > 0 && (
-                <div className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm">
-                  <h3 className="text-sm font-medium text-gray-700 mb-3">Top Tenants by Revenue</h3>
+                <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
+                  <div className="flex items-center gap-2 mb-4">
+                    <BarChart2 size={15} className="text-slate-400" />
+                    <h3 className="text-sm font-semibold text-slate-800">Top Tenants by Revenue</h3>
+                  </div>
                   <ResponsiveContainer width="100%" height={200}>
-                    <BarChart data={byTenantChart} layout="vertical">
-                      <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                      <XAxis type="number" tick={{ fontSize: 11 }} />
-                      <YAxis dataKey="tenantName" type="category" tick={{ fontSize: 11 }} width={90} />
-                      <Tooltip formatter={(v) => [`₹${Number(v).toLocaleString()}`, 'Revenue']} />
-                      <Bar dataKey="amount" fill="#3b82f6" radius={[0, 4, 4, 0]} />
+                    <BarChart data={byTenantChart} layout="vertical" barSize={16}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" horizontal={false} />
+                      <XAxis
+                        type="number"
+                        tick={{ fontSize: 10, fill: '#94A3B8' }}
+                        axisLine={false}
+                        tickLine={false}
+                      />
+                      <YAxis
+                        dataKey="tenantName"
+                        type="category"
+                        tick={{ fontSize: 10, fill: '#64748B' }}
+                        width={80}
+                        axisLine={false}
+                        tickLine={false}
+                      />
+                      <Tooltip
+                        formatter={(v) => [`₹${Number(v).toLocaleString()}`, 'Revenue']}
+                        contentStyle={{
+                          borderRadius: '10px',
+                          border: '1px solid #E2E8F0',
+                          boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
+                          fontSize: '12px',
+                        }}
+                      />
+                      <Bar dataKey="amount" fill="#8B5CF6" radius={[0, 6, 6, 0]} />
                     </BarChart>
                   </ResponsiveContainer>
                 </div>
@@ -168,6 +284,7 @@ export default function RevenueReportsPage() {
             </div>
           )}
 
+          {/* Payments Table */}
           <DataTable data={rows} columns={columns} isLoading={false} />
         </>
       )}

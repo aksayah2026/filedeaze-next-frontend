@@ -14,16 +14,17 @@ export function AppShell({ sidebar, children }: AppShellProps) {
   const close = () => setOpen(false);
 
   return (
-    <div className="flex h-screen overflow-hidden">
+    <div className="flex h-screen overflow-hidden" style={{ background: '#F8FAFC' }}>
       {/* Mobile backdrop */}
       {open && (
         <div
-          className="fixed inset-0 z-20 bg-black/50 lg:hidden"
+          className="fixed inset-0 z-20 lg:hidden"
+          style={{ background: 'rgba(15,23,42,0.5)', backdropFilter: 'blur(2px)' }}
           onClick={close}
         />
       )}
 
-      {/* Sidebar — fixed drawer on mobile, static in flow on desktop */}
+      {/* Sidebar — fixed drawer on mobile, static on desktop */}
       <div
         className={cn(
           'fixed inset-y-0 left-0 z-30 transition-transform duration-300 ease-in-out',
@@ -37,7 +38,9 @@ export function AppShell({ sidebar, children }: AppShellProps) {
       {/* Main area */}
       <div className="flex flex-1 flex-col overflow-hidden min-w-0">
         <Topbar onMenuClick={() => setOpen(v => !v)} />
-        <main className="flex-1 overflow-y-auto p-4 sm:p-6">{children}</main>
+        <main className="flex-1 overflow-y-auto p-4 sm:p-6 animate-fe-fade-in">
+          {children}
+        </main>
       </div>
     </div>
   );

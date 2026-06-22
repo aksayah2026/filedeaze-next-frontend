@@ -4,17 +4,50 @@ const sizes = { sm: 'h-4 w-4', md: 'h-6 w-6', lg: 'h-10 w-10' };
 
 export function Spinner({ size = 'md', className }: { size?: keyof typeof sizes; className?: string }) {
   return (
-    <svg className={cn('animate-spin text-blue-600', sizes[size], className)} viewBox="0 0 24 24" fill="none">
-      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+    <svg
+      className={cn('animate-spin text-[#2563EB]', sizes[size], className)}
+      viewBox="0 0 24 24"
+      fill="none"
+    >
+      <circle
+        className="opacity-20"
+        cx="12" cy="12" r="10"
+        stroke="currentColor"
+        strokeWidth="3"
+      />
+      <path
+        className="opacity-80"
+        fill="currentColor"
+        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+      />
     </svg>
   );
 }
 
 export function PageSpinner() {
   return (
-    <div className="flex h-64 items-center justify-center">
+    <div className="flex h-64 flex-col items-center justify-center gap-3">
       <Spinner size="lg" />
+      <p className="text-xs text-slate-400 font-medium animate-pulse">Loading…</p>
+    </div>
+  );
+}
+
+/** Skeleton block for loading placeholders */
+export function SkeletonLine({ className }: { className?: string }) {
+  return (
+    <div
+      className={cn('fe-skeleton h-4 rounded-md', className)}
+    />
+  );
+}
+
+export function SkeletonCard() {
+  return (
+    <div className="rounded-xl border border-slate-100 bg-white p-5 space-y-3">
+      <SkeletonLine className="w-24 h-3" />
+      <SkeletonLine className="w-16 h-7" />
+      <SkeletonLine className="w-32 h-3" />
     </div>
   );
 }

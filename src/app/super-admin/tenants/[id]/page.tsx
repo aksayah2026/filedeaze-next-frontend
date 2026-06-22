@@ -16,7 +16,9 @@ import { PageSpinner } from '@/components/ui/Spinner';
 import { ColumnDef } from '@tanstack/react-table';
 import { DataTable } from '@/components/ui/DataTable';
 import dayjs from 'dayjs';
-import { Users, CreditCard, Calendar, Download, QrCode } from 'lucide-react';
+import { Users, CreditCard, Calendar, Download, QrCode, Building2, ChevronLeft } from 'lucide-react';
+import Link from 'next/link';
+import { cn } from '@/lib/utils';
 
 export default function TenantDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -71,10 +73,30 @@ export default function TenantDetailPage() {
   });
 
   const billingColumns: ColumnDef<Billing, unknown>[] = [
-    { accessorKey: 'amount', header: 'Amount', cell: ({ row }) => `₹${row.original.amount.toLocaleString()}` },
-    { accessorKey: 'status', header: 'Status', cell: ({ row }) => <Badge variant={row.original.status === 'PAID' ? 'success' : 'warning'}>{row.original.status}</Badge> },
-    { accessorKey: 'createdAt', header: 'Date', cell: ({ row }) => dayjs(row.original.createdAt).format('DD MMM YYYY') },
-    { accessorKey: 'paidAt', header: 'Paid At', cell: ({ row }) => row.original.paidAt ? dayjs(row.original.paidAt).format('DD MMM YYYY') : '—' },
+    {
+      accessorKey: 'amount',
+      header: 'Amount',
+      cell: ({ row }) => <span className="font-semibold text-slate-900">₹{row.original.amount.toLocaleString()}</span>,
+    },
+    {
+      accessorKey: 'status',
+      header: 'Status',
+      cell: ({ row }) => (
+        <Badge variant={row.original.status === 'PAID' ? 'success' : 'warning'}>
+          {row.original.status}
+        </Badge>
+      ),
+    },
+    {
+      accessorKey: 'createdAt',
+      header: 'Billed On',
+      cell: ({ row }) => dayjs(row.original.createdAt).format('DD MMM YYYY'),
+    },
+    {
+      accessorKey: 'paidAt',
+      header: 'Paid At',
+      cell: ({ row }) => row.original.paidAt ? dayjs(row.original.paidAt).format('DD MMM YYYY') : '—',
+    },
   ];
 
   if (isLoading || !tenant) return <PageSpinner />;
@@ -83,7 +105,6 @@ export default function TenantDetailPage() {
   const currentPlan = tenant.subscription?.plan ?? tenant.selectedPlan ?? null;
   const currentPlanId = tenant.subscription?.planId ?? tenant.selectedPlanId ?? '';
 
-  // UPI QR string — standard UPI deep link
   const upiQrString = currentPlan
     ? `upi://pay?pa=fieldeaze@upi&pn=FieldEaze&am=${currentPlan.price}&tn=${tenant.tenantCode}-subscription&cu=INR`
     : '';
@@ -97,114 +118,170 @@ export default function TenantDetailPage() {
     link.click();
   }
 
-  return (
-    <div className="max-w-3xl space-y-6">
-      {/* Header */}
-      <div className="flex items-center gap-4">
-        <div>
-          <h2 className="text-xl font-semibold text-gray-800">{tenant.companyName}</h2>
-          <p className="text-sm text-gray-400">{tenant.tenantCode}</p>
-        </div>
-        <TenantStatusBadge status={tenant.status} />
-      </div>
+  const initials = tenant.companyName.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase();
 
-      {/* Stats row */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-        <div className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm flex items-center gap-3">
-          <div className="h-9 w-9 rounded-lg bg-blue-50 flex items-center justify-center shrink-0">
-            <CreditCard size={16} className="text-blue-600" />
+  const statusButtons: { status: TenantStatus; label: string; activeColor: string }[] = [
+    { status: 'ACTIVE',    label: 'Active',    activeColor: 'bg-emerald-600 text-white border-emerald-600' },
+    { status: 'SUSPENDED', label: 'Suspended', activeColor: 'bg-red-600 text-white border-red-600' },
+    { status: 'EXPIRED',   label: 'Expired',   activeColor: 'bg-amber-500 text-white border-amber-500' },
+    { status: 'TRIAL',     label: 'Trial',     activeColor: 'bg-blue-600 text-white border-blue-600' },
+  ];
+
+  return (
+    <div className="max-w-3xl space-y-5">
+      {/* Back link */}
+      <Link
+        href="/super-admin/tenants"
+        className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-500 hover:text-slate-700 transition-colors"
+      >
+        <ChevronLeft size={14} />
+        Back to Tenants
+      </Link>
+
+      {/* Tenant Profile Header */}
+      <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
+        <div className="flex items-start gap-4">
+          <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-bold text-lg shadow-md shrink-0">
+            {initials}
           </div>
-          <div>
-            <p className="text-xs text-gray-500">Current Plan</p>
-            <p className="text-sm font-semibold text-gray-800">
-              {currentPlan?.name ?? '—'}
-              {!tenant.subscription && tenant.selectedPlan && (
-                <span className="ml-1.5 text-xs font-normal text-amber-500">(trial)</span>
-              )}
-            </p>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-3 flex-wrap">
+              <h2 className="text-xl font-bold text-slate-900">{tenant.companyName}</h2>
+              <TenantStatusBadge status={tenant.status} />
+            </div>
+            <div className="flex items-center gap-4 mt-1.5 text-xs text-slate-500 flex-wrap">
+              <span className="flex items-center gap-1">
+                <Building2 size={11} />
+                <code className="font-mono">{tenant.tenantCode}</code>
+              </span>
+              <span>{tenant.email}</span>
+              {tenant.phone && <span>{tenant.phone}</span>}
+            </div>
           </div>
         </div>
-        <div className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm flex items-center gap-3">
-          <div className="h-9 w-9 rounded-lg bg-green-50 flex items-center justify-center shrink-0">
-            <Calendar size={16} className="text-green-600" />
+
+        {/* Stats Row */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mt-5 pt-5 border-t border-slate-100">
+          <div className="flex items-center gap-3">
+            <div className="h-9 w-9 rounded-lg bg-blue-50 flex items-center justify-center shrink-0">
+              <CreditCard size={15} className="text-blue-600" />
+            </div>
+            <div>
+              <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Current Plan</p>
+              <p className="text-sm font-semibold text-slate-800">
+                {currentPlan?.name ?? '—'}
+                {!tenant.subscription && tenant.selectedPlan && (
+                  <span className="ml-1.5 text-xs font-normal text-amber-500">(trial)</span>
+                )}
+              </p>
+            </div>
           </div>
-          <div>
-            <p className="text-xs text-gray-500">Subscription End</p>
-            <p className="text-sm font-semibold text-gray-800">
-              {tenant.subscription?.endDate ? dayjs(tenant.subscription.endDate).format('DD MMM YYYY') : '—'}
-            </p>
+          <div className="flex items-center gap-3">
+            <div className="h-9 w-9 rounded-lg bg-emerald-50 flex items-center justify-center shrink-0">
+              <Calendar size={15} className="text-emerald-600" />
+            </div>
+            <div>
+              <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Sub. End</p>
+              <p className="text-sm font-semibold text-slate-800">
+                {tenant.subscription?.endDate ? dayjs(tenant.subscription.endDate).format('DD MMM YYYY') : '—'}
+              </p>
+            </div>
           </div>
-        </div>
-        <div className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm flex items-center gap-3">
-          <div className="h-9 w-9 rounded-lg bg-purple-50 flex items-center justify-center shrink-0">
-            <Users size={16} className="text-purple-600" />
-          </div>
-          <div>
-            <p className="text-xs text-gray-500">Billing Records</p>
-            <p className="text-sm font-semibold text-gray-800">{billings.length}</p>
+          <div className="flex items-center gap-3">
+            <div className="h-9 w-9 rounded-lg bg-violet-50 flex items-center justify-center shrink-0">
+              <Users size={15} className="text-violet-600" />
+            </div>
+            <div>
+              <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Billing Records</p>
+              <p className="text-sm font-semibold text-slate-800">{billings.length}</p>
+            </div>
           </div>
         </div>
       </div>
 
       {/* Edit Details */}
-      <div className="bg-white rounded-xl p-6 border border-gray-100 shadow-sm">
-        <h3 className="font-medium text-gray-700 mb-4">Edit Details</h3>
-        <form onSubmit={handleSubmit(d => updateMutation.mutate(d))} className="grid grid-cols-2 gap-4">
-          <Input label="Company Name" {...register('companyName')} />
-          <Input label="Email" type="email" {...register('email')} />
-          <Input label="Phone" {...register('phone')} />
-          <Input label="Address" {...register('address')} />
-          <div className="col-span-2 flex justify-end">
-            <Button type="submit" loading={isSubmitting}>Save Changes</Button>
-          </div>
-        </form>
+      <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
+        <div className="px-6 py-4 border-b border-slate-100 bg-slate-50/50 flex items-center gap-2">
+          <div className="h-1 w-4 rounded-full bg-blue-500" />
+          <h3 className="text-sm font-semibold text-slate-800">Edit Details</h3>
+        </div>
+        <div className="p-6">
+          <form onSubmit={handleSubmit(d => updateMutation.mutate(d))} className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <Input label="Company Name" {...register('companyName')} />
+            <Input label="Email" type="email" {...register('email')} />
+            <Input label="Phone" {...register('phone')} />
+            <Input label="Address" {...register('address')} />
+            <div className="sm:col-span-2 flex justify-end">
+              <Button type="submit" loading={isSubmitting}>Save Changes</Button>
+            </div>
+          </form>
+        </div>
       </div>
 
       {/* Change Status */}
-      <div className="bg-white rounded-xl p-6 border border-gray-100 shadow-sm">
-        <h3 className="font-medium text-gray-700 mb-4">Change Status</h3>
-        <div className="flex gap-3">
-          {(['ACTIVE', 'SUSPENDED', 'EXPIRED', 'TRIAL'] as TenantStatus[]).map(s => (
-            <Button
-              key={s}
-              variant={tenant.status === s ? 'primary' : 'outline'}
-              size="sm"
-              onClick={() => statusMutation.mutate(s)}
-              loading={statusMutation.isPending}
-            >
-              {s}
-            </Button>
-          ))}
+      <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
+        <div className="px-6 py-4 border-b border-slate-100 bg-slate-50/50 flex items-center gap-2">
+          <div className="h-1 w-4 rounded-full bg-amber-500" />
+          <h3 className="text-sm font-semibold text-slate-800">Change Status</h3>
+        </div>
+        <div className="p-6">
+          <div className="flex flex-wrap gap-2">
+            {statusButtons.map(({ status, label, activeColor }) => (
+              <button
+                key={status}
+                onClick={() => statusMutation.mutate(status)}
+                disabled={statusMutation.isPending}
+                className={cn(
+                  'px-4 py-2 rounded-lg border text-xs font-semibold transition-all duration-150',
+                  tenant.status === status
+                    ? activeColor
+                    : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50'
+                )}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
-      {/* Change Plan — works for TRIAL and ACTIVE */}
-      <div className="bg-white rounded-xl p-6 border border-gray-100 shadow-sm">
-        <h3 className="font-medium text-gray-700 mb-4">Change Plan</h3>
-        <div className="flex gap-3 items-end flex-wrap">
-          <Select
-            label="Select Plan"
-            options={planOptions}
-            value={currentPlanId}
-            onChange={e => changePlanMutation.mutate(e.target.value)}
-            className="w-64"
-          />
-          {changePlanMutation.isPending && <p className="text-xs text-gray-400 pb-2">Updating…</p>}
+      {/* Change Plan */}
+      <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
+        <div className="px-6 py-4 border-b border-slate-100 bg-slate-50/50 flex items-center gap-2">
+          <div className="h-1 w-4 rounded-full bg-violet-500" />
+          <h3 className="text-sm font-semibold text-slate-800">Change Plan</h3>
         </div>
-        {!tenant.subscription && (
-          <p className="mt-2 text-xs text-amber-600">
-            This tenant is on a trial. Changing the plan updates what they will pay when they subscribe.
-          </p>
-        )}
+        <div className="p-6">
+          <div className="flex gap-3 items-end flex-wrap">
+            <Select
+              label="Select Plan"
+              options={planOptions}
+              value={currentPlanId}
+              onChange={e => changePlanMutation.mutate(e.target.value)}
+              className="w-64"
+            />
+            {changePlanMutation.isPending && (
+              <p className="text-xs text-slate-400 pb-2">Updating…</p>
+            )}
+          </div>
+          {!tenant.subscription && (
+            <p className="mt-3 text-xs text-amber-600 bg-amber-50 border border-amber-100 rounded-lg px-3 py-2">
+              This tenant is on a trial. Changing the plan updates what they will pay when they subscribe.
+            </p>
+          )}
+        </div>
       </div>
 
-      {/* Generate Payment QR */}
+      {/* Payment QR */}
       {currentPlan && (
-        <div className="bg-white rounded-xl p-6 border border-gray-100 shadow-sm">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="font-medium text-gray-700 flex items-center gap-2">
-              <QrCode size={16} className="text-violet-500" /> Payment QR
-            </h3>
+        <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
+          <div className="px-6 py-4 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="h-1 w-4 rounded-full bg-violet-500" />
+              <h3 className="text-sm font-semibold text-slate-800 flex items-center gap-1.5">
+                <QrCode size={15} className="text-violet-500" /> Payment QR
+              </h3>
+            </div>
             <div className="flex gap-2">
               <Button size="sm" variant="outline" onClick={() => setShowQr(v => !v)}>
                 {showQr ? 'Hide QR' : 'Generate QR'}
@@ -216,35 +293,34 @@ export default function TenantDetailPage() {
               )}
             </div>
           </div>
-
           {showQr && (
-            <div className="flex flex-col sm:flex-row gap-6 items-start">
+            <div className="p-6 flex flex-col sm:flex-row gap-6 items-start animate-fe-fade-in">
               <div className="flex flex-col items-center gap-2">
-                <QRCodeCanvas
-                  id="tenant-qr-canvas"
-                  value={upiQrString}
-                  size={160}
-                  level="M"
-                  marginSize={2}
-                />
-                <p className="text-xs text-gray-400">Scan to pay via UPI</p>
+                <div className="p-3 bg-white rounded-xl border border-slate-100 shadow-sm">
+                  <QRCodeCanvas
+                    id="tenant-qr-canvas"
+                    value={upiQrString}
+                    size={150}
+                    level="M"
+                    marginSize={2}
+                  />
+                </div>
+                <p className="text-xs text-slate-400">Scan to pay via UPI</p>
               </div>
-              <div className="space-y-2 text-sm">
+              <div className="space-y-3 text-sm">
+                {[
+                  { label: 'Plan', value: currentPlan.name },
+                  { label: 'Amount', value: `₹${Number(currentPlan.price).toLocaleString()}`, bold: true },
+                  { label: 'Tenant', value: tenant.companyName },
+                ].map(({ label, value, bold }) => (
+                  <div key={label}>
+                    <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">{label}</p>
+                    <p className={cn('text-slate-800', bold ? 'text-xl font-bold' : 'font-semibold')}>{value}</p>
+                  </div>
+                ))}
                 <div>
-                  <p className="text-xs text-gray-400">Plan</p>
-                  <p className="font-semibold text-gray-800">{currentPlan.name}</p>
-                </div>
-                <div>
-                  <p className="text-xs text-gray-400">Amount</p>
-                  <p className="text-xl font-bold text-gray-800">₹{Number(currentPlan.price).toLocaleString()}</p>
-                </div>
-                <div>
-                  <p className="text-xs text-gray-400">Tenant</p>
-                  <p className="font-medium text-gray-700">{tenant.companyName}</p>
-                </div>
-                <div>
-                  <p className="text-xs text-gray-400 mb-1">UPI String</p>
-                  <p className="font-mono text-xs text-gray-500 break-all max-w-xs">{upiQrString}</p>
+                  <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 mb-1">UPI String</p>
+                  <p className="font-mono text-xs text-slate-500 break-all max-w-xs bg-slate-50 p-2 rounded-lg">{upiQrString}</p>
                 </div>
               </div>
             </div>
@@ -253,28 +329,52 @@ export default function TenantDetailPage() {
       )}
 
       {/* Subscription Info */}
-      <div className="bg-white rounded-xl p-6 border border-gray-100 shadow-sm">
-        <h3 className="font-medium text-gray-700 mb-3">Subscription Info</h3>
-        {tenant.subscription ? (
-          <div className="grid grid-cols-2 gap-3 text-sm">
-            <div><span className="text-gray-500">Plan:</span> <span className="font-medium">{tenant.subscription.plan?.name}</span></div>
-            <div><span className="text-gray-500">Start:</span> <span className="font-medium">{dayjs(tenant.subscription.startDate).format('DD MMM YYYY')}</span></div>
-            <div><span className="text-gray-500">End:</span> <span className="font-medium">{dayjs(tenant.subscription.endDate).format('DD MMM YYYY')}</span></div>
-            <div><span className="text-gray-500">Active:</span> <span className="font-medium">{tenant.subscription.isActive ? 'Yes' : 'No'}</span></div>
-          </div>
-        ) : (
-          <p className="text-sm text-gray-400">No active subscription — on trial until {tenant.trialEndsAt ? dayjs(tenant.trialEndsAt).format('DD MMM YYYY') : '—'}</p>
-        )}
+      <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
+        <div className="px-6 py-4 border-b border-slate-100 bg-slate-50/50 flex items-center gap-2">
+          <div className="h-1 w-4 rounded-full bg-emerald-500" />
+          <h3 className="text-sm font-semibold text-slate-800">Subscription Info</h3>
+        </div>
+        <div className="p-6">
+          {tenant.subscription ? (
+            <div className="grid grid-cols-2 gap-4">
+              {[
+                { label: 'Plan', value: tenant.subscription.plan?.name },
+                { label: 'Active', value: tenant.subscription.isActive ? 'Yes' : 'No' },
+                { label: 'Start Date', value: dayjs(tenant.subscription.startDate).format('DD MMM YYYY') },
+                { label: 'End Date', value: dayjs(tenant.subscription.endDate).format('DD MMM YYYY') },
+              ].map(({ label, value }) => (
+                <div key={label} className="bg-slate-50 rounded-lg px-4 py-3">
+                  <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 mb-1">{label}</p>
+                  <p className="text-sm font-semibold text-slate-800">{value ?? '—'}</p>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="bg-amber-50 border border-amber-100 rounded-lg px-4 py-3">
+              <p className="text-sm text-amber-700">
+                No active subscription — on trial until{' '}
+                <span className="font-semibold">
+                  {tenant.trialEndsAt ? dayjs(tenant.trialEndsAt).format('DD MMM YYYY') : '—'}
+                </span>
+              </p>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Billing History */}
-      <div className="bg-white rounded-xl p-6 border border-gray-100 shadow-sm">
-        <h3 className="font-medium text-gray-700 mb-4">Billing History</h3>
-        {billings.length === 0 ? (
-          <p className="text-sm text-gray-400">No billing records found.</p>
-        ) : (
-          <DataTable data={billings} columns={billingColumns} isLoading={false} />
-        )}
+      <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
+        <div className="px-6 py-4 border-b border-slate-100 bg-slate-50/50 flex items-center gap-2">
+          <div className="h-1 w-4 rounded-full bg-slate-400" />
+          <h3 className="text-sm font-semibold text-slate-800">Billing History</h3>
+        </div>
+        <div className="p-6">
+          {billings.length === 0 ? (
+            <p className="text-sm text-slate-400 text-center py-6">No billing records found.</p>
+          ) : (
+            <DataTable data={billings} columns={billingColumns} isLoading={false} />
+          )}
+        </div>
       </div>
     </div>
   );

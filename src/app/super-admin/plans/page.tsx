@@ -5,7 +5,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
-import { Plus, Pencil } from 'lucide-react';
+import { Plus, Pencil, Users, Ticket, HardDrive, DollarSign } from 'lucide-react';
 import api from '@/lib/axios';
 import { Plan } from '@/types';
 import { DataTable } from '@/components/ui/DataTable';
@@ -14,6 +14,7 @@ import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
 import { Badge } from '@/components/ui/Badge';
 import { Modal } from '@/components/ui/Modal';
+import { cn } from '@/lib/utils';
 
 type Form = {
   name: 'STARTER' | 'PROFESSIONAL' | 'ENTERPRISE';
@@ -22,6 +23,12 @@ type Form = {
   technicianLimit: number;
   ticketLimit: number;
   storageLimitGb: number;
+};
+
+const planTierStyle: Record<string, { bg: string; text: string; ring: string }> = {
+  STARTER:      { bg: 'bg-slate-100',   text: 'text-slate-700',  ring: 'ring-slate-200' },
+  PROFESSIONAL: { bg: 'bg-blue-50',     text: 'text-blue-700',   ring: 'ring-blue-200' },
+  ENTERPRISE:   { bg: 'bg-violet-50',   text: 'text-violet-700', ring: 'ring-violet-200' },
 };
 
 export default function PlansPage() {
@@ -38,13 +45,19 @@ export default function PlansPage() {
 
   const openEdit = (plan: Plan) => {
     setEditing(plan);
-    reset({ name: plan.name, price: plan.price, managerLimit: plan.managerLimit, technicianLimit: plan.technicianLimit, ticketLimit: plan.ticketLimit, storageLimitGb: plan.storageLimitGb });
+    reset({
+      name: plan.name,
+      price: plan.price,
+      managerLimit: plan.managerLimit,
+      technicianLimit: plan.technicianLimit,
+      ticketLimit: plan.ticketLimit,
+      storageLimitGb: plan.storageLimitGb,
+    });
   };
 
   const saveMutation = useMutation({
     mutationFn: (data: Form) => {
       if (editing) {
-        // name is not allowed in UpdatePlanDto — send only editable fields
         const { name: _n, ...updatePayload } = data;
         return api.patch(`/web/super-admin/plans/${editing.id}`, updatePayload);
       }
@@ -65,12 +78,68 @@ export default function PlansPage() {
   });
 
   const columns: ColumnDef<Plan, unknown>[] = [
-    { accessorKey: 'name', header: 'Plan' },
-    { accessorKey: 'price', header: 'Price', cell: ({ row }) => `₹${row.original.price}` },
-    { accessorKey: 'managerLimit', header: 'Managers' },
-    { accessorKey: 'technicianLimit', header: 'Technicians' },
-    { accessorKey: 'ticketLimit', header: 'Tickets' },
-    { accessorKey: 'storageLimitGb', header: 'Storage (GB)' },
+    {
+      accessorKey: 'name',
+      header: 'Plan',
+      cell: ({ row }) => {
+        const style = planTierStyle[row.original.name] ?? planTierStyle.STARTER;
+        return (
+          <span className={cn(
+            'inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold ring-1 ring-inset',
+            style.bg, style.text, style.ring
+          )}>
+            {row.original.name}
+          </span>
+        );
+      },
+    },
+    {
+      accessorKey: 'price',
+      header: 'Price / mo',
+      cell: ({ row }) => (
+        <span className="font-semibold text-slate-900">₹{row.original.price.toLocaleString()}</span>
+      ),
+    },
+    {
+      accessorKey: 'managerLimit',
+      header: 'Managers',
+      cell: ({ row }) => (
+        <div className="flex items-center gap-1.5 text-slate-600">
+          <Users size={12} className="text-slate-400" />
+          {row.original.managerLimit}
+        </div>
+      ),
+    },
+    {
+      accessorKey: 'technicianLimit',
+      header: 'Technicians',
+      cell: ({ row }) => (
+        <div className="flex items-center gap-1.5 text-slate-600">
+          <Users size={12} className="text-slate-400" />
+          {row.original.technicianLimit}
+        </div>
+      ),
+    },
+    {
+      accessorKey: 'ticketLimit',
+      header: 'Tickets',
+      cell: ({ row }) => (
+        <div className="flex items-center gap-1.5 text-slate-600">
+          <Ticket size={12} className="text-slate-400" />
+          {row.original.ticketLimit}
+        </div>
+      ),
+    },
+    {
+      accessorKey: 'storageLimitGb',
+      header: 'Storage',
+      cell: ({ row }) => (
+        <div className="flex items-center gap-1.5 text-slate-600">
+          <HardDrive size={12} className="text-slate-400" />
+          {row.original.storageLimitGb} GB
+        </div>
+      ),
+    },
     {
       accessorKey: 'isActive',
       header: 'Status',
@@ -84,16 +153,24 @@ export default function PlansPage() {
       id: 'actions',
       header: '',
       cell: ({ row }) => (
-        <div className="flex items-center gap-2">
-          <Button variant="ghost" size="sm" onClick={() => openEdit(row.original)}>
-            <Pencil size={14} />
+        <div className="flex items-center gap-1">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => openEdit(row.original)}
+            title="Edit plan"
+          >
+            <Pencil size={13} />
           </Button>
           <Button
             variant="ghost"
             size="sm"
             onClick={() => toggleMutation.mutate(row.original)}
             loading={toggleMutation.isPending}
-            className={row.original.isActive ? 'text-red-500' : 'text-green-600'}
+            className={row.original.isActive
+              ? 'text-red-500 hover:bg-red-50 hover:text-red-600'
+              : 'text-emerald-600 hover:bg-emerald-50 hover:text-emerald-700'
+            }
           >
             {row.original.isActive ? 'Deactivate' : 'Activate'}
           </Button>
@@ -103,11 +180,11 @@ export default function PlansPage() {
   ];
 
   const FormFields = ({ isEdit }: { isEdit: boolean }) => (
-    <>
+    <div className="space-y-5">
       {isEdit ? (
-        <div className="col-span-2">
-          <p className="text-xs text-gray-400 mb-1">Plan Name</p>
-          <p className="text-sm font-semibold text-gray-800 capitalize">{editing?.name}</p>
+        <div className="bg-slate-50 rounded-lg px-4 py-3">
+          <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 mb-1">Plan Name</p>
+          <p className="text-sm font-bold text-slate-800">{editing?.name}</p>
         </div>
       ) : (
         <Select
@@ -121,32 +198,76 @@ export default function PlansPage() {
           error={errors.name?.message}
         />
       )}
-      <Input label="Price (₹)" type="number" {...register('price', { valueAsNumber: true })} error={errors.price?.message} />
-      <Input label="Manager Limit" type="number" {...register('managerLimit', { valueAsNumber: true })} error={errors.managerLimit?.message} />
-      <Input label="Technician Limit" type="number" {...register('technicianLimit', { valueAsNumber: true })} error={errors.technicianLimit?.message} />
-      <Input label="Ticket Limit" type="number" {...register('ticketLimit', { valueAsNumber: true })} error={errors.ticketLimit?.message} />
-      <Input label="Storage (GB)" type="number" {...register('storageLimitGb', { valueAsNumber: true })} error={errors.storageLimitGb?.message} />
-    </>
+
+      <div className="grid grid-cols-2 gap-4">
+        <Input
+          label="Price (₹ / month)"
+          type="number"
+          {...register('price', { valueAsNumber: true })}
+          error={errors.price?.message}
+        />
+        <Input
+          label="Manager Limit"
+          type="number"
+          {...register('managerLimit', { valueAsNumber: true })}
+          error={errors.managerLimit?.message}
+        />
+        <Input
+          label="Technician Limit"
+          type="number"
+          {...register('technicianLimit', { valueAsNumber: true })}
+          error={errors.technicianLimit?.message}
+        />
+        <Input
+          label="Ticket Limit"
+          type="number"
+          {...register('ticketLimit', { valueAsNumber: true })}
+          error={errors.ticketLimit?.message}
+        />
+        <Input
+          label="Storage (GB)"
+          type="number"
+          {...register('storageLimitGb', { valueAsNumber: true })}
+          error={errors.storageLimitGb?.message}
+          className="col-span-2"
+        />
+      </div>
+    </div>
   );
 
   return (
-    <div>
-      <div className="flex items-center justify-between mb-6">
-        <h2 className="text-xl font-semibold text-gray-800">Plans</h2>
-        <Button onClick={() => { setShowCreate(true); reset(); }}><Plus size={15} /> New Plan</Button>
+    <div className="space-y-5">
+      {/* Page Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-xl font-bold text-slate-900">Subscription Plans</h2>
+          <p className="text-sm text-slate-500 mt-0.5">Manage plan tiers, limits, and pricing</p>
+        </div>
+        <Button onClick={() => { setShowCreate(true); reset(); }}>
+          <Plus size={15} /> New Plan
+        </Button>
       </div>
+
       <DataTable data={plans} columns={columns} isLoading={isLoading} />
 
       <Modal
         open={showCreate || !!editing}
         onClose={() => { setShowCreate(false); setEditing(null); reset(); }}
-        title={editing ? 'Edit Plan' : 'Create Plan'}
+        title={editing ? 'Edit Plan' : 'Create Subscription Plan'}
       >
-        <form onSubmit={handleSubmit(d => saveMutation.mutate(d))} className="grid grid-cols-2 gap-4">
+        <form onSubmit={handleSubmit(d => saveMutation.mutate(d))} className="space-y-5">
           <FormFields isEdit={!!editing} />
-          <div className="col-span-2 flex justify-end gap-3">
-            <Button variant="secondary" type="button" onClick={() => { setShowCreate(false); setEditing(null); reset(); }}>Cancel</Button>
-            <Button type="submit" loading={isSubmitting}>{editing ? 'Save' : 'Create'}</Button>
+          <div className="flex justify-end gap-3 pt-1 border-t border-slate-100">
+            <Button
+              variant="outline"
+              type="button"
+              onClick={() => { setShowCreate(false); setEditing(null); reset(); }}
+            >
+              Cancel
+            </Button>
+            <Button type="submit" loading={isSubmitting}>
+              {editing ? 'Save Changes' : 'Create Plan'}
+            </Button>
           </div>
         </form>
       </Modal>
