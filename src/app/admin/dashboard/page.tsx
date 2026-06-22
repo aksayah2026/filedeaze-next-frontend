@@ -1,7 +1,8 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
-import { Ticket, Users, DollarSign, UserCheck } from 'lucide-react';
+import { Ticket, Users, DollarSign, UserCheck, AlertTriangle } from 'lucide-react';
+import Link from 'next/link';
 import api from '@/lib/axios';
 import { AdminDashboard } from '@/types';
 import { StatsCard } from '@/components/ui/StatsCard';
@@ -16,8 +17,24 @@ export default function AdminDashboardPage() {
 
   if (isLoading || !data) return <PageSpinner />;
 
+  const sub = data.subscription;
+  const showTrialBanner = sub?.isTrial;
+
   return (
     <div className="space-y-6">
+      {showTrialBanner && (
+        <div className="flex items-center gap-3 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 text-sm text-amber-800">
+          <AlertTriangle className="w-4 h-4 shrink-0 text-amber-500" />
+          <span>
+            You are on a <strong>{sub?.currentPlan?.name ?? 'STARTER'}</strong> free trial.{' '}
+            {sub?.trialDaysLeft != null && sub.trialDaysLeft > 0
+              ? <><strong>{sub.trialDaysLeft} day{sub.trialDaysLeft !== 1 ? 's' : ''}</strong> remaining.</>
+              : <strong>Trial has ended.</strong>}{' '}
+            <Link href="/admin/subscription" className="underline font-medium">Subscribe now</Link> to keep access.
+          </span>
+        </div>
+      )}
+
       <h2 className="text-xl font-semibold text-gray-800">Overview</h2>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
         <StatsCard title="Total Tickets" value={data.totalTickets} icon={Ticket} iconBg="bg-blue-50" iconColor="text-blue-600" />

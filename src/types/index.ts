@@ -399,6 +399,13 @@ export interface AdminDashboard {
   totalCustomers: number;
   monthlyRevenue: number;
   planUsage: PlanUsage | null;
+  subscription: {
+    tenantStatus: TenantStatus | null;
+    isTrial: boolean;
+    trialDaysLeft: number | null;
+    trialEndsAt: string | null;
+    currentPlan: { name: string } | null;
+  } | null;
 }
 
 export interface ManagerDashboard {
