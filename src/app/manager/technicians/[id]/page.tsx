@@ -14,8 +14,9 @@ import { Modal } from '@/components/ui/Modal';
 import { Select } from '@/components/ui/Select';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { PageSpinner } from '@/components/ui/Spinner';
-import { MapPin, Route, Star, Trash2, Plus, Key } from 'lucide-react';
+import { MapPin, Route, Star, Trash2, Plus, Key, ChevronLeft } from 'lucide-react';
 import dayjs from 'dayjs';
+import Link from 'next/link';
 
 export default function TechnicianDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -58,6 +59,15 @@ export default function TechnicianDetailPage() {
 
   return (
     <div className="space-y-5 max-w-3xl">
+      {/* Back link */}
+      <Link
+        href="/manager/technicians"
+        className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-500 hover:text-slate-700 transition-colors"
+      >
+        <ChevronLeft size={14} />
+        Back to Technicians
+      </Link>
+
       <div className="flex items-center gap-3">
         <h2 className="text-xl font-semibold text-gray-800">{tech.name}</h2>
         <Badge variant={tech.isActive ? 'success' : 'default'}>{tech.isActive ? 'Active' : 'Inactive'}</Badge>

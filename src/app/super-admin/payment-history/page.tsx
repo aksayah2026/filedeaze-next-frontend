@@ -160,11 +160,33 @@ export default function PaymentHistoryPage() {
         />
         <div className="flex flex-col gap-1">
           <label className="text-xs font-medium text-gray-500">From</label>
-          <Input type="date" value={from} onChange={e => setFrom(e.target.value)} />
+          <Input 
+            type="date" 
+            value={from} 
+            onChange={e => {
+              const val = e.target.value;
+              setFrom(val);
+              if (to && val > to) {
+                setTo(val);
+              }
+            }} 
+            max={to || undefined} 
+          />
         </div>
         <div className="flex flex-col gap-1">
           <label className="text-xs font-medium text-gray-500">To</label>
-          <Input type="date" value={to} onChange={e => setTo(e.target.value)} />
+          <Input 
+            type="date" 
+            value={to} 
+            onChange={e => {
+              const val = e.target.value;
+              setTo(val);
+              if (from && val < from) {
+                setFrom(val);
+              }
+            }} 
+            min={from || undefined} 
+          />
         </div>
         <Button variant="secondary" onClick={() => setParams({ tenantId, status, from, to })}>
           <Search size={14} /> Apply

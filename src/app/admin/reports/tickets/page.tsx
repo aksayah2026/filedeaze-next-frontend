@@ -44,8 +44,32 @@ export default function TicketsReportPage() {
       <h2 className="text-xl font-semibold text-gray-800">Ticket Report</h2>
 
       <div className="flex flex-wrap gap-3 items-end rounded-xl border border-gray-100 bg-white p-4 shadow-sm">
-        <Input label="From" type="date" value={from} onChange={e => setFrom(e.target.value)} />
-        <Input label="To" type="date" value={to} onChange={e => setTo(e.target.value)} />
+        <Input 
+          label="From" 
+          type="date" 
+          value={from} 
+          onChange={e => {
+            const val = e.target.value;
+            setFrom(val);
+            if (to && val > to) {
+              setTo(val);
+            }
+          }} 
+          max={to || undefined} 
+        />
+        <Input 
+          label="To" 
+          type="date" 
+          value={to} 
+          onChange={e => {
+            const val = e.target.value;
+            setTo(val);
+            if (from && val < from) {
+              setFrom(val);
+            }
+          }} 
+          min={from || undefined} 
+        />
         <Button variant="secondary" onClick={() => setParams({ from, to })}>
           <Search size={14} /> Apply
         </Button>

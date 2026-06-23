@@ -11,6 +11,8 @@ import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { PageSpinner } from '@/components/ui/Spinner';
+import Link from 'next/link';
+import { ChevronLeft } from 'lucide-react';
 
 export default function ManagerDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -33,7 +35,16 @@ export default function ManagerDetailPage() {
   if (isLoading || !data) return <PageSpinner />;
 
   return (
-    <div className="max-w-xl space-y-6">
+    <div className="max-w-xl space-y-5">
+      {/* Back link */}
+      <Link
+        href="/admin/managers"
+        className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-500 hover:text-slate-700 transition-colors"
+      >
+        <ChevronLeft size={14} />
+        Back to Managers
+      </Link>
+
       <div className="flex items-center gap-3">
         <h2 className="text-xl font-semibold text-gray-800">{data.name}</h2>
         <Badge variant={data.isActive ? 'success' : 'default'}>{data.isActive ? 'Active' : 'Inactive'}</Badge>

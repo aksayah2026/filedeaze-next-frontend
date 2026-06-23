@@ -14,8 +14,9 @@ import { Select } from '@/components/ui/Select';
 import { Input } from '@/components/ui/Input';
 import { Textarea } from '@/components/ui/Textarea';
 import { PageSpinner } from '@/components/ui/Spinner';
-import { Star, CheckCircle, XCircle, RefreshCw, UserCheck } from 'lucide-react';
+import { Star, CheckCircle, XCircle, RefreshCw, UserCheck, ChevronLeft } from 'lucide-react';
 import dayjs from 'dayjs';
+import Link from 'next/link';
 
 export default function TicketDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -61,6 +62,15 @@ export default function TicketDetailPage() {
 
   return (
     <div className="space-y-5 max-w-3xl">
+      {/* Back link */}
+      <Link
+        href="/manager/tickets"
+        className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-500 hover:text-slate-700 transition-colors"
+      >
+        <ChevronLeft size={14} />
+        Back to Tickets
+      </Link>
+
       <div className="flex items-start justify-between">
         <div>
           <p className="text-sm text-gray-400 font-mono">{ticket.ticketNumber}</p>

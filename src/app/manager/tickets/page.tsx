@@ -145,10 +145,43 @@ export default function TicketsPage() {
         </Button>
       </div>
 
-      <div className="flex flex-wrap gap-3 mb-4 items-end">
-        <Select options={STATUS_OPTIONS} value={status} onChange={e => setStatus(e.target.value)} className="w-48" />
-        <Input type="date" value={from} onChange={e => setFrom(e.target.value)} />
-        <Input type="date" value={to} onChange={e => setTo(e.target.value)} />
+      <div className="flex flex-wrap gap-3 mb-4 items-end rounded-xl border border-slate-200 bg-white p-4 shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
+        <div className="flex flex-col gap-1.5">
+          <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">Status</span>
+          <Select options={STATUS_OPTIONS} value={status} onChange={e => setStatus(e.target.value)} className="w-48" />
+        </div>
+        <div className="flex flex-col gap-1.5">
+          <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">From</span>
+          <Input 
+            type="date" 
+            value={from} 
+            onChange={e => {
+              const val = e.target.value;
+              setFrom(val);
+              if (to && val > to) {
+                setTo(val);
+              }
+            }} 
+            max={to || undefined} 
+            className="w-40"
+          />
+        </div>
+        <div className="flex flex-col gap-1.5">
+          <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">To</span>
+          <Input 
+            type="date" 
+            value={to} 
+            onChange={e => {
+              const val = e.target.value;
+              setTo(val);
+              if (from && val < from) {
+                setFrom(val);
+              }
+            }} 
+            min={from || undefined} 
+            className="w-40"
+          />
+        </div>
         <Button variant="secondary" onClick={() => setParams({ status, from, to })}>Filter</Button>
       </div>
 

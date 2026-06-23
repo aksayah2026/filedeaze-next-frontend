@@ -43,7 +43,7 @@ export default function AdminDashboardPage() {
       {/* Main Content Areas */}
       {isLoading ? (
         <div className="space-y-6">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-4">
             {Array.from({ length: 5 }).map((_, i) => (
               <SkeletonCard key={i} />
             ))}
@@ -58,7 +58,7 @@ export default function AdminDashboardPage() {
       ) : !data ? null : (
         <>
           {/* KPI Cards Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-4">
             <StatsCard
               title="Total Tickets"
               value={data.totalTickets}
@@ -110,7 +110,7 @@ export default function AdminDashboardPage() {
           <div className="relative overflow-hidden bg-white rounded-xl p-6 border border-slate-200/60 shadow-[0_2px_8px_rgba(0,0,0,0.04)] max-w-xl group">
             {/* Top accent bar */}
             <div className="absolute left-0 top-0 right-0 h-1 bg-[var(--color-primary)] rounded-t-xl" />
-            
+
             <h3 className="font-bold text-slate-900 flex items-center justify-between gap-2 mb-6">
               <span className="text-sm font-bold uppercase tracking-wider text-slate-700">Plan Resource Usage</span>
               {data.planUsage && (

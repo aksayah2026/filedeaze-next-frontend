@@ -6,6 +6,7 @@ import { useRouter, usePathname } from 'next/navigation';
 import api from '@/lib/axios';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import { RefreshButton } from '@/components/ui/RefreshButton';
 
 interface TopbarProps {
   title?: string;
@@ -86,7 +87,7 @@ export function Topbar({ title, onMenuClick, isCollapsed, onToggleCollapse }: To
     try {
       const rt = localStorage.getItem('refreshToken');
       await api.post('/auth/logout', { refreshToken: rt });
-    } catch {}
+    } catch { }
     clearAuth();
     router.push('/login');
     toast.success('Logged out successfully');
@@ -143,6 +144,9 @@ export function Topbar({ title, onMenuClick, isCollapsed, onToggleCollapse }: To
 
       {/* Right — User Actions */}
       <div className="flex items-center gap-2 shrink-0">
+        {/* Refresh Button */}
+        <RefreshButton />
+
         {/* Notification Bell */}
         <button className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-50 hover:text-slate-600 transition-colors relative">
           <Bell size={16} />

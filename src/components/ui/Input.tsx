@@ -12,8 +12,9 @@ interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
 export const Input = forwardRef<HTMLInputElement, InputProps>(
   ({ label, error, hint, className, id, ...props }, ref) => {
     const inputId = id ?? label?.toLowerCase().replace(/\s+/g, '-');
+    const hasCustomWidth = className && /\b(w-\d+|w-auto|w-px|w-fit|w-max|w-min|w-\[[^\]]+\]|max-w-|min-w-)/.test(className);
     return (
-      <div className="flex flex-col gap-1.5 w-full">
+      <div className={cn("flex flex-col gap-1.5", !hasCustomWidth && "w-full")}>
         {label && (
           <label
             htmlFor={inputId}
