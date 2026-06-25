@@ -48,21 +48,22 @@ export function Modal({ open, onClose, title, children, size = 'md' }: ModalProp
       {/* Dialog */}
       <div
         className={cn(
-          'relative w-full rounded-2xl bg-white animate-fe-scale-in',
+          'relative w-full rounded-2xl bg-[var(--color-surface)] animate-fe-scale-in',
           'shadow-[0_20px_60px_rgba(0,0,0,0.12),0_8px_24px_rgba(0,0,0,0.06)]',
+          'transition-colors duration-250',
           sizes[size]
         )}
       >
         {/* Header */}
         {title && (
-          <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
+          <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--color-border)]">
             <div className="flex items-center gap-3">
               <div className="h-1.5 w-4 rounded-full bg-[var(--color-primary)]" />
-              <h2 className="text-sm font-bold text-slate-800 uppercase tracking-wide">{title}</h2>
+              <h2 className="text-sm font-bold text-[var(--color-text-primary)] uppercase tracking-wide">{title}</h2>
             </div>
             <button
               onClick={onClose}
-              className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-50 hover:text-slate-600 transition-colors"
+              className="rounded-lg p-1.5 text-[var(--color-text-muted)] hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-text-primary)] transition-colors"
             >
               <X size={16} />
             </button>

@@ -26,9 +26,9 @@ type Form = {
 };
 
 const planTierStyle: Record<string, { bg: string; text: string; ring: string }> = {
-  STARTER:      { bg: 'bg-slate-100',   text: 'text-slate-700',  ring: 'ring-slate-200' },
-  PROFESSIONAL: { bg: 'bg-blue-50',     text: 'text-blue-700',   ring: 'ring-blue-200' },
-  ENTERPRISE:   { bg: 'bg-violet-50',   text: 'text-violet-700', ring: 'ring-violet-200' },
+  STARTER:      { bg: 'bg-[var(--color-surface-elevated)]',   text: 'text-[var(--color-text-secondary)]',  ring: 'ring-slate-200' },
+  PROFESSIONAL: { bg: 'bg-[var(--color-surface-elevated)]',     text: 'text-blue-700',   ring: 'ring-blue-200' },
+  ENTERPRISE:   { bg: 'bg-[var(--color-surface-elevated)]',   text: 'text-violet-700', ring: 'ring-violet-200' },
 };
 
 export default function PlansPage() {
@@ -97,15 +97,15 @@ export default function PlansPage() {
       accessorKey: 'price',
       header: 'Price / mo',
       cell: ({ row }) => (
-        <span className="font-semibold text-slate-900">₹{row.original.price.toLocaleString()}</span>
+        <span className="font-semibold text-[var(--color-text-primary)]">₹{row.original.price.toLocaleString()}</span>
       ),
     },
     {
       accessorKey: 'managerLimit',
       header: 'Managers',
       cell: ({ row }) => (
-        <div className="flex items-center gap-1.5 text-slate-600">
-          <Users size={12} className="text-slate-400" />
+        <div className="flex items-center gap-1.5 text-[var(--color-text-secondary)]">
+          <Users size={12} className="text-[var(--color-text-muted)]" />
           {row.original.managerLimit}
         </div>
       ),
@@ -114,8 +114,8 @@ export default function PlansPage() {
       accessorKey: 'technicianLimit',
       header: 'Technicians',
       cell: ({ row }) => (
-        <div className="flex items-center gap-1.5 text-slate-600">
-          <Users size={12} className="text-slate-400" />
+        <div className="flex items-center gap-1.5 text-[var(--color-text-secondary)]">
+          <Users size={12} className="text-[var(--color-text-muted)]" />
           {row.original.technicianLimit}
         </div>
       ),
@@ -124,8 +124,8 @@ export default function PlansPage() {
       accessorKey: 'ticketLimit',
       header: 'Tickets',
       cell: ({ row }) => (
-        <div className="flex items-center gap-1.5 text-slate-600">
-          <Ticket size={12} className="text-slate-400" />
+        <div className="flex items-center gap-1.5 text-[var(--color-text-secondary)]">
+          <Ticket size={12} className="text-[var(--color-text-muted)]" />
           {row.original.ticketLimit}
         </div>
       ),
@@ -134,8 +134,8 @@ export default function PlansPage() {
       accessorKey: 'storageLimitGb',
       header: 'Storage',
       cell: ({ row }) => (
-        <div className="flex items-center gap-1.5 text-slate-600">
-          <HardDrive size={12} className="text-slate-400" />
+        <div className="flex items-center gap-1.5 text-[var(--color-text-secondary)]">
+          <HardDrive size={12} className="text-[var(--color-text-muted)]" />
           {row.original.storageLimitGb} GB
         </div>
       ),
@@ -168,8 +168,8 @@ export default function PlansPage() {
             onClick={() => toggleMutation.mutate(row.original)}
             loading={toggleMutation.isPending}
             className={row.original.isActive
-              ? 'text-red-500 hover:bg-red-50 hover:text-red-600'
-              : 'text-emerald-600 hover:bg-emerald-50 hover:text-emerald-700'
+              ? 'text-red-500 hover:bg-[var(--color-surface-elevated)] hover:text-red-600'
+              : 'text-emerald-600 hover:bg-[var(--color-surface-elevated)] hover:text-emerald-700'
             }
           >
             {row.original.isActive ? 'Deactivate' : 'Activate'}
@@ -182,9 +182,9 @@ export default function PlansPage() {
   const FormFields = ({ isEdit }: { isEdit: boolean }) => (
     <div className="space-y-5">
       {isEdit ? (
-        <div className="bg-slate-50 rounded-lg px-4 py-3">
-          <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 mb-1">Plan Name</p>
-          <p className="text-sm font-bold text-slate-800">{editing?.name}</p>
+        <div className="bg-[var(--color-surface-elevated)] rounded-lg px-4 py-3">
+          <p className="text-[10px] font-semibold uppercase tracking-wide text-[var(--color-text-muted)] mb-1">Plan Name</p>
+          <p className="text-sm font-bold text-[var(--color-text-primary)]">{editing?.name}</p>
         </div>
       ) : (
         <Select
@@ -240,8 +240,8 @@ export default function PlansPage() {
       {/* Page Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-xl font-bold text-slate-900">Subscription Plans</h2>
-          <p className="text-sm text-slate-500 mt-0.5">Manage plan tiers, limits, and pricing</p>
+          <h2 className="text-xl font-bold text-[var(--color-text-primary)]">Subscription Plans</h2>
+          <p className="text-sm text-[var(--color-text-muted)] mt-0.5">Manage plan tiers, limits, and pricing</p>
         </div>
         <Button onClick={() => { setShowCreate(true); reset(); }}>
           <Plus size={15} /> New Plan
@@ -257,7 +257,7 @@ export default function PlansPage() {
       >
         <form onSubmit={handleSubmit(d => saveMutation.mutate(d))} className="space-y-5">
           <FormFields isEdit={!!editing} />
-          <div className="flex justify-end gap-3 pt-1 border-t border-slate-100">
+          <div className="flex justify-end gap-3 pt-1 border-t border-[var(--color-border)]">
             <Button
               variant="outline"
               type="button"

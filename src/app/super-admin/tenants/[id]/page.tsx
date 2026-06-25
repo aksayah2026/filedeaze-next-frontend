@@ -76,7 +76,7 @@ export default function TenantDetailPage() {
     {
       accessorKey: 'amount',
       header: 'Amount',
-      cell: ({ row }) => <span className="font-semibold text-slate-900">₹{row.original.amount.toLocaleString()}</span>,
+      cell: ({ row }) => <span className="font-semibold text-[var(--color-text-primary)]">₹{row.original.amount.toLocaleString()}</span>,
     },
     {
       accessorKey: 'status',
@@ -132,24 +132,24 @@ export default function TenantDetailPage() {
       {/* Back link */}
       <Link
         href="/super-admin/tenants"
-        className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-500 hover:text-slate-700 transition-colors"
+        className="inline-flex items-center gap-1.5 text-xs font-medium text-[var(--color-text-muted)] hover:text-[var(--color-text-secondary)] transition-colors"
       >
         <ChevronLeft size={14} />
         Back to Tenants
       </Link>
 
       {/* Tenant Profile Header */}
-      <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
+      <div className="bg-[var(--color-surface)] rounded-xl border border-[var(--color-border)] p-6 shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
         <div className="flex items-start gap-4">
           <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-bold text-lg shadow-md shrink-0">
             {initials}
           </div>
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-3 flex-wrap">
-              <h2 className="text-xl font-bold text-slate-900">{tenant.companyName}</h2>
+              <h2 className="text-xl font-bold text-[var(--color-text-primary)]">{tenant.companyName}</h2>
               <TenantStatusBadge status={tenant.status} />
             </div>
-            <div className="flex items-center gap-4 mt-1.5 text-xs text-slate-500 flex-wrap">
+            <div className="flex items-center gap-4 mt-1.5 text-xs text-[var(--color-text-muted)] flex-wrap">
               <span className="flex items-center gap-1">
                 <Building2 size={11} />
                 <code className="font-mono">{tenant.tenantCode}</code>
@@ -161,14 +161,14 @@ export default function TenantDetailPage() {
         </div>
 
         {/* Stats Row */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mt-5 pt-5 border-t border-slate-100">
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mt-5 pt-5 border-t border-[var(--color-border)]">
           <div className="flex items-center gap-3">
-            <div className="h-9 w-9 rounded-lg bg-blue-50 flex items-center justify-center shrink-0">
+            <div className="h-9 w-9 rounded-lg bg-[var(--color-surface-elevated)] flex items-center justify-center shrink-0">
               <CreditCard size={15} className="text-blue-600" />
             </div>
             <div>
-              <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Current Plan</p>
-              <p className="text-sm font-semibold text-slate-800">
+              <p className="text-[10px] font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">Current Plan</p>
+              <p className="text-sm font-semibold text-[var(--color-text-primary)]">
                 {currentPlan?.name ?? '—'}
                 {!tenant.subscription && tenant.selectedPlan && (
                   <span className="ml-1.5 text-xs font-normal text-amber-500">(trial)</span>
@@ -177,33 +177,33 @@ export default function TenantDetailPage() {
             </div>
           </div>
           <div className="flex items-center gap-3">
-            <div className="h-9 w-9 rounded-lg bg-emerald-50 flex items-center justify-center shrink-0">
+            <div className="h-9 w-9 rounded-lg bg-[var(--color-surface-elevated)] flex items-center justify-center shrink-0">
               <Calendar size={15} className="text-emerald-600" />
             </div>
             <div>
-              <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Sub. End</p>
-              <p className="text-sm font-semibold text-slate-800">
+              <p className="text-[10px] font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">Sub. End</p>
+              <p className="text-sm font-semibold text-[var(--color-text-primary)]">
                 {tenant.subscription?.endDate ? dayjs(tenant.subscription.endDate).format('DD MMM YYYY') : '—'}
               </p>
             </div>
           </div>
           <div className="flex items-center gap-3">
-            <div className="h-9 w-9 rounded-lg bg-violet-50 flex items-center justify-center shrink-0">
+            <div className="h-9 w-9 rounded-lg bg-[var(--color-surface-elevated)] flex items-center justify-center shrink-0">
               <Users size={15} className="text-violet-600" />
             </div>
             <div>
-              <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Billing Records</p>
-              <p className="text-sm font-semibold text-slate-800">{billings.length}</p>
+              <p className="text-[10px] font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">Billing Records</p>
+              <p className="text-sm font-semibold text-[var(--color-text-primary)]">{billings.length}</p>
             </div>
           </div>
         </div>
       </div>
 
       {/* Edit Details */}
-      <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
-        <div className="px-6 py-4 border-b border-slate-100 bg-slate-50/50 flex items-center gap-2">
+      <div className="bg-[var(--color-surface)] rounded-xl border border-[var(--color-border)] overflow-hidden shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
+        <div className="px-6 py-4 border-b border-[var(--color-border)] bg-[var(--color-surface-elevated)]/50 flex items-center gap-2">
           <div className="h-1 w-4 rounded-full bg-blue-500" />
-          <h3 className="text-sm font-semibold text-slate-800">Edit Details</h3>
+          <h3 className="text-sm font-semibold text-[var(--color-text-primary)]">Edit Details</h3>
         </div>
         <div className="p-6">
           <form onSubmit={handleSubmit(d => updateMutation.mutate(d))} className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -219,10 +219,10 @@ export default function TenantDetailPage() {
       </div>
 
       {/* Change Status */}
-      <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
-        <div className="px-6 py-4 border-b border-slate-100 bg-slate-50/50 flex items-center gap-2">
+      <div className="bg-[var(--color-surface)] rounded-xl border border-[var(--color-border)] overflow-hidden shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
+        <div className="px-6 py-4 border-b border-[var(--color-border)] bg-[var(--color-surface-elevated)]/50 flex items-center gap-2">
           <div className="h-1 w-4 rounded-full bg-amber-500" />
-          <h3 className="text-sm font-semibold text-slate-800">Change Status</h3>
+          <h3 className="text-sm font-semibold text-[var(--color-text-primary)]">Change Status</h3>
         </div>
         <div className="p-6">
           <div className="flex flex-wrap gap-2">
@@ -235,7 +235,7 @@ export default function TenantDetailPage() {
                   'px-4 py-2 rounded-lg border text-xs font-semibold transition-all duration-150',
                   tenant.status === status
                     ? activeColor
-                    : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50'
+                    : 'border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text-secondary)] hover:border-[var(--color-border-strong)] hover:bg-[var(--color-surface-elevated)]'
                 )}
               >
                 {label}
@@ -246,10 +246,10 @@ export default function TenantDetailPage() {
       </div>
 
       {/* Change Plan */}
-      <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
-        <div className="px-6 py-4 border-b border-slate-100 bg-slate-50/50 flex items-center gap-2">
+      <div className="bg-[var(--color-surface)] rounded-xl border border-[var(--color-border)] overflow-hidden shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
+        <div className="px-6 py-4 border-b border-[var(--color-border)] bg-[var(--color-surface-elevated)]/50 flex items-center gap-2">
           <div className="h-1 w-4 rounded-full bg-violet-500" />
-          <h3 className="text-sm font-semibold text-slate-800">Change Plan</h3>
+          <h3 className="text-sm font-semibold text-[var(--color-text-primary)]">Change Plan</h3>
         </div>
         <div className="p-6">
           <div className="flex gap-3 items-end flex-wrap">
@@ -261,11 +261,11 @@ export default function TenantDetailPage() {
               className="w-64"
             />
             {changePlanMutation.isPending && (
-              <p className="text-xs text-slate-400 pb-2">Updating…</p>
+              <p className="text-xs text-[var(--color-text-muted)] pb-2">Updating…</p>
             )}
           </div>
           {!tenant.subscription && (
-            <p className="mt-3 text-xs text-amber-600 bg-amber-50 border border-amber-100 rounded-lg px-3 py-2">
+            <p className="mt-3 text-xs text-amber-600 bg-[var(--color-surface-elevated)] border border-amber-100 rounded-lg px-3 py-2">
               This tenant is on a trial. Changing the plan updates what they will pay when they subscribe.
             </p>
           )}
@@ -274,11 +274,11 @@ export default function TenantDetailPage() {
 
       {/* Payment QR */}
       {currentPlan && (
-        <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
-          <div className="px-6 py-4 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between">
+        <div className="bg-[var(--color-surface)] rounded-xl border border-[var(--color-border)] overflow-hidden shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
+          <div className="px-6 py-4 border-b border-[var(--color-border)] bg-[var(--color-surface-elevated)]/50 flex items-center justify-between">
             <div className="flex items-center gap-2">
               <div className="h-1 w-4 rounded-full bg-violet-500" />
-              <h3 className="text-sm font-semibold text-slate-800 flex items-center gap-1.5">
+              <h3 className="text-sm font-semibold text-[var(--color-text-primary)] flex items-center gap-1.5">
                 <QrCode size={15} className="text-violet-500" /> Payment QR
               </h3>
             </div>
@@ -296,7 +296,7 @@ export default function TenantDetailPage() {
           {showQr && (
             <div className="p-6 flex flex-col sm:flex-row gap-6 items-start animate-fe-fade-in">
               <div className="flex flex-col items-center gap-2">
-                <div className="p-3 bg-white rounded-xl border border-slate-100 shadow-sm">
+                <div className="p-3 bg-[var(--color-surface)] rounded-xl border border-[var(--color-border)] shadow-sm">
                   <QRCodeCanvas
                     id="tenant-qr-canvas"
                     value={upiQrString}
@@ -305,7 +305,7 @@ export default function TenantDetailPage() {
                     marginSize={2}
                   />
                 </div>
-                <p className="text-xs text-slate-400">Scan to pay via UPI</p>
+                <p className="text-xs text-[var(--color-text-muted)]">Scan to pay via UPI</p>
               </div>
               <div className="space-y-3 text-sm">
                 {[
@@ -314,13 +314,13 @@ export default function TenantDetailPage() {
                   { label: 'Tenant', value: tenant.companyName },
                 ].map(({ label, value, bold }) => (
                   <div key={label}>
-                    <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">{label}</p>
-                    <p className={cn('text-slate-800', bold ? 'text-xl font-bold' : 'font-semibold')}>{value}</p>
+                    <p className="text-[10px] font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">{label}</p>
+                    <p className={cn('text-[var(--color-text-primary)]', bold ? 'text-xl font-bold' : 'font-semibold')}>{value}</p>
                   </div>
                 ))}
                 <div>
-                  <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 mb-1">UPI String</p>
-                  <p className="font-mono text-xs text-slate-500 break-all max-w-xs bg-slate-50 p-2 rounded-lg">{upiQrString}</p>
+                  <p className="text-[10px] font-semibold uppercase tracking-wide text-[var(--color-text-muted)] mb-1">UPI String</p>
+                  <p className="font-mono text-xs text-[var(--color-text-muted)] break-all max-w-xs bg-[var(--color-surface-elevated)] p-2 rounded-lg">{upiQrString}</p>
                 </div>
               </div>
             </div>
@@ -329,10 +329,10 @@ export default function TenantDetailPage() {
       )}
 
       {/* Subscription Info */}
-      <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
-        <div className="px-6 py-4 border-b border-slate-100 bg-slate-50/50 flex items-center gap-2">
+      <div className="bg-[var(--color-surface)] rounded-xl border border-[var(--color-border)] overflow-hidden shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
+        <div className="px-6 py-4 border-b border-[var(--color-border)] bg-[var(--color-surface-elevated)]/50 flex items-center gap-2">
           <div className="h-1 w-4 rounded-full bg-emerald-500" />
-          <h3 className="text-sm font-semibold text-slate-800">Subscription Info</h3>
+          <h3 className="text-sm font-semibold text-[var(--color-text-primary)]">Subscription Info</h3>
         </div>
         <div className="p-6">
           {tenant.subscription ? (
@@ -343,14 +343,14 @@ export default function TenantDetailPage() {
                 { label: 'Start Date', value: dayjs(tenant.subscription.startDate).format('DD MMM YYYY') },
                 { label: 'End Date', value: dayjs(tenant.subscription.endDate).format('DD MMM YYYY') },
               ].map(({ label, value }) => (
-                <div key={label} className="bg-slate-50 rounded-lg px-4 py-3">
-                  <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 mb-1">{label}</p>
-                  <p className="text-sm font-semibold text-slate-800">{value ?? '—'}</p>
+                <div key={label} className="bg-[var(--color-surface-elevated)] rounded-lg px-4 py-3">
+                  <p className="text-[10px] font-semibold uppercase tracking-wide text-[var(--color-text-muted)] mb-1">{label}</p>
+                  <p className="text-sm font-semibold text-[var(--color-text-primary)]">{value ?? '—'}</p>
                 </div>
               ))}
             </div>
           ) : (
-            <div className="bg-amber-50 border border-amber-100 rounded-lg px-4 py-3">
+            <div className="bg-[var(--color-surface-elevated)] border border-amber-100 rounded-lg px-4 py-3">
               <p className="text-sm text-amber-700">
                 No active subscription — on trial until{' '}
                 <span className="font-semibold">
@@ -363,14 +363,14 @@ export default function TenantDetailPage() {
       </div>
 
       {/* Billing History */}
-      <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
-        <div className="px-6 py-4 border-b border-slate-100 bg-slate-50/50 flex items-center gap-2">
-          <div className="h-1 w-4 rounded-full bg-slate-400" />
-          <h3 className="text-sm font-semibold text-slate-800">Billing History</h3>
+      <div className="bg-[var(--color-surface)] rounded-xl border border-[var(--color-border)] overflow-hidden shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
+        <div className="px-6 py-4 border-b border-[var(--color-border)] bg-[var(--color-surface-elevated)]/50 flex items-center gap-2">
+          <div className="h-1 w-4 rounded-full bg-[var(--color-surface-elevated)]" />
+          <h3 className="text-sm font-semibold text-[var(--color-text-primary)]">Billing History</h3>
         </div>
         <div className="p-6">
           {billings.length === 0 ? (
-            <p className="text-sm text-slate-400 text-center py-6">No billing records found.</p>
+            <p className="text-sm text-[var(--color-text-muted)] text-center py-6">No billing records found.</p>
           ) : (
             <DataTable data={billings} columns={billingColumns} isLoading={false} />
           )}

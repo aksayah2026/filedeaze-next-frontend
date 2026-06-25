@@ -75,7 +75,7 @@ export default function OffersPage() {
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
-        <h2 className="text-xl font-semibold text-gray-800">Offers</h2>
+        <h2 className="text-xl font-semibold text-[var(--color-text-primary)]">Offers</h2>
         <Button onClick={() => { setShowCreate(true); reset({ discountType: 'PERCENTAGE', offerType: 'GENERAL', isRecurring: false }); }}><Plus size={15} /> New Offer</Button>
       </div>
       <DataTable data={data} columns={columns} isLoading={isLoading} />
@@ -92,7 +92,7 @@ export default function OffersPage() {
           <Input label="End Date" type="date" {...register('endDate', { required: true })} />
           <div className="flex items-center gap-2 col-span-2">
             <input type="checkbox" id="isRecurring" {...register('isRecurring')} className="h-4 w-4" />
-            <label htmlFor="isRecurring" className="text-sm text-gray-700">Recurring offer</label>
+            <label htmlFor="isRecurring" className="text-sm text-[var(--color-text-secondary)]">Recurring offer</label>
           </div>
           <div className="col-span-2 flex justify-end gap-3 mt-2">
             <Button variant="secondary" type="button" onClick={() => { setShowCreate(false); setEditing(null); reset(); }}>Cancel</Button>

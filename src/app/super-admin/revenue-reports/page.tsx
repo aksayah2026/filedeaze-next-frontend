@@ -74,19 +74,19 @@ export default function RevenueReportsPage() {
     {
       accessorKey: 'tenantName',
       header: 'Tenant',
-      cell: ({ row }) => <span className="font-medium text-slate-800">{row.original.tenantName}</span>,
+      cell: ({ row }) => <span className="font-medium text-[var(--color-text-primary)]">{row.original.tenantName}</span>,
     },
     {
       accessorKey: 'planName',
       header: 'Plan',
       cell: ({ row }) => {
         const colors: Record<string, string> = {
-          STARTER: 'bg-slate-100 text-slate-700',
-          PROFESSIONAL: 'bg-blue-50 text-blue-700',
-          ENTERPRISE: 'bg-violet-50 text-violet-700',
+          STARTER: 'bg-[var(--color-surface-elevated)] text-[var(--color-text-secondary)]',
+          PROFESSIONAL: 'bg-[var(--color-surface-elevated)] text-blue-700',
+          ENTERPRISE: 'bg-[var(--color-surface-elevated)] text-violet-700',
         };
         return (
-          <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${colors[row.original.planName] ?? 'bg-slate-100 text-slate-600'}`}>
+          <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${colors[row.original.planName] ?? 'bg-[var(--color-surface-elevated)] text-[var(--color-text-secondary)]'}`}>
             {row.original.planName}
           </span>
         );
@@ -96,7 +96,7 @@ export default function RevenueReportsPage() {
       accessorKey: 'amount',
       header: 'Amount',
       cell: ({ row }) => (
-        <span className="tabular-nums font-semibold text-slate-900">
+        <span className="tabular-nums font-semibold text-[var(--color-text-primary)]">
           ₹{row.original.amount.toLocaleString()}
         </span>
       ),
@@ -107,8 +107,8 @@ export default function RevenueReportsPage() {
       cell: ({ row }) => (
         <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
           row.original.status === 'PAID'
-            ? 'bg-emerald-50 text-emerald-700'
-            : 'bg-amber-50 text-amber-700'
+            ? 'bg-[var(--color-surface-elevated)] text-emerald-700'
+            : 'bg-[var(--color-surface-elevated)] text-amber-700'
         }`}>
           {row.original.status}
         </span>
@@ -118,14 +118,14 @@ export default function RevenueReportsPage() {
       accessorKey: 'paidAt',
       header: 'Paid At',
       cell: ({ row }) => row.original.paidAt
-        ? <span className="text-xs text-slate-500">{dayjs(row.original.paidAt).format('DD MMM YYYY')}</span>
+        ? <span className="text-xs text-[var(--color-text-muted)]">{dayjs(row.original.paidAt).format('DD MMM YYYY')}</span>
         : <span className="text-slate-300">—</span>,
     },
     {
       accessorKey: 'createdAt',
       header: 'Date',
       cell: ({ row }) => (
-        <span className="text-xs text-slate-500">{dayjs(row.original.createdAt).format('DD MMM YYYY')}</span>
+        <span className="text-xs text-[var(--color-text-muted)]">{dayjs(row.original.createdAt).format('DD MMM YYYY')}</span>
       ),
     },
   ];
@@ -137,8 +137,8 @@ export default function RevenueReportsPage() {
       {/* Page Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-xl font-bold text-slate-900">Revenue Reports</h2>
-          <p className="text-sm text-slate-500 mt-0.5">Subscription revenue across tenants and plans</p>
+          <h2 className="text-xl font-bold text-[var(--color-text-primary)]">Revenue Reports</h2>
+          <p className="text-sm text-[var(--color-text-muted)] mt-0.5">Subscription revenue across tenants and plans</p>
         </div>
         <Button variant="secondary" onClick={() => exportCsv(rows)} disabled={!rows.length}>
           <Download size={14} /> Export CSV
@@ -146,7 +146,7 @@ export default function RevenueReportsPage() {
       </div>
 
       {/* Filter Bar */}
-      <div className="flex flex-wrap gap-3 items-end rounded-xl border border-slate-200 bg-white p-4 shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
+      <div className="flex flex-wrap gap-3 items-end rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4 shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
         <Select
           label="Tenant"
           options={tenantOptions}
@@ -167,7 +167,7 @@ export default function RevenueReportsPage() {
           className="w-40"
         />
         <div className="flex flex-col gap-1.5">
-          <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">From</span>
+          <span className="text-[10px] font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">From</span>
           <Input 
             type="date" 
             value={from} 
@@ -182,7 +182,7 @@ export default function RevenueReportsPage() {
           />
         </div>
         <div className="flex flex-col gap-1.5">
-          <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">To</span>
+          <span className="text-[10px] font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">To</span>
           <Input 
             type="date" 
             value={to} 
@@ -197,7 +197,7 @@ export default function RevenueReportsPage() {
           />
         </div>
         <div className="flex flex-col gap-1.5">
-          <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-500 invisible">_</span>
+          <span className="text-[10px] font-semibold uppercase tracking-wide text-[var(--color-text-muted)] invisible">_</span>
           <Button variant="secondary" onClick={() => setParams({ tenantId, plan, from, to })}>
             <Search size={14} /> Apply
           </Button>
@@ -220,7 +220,7 @@ export default function RevenueReportsPage() {
                   <p className="text-xs font-semibold uppercase tracking-widest text-emerald-600 mb-0.5">
                     Total Revenue
                   </p>
-                  <p className="text-3xl font-bold tabular-nums text-slate-900">
+                  <p className="text-3xl font-bold tabular-nums text-[var(--color-text-primary)]">
                     ₹{data.total.toLocaleString()}
                   </p>
                 </div>
@@ -232,10 +232,10 @@ export default function RevenueReportsPage() {
           {mounted && (byPlanChart.length > 0 || byTenantChart.length > 0) && (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
               {byPlanChart.length > 0 && (
-                <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
+                <div className="bg-[var(--color-surface)] rounded-xl border border-[var(--color-border)] p-5 shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
                   <div className="flex items-center gap-2 mb-4">
-                    <BarChart2 size={15} className="text-slate-400" />
-                    <h3 className="text-sm font-semibold text-slate-800">Revenue by Plan</h3>
+                    <BarChart2 size={15} className="text-[var(--color-text-muted)]" />
+                    <h3 className="text-sm font-semibold text-[var(--color-text-primary)]">Revenue by Plan</h3>
                   </div>
                   <ResponsiveContainer width="100%" height={200}>
                     <BarChart data={byPlanChart} barSize={36}>
@@ -267,10 +267,10 @@ export default function RevenueReportsPage() {
               )}
 
               {byTenantChart.length > 0 && (
-                <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
+                <div className="bg-[var(--color-surface)] rounded-xl border border-[var(--color-border)] p-5 shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
                   <div className="flex items-center gap-2 mb-4">
-                    <BarChart2 size={15} className="text-slate-400" />
-                    <h3 className="text-sm font-semibold text-slate-800">Top Tenants by Revenue</h3>
+                    <BarChart2 size={15} className="text-[var(--color-text-muted)]" />
+                    <h3 className="text-sm font-semibold text-[var(--color-text-primary)]">Top Tenants by Revenue</h3>
                   </div>
                   <ResponsiveContainer width="100%" height={200}>
                     <BarChart data={byTenantChart} layout="vertical" barSize={16}>

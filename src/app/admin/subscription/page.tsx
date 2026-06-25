@@ -115,18 +115,18 @@ export default function SubscriptionPage() {
 
   return (
     <div className="space-y-6 max-w-3xl">
-      <h2 className="text-xl font-semibold text-gray-800">Subscription & Billing</h2>
+      <h2 className="text-xl font-semibold text-[var(--color-text-primary)]">Subscription & Billing</h2>
 
       {/* Current Plan */}
-      <div className="bg-white rounded-xl p-5 border border-gray-100 shadow-sm">
-        <h3 className="font-medium text-gray-700 mb-4 flex items-center gap-2">
+      <div className="bg-[var(--color-surface)] rounded-xl p-5 border border-[var(--color-border)] shadow-sm">
+        <h3 className="font-medium text-[var(--color-text-secondary)] mb-4 flex items-center gap-2">
           <CreditCard size={16} className="text-blue-500" /> Current Plan
         </h3>
         {currentPlan ? (
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <p className="text-2xl font-bold text-gray-800">{currentPlan.name}</p>
-              <p className="text-sm text-gray-400 mt-0.5">₹{Number(currentPlan.price).toLocaleString()} / year</p>
+              <p className="text-2xl font-bold text-[var(--color-text-primary)]">{currentPlan.name}</p>
+              <p className="text-sm text-[var(--color-text-muted)] mt-0.5">₹{Number(currentPlan.price).toLocaleString()} / year</p>
               <div className="mt-3 flex items-center gap-2 flex-wrap">
                 {isTrial && (
                   <Badge variant="warning">
@@ -141,17 +141,17 @@ export default function SubscriptionPage() {
                 {isActive && !isExpiringSoon && subscription && <Badge variant="success">Active</Badge>}
               </div>
               {subscription && (
-                <p className="text-xs text-gray-400 mt-2">
+                <p className="text-xs text-[var(--color-text-muted)] mt-2">
                   {dayjs(subscription.startDate).format('DD MMM YYYY')} → {dayjs(subscription.endDate).format('DD MMM YYYY')}
                 </p>
               )}
               {isTrial && trialEndsAt && (
-                <p className="text-xs text-gray-400 mt-2">
+                <p className="text-xs text-[var(--color-text-muted)] mt-2">
                   Trial ends {dayjs(trialEndsAt).format('DD MMM YYYY')}
                 </p>
               )}
             </div>
-            <div className="space-y-2 text-sm text-gray-600">
+            <div className="space-y-2 text-sm text-[var(--color-text-secondary)]">
               <div className="flex items-center gap-2"><CheckCircle size={14} className="text-green-500" /> Up to <strong>{currentPlan.managerLimit}</strong> managers</div>
               <div className="flex items-center gap-2"><CheckCircle size={14} className="text-green-500" /> Up to <strong>{currentPlan.technicianLimit}</strong> technicians</div>
               <div className="flex items-center gap-2"><CheckCircle size={14} className="text-green-500" /> Up to <strong>{currentPlan.ticketLimit}</strong> tickets / month</div>
@@ -159,13 +159,13 @@ export default function SubscriptionPage() {
             </div>
           </div>
         ) : (
-          <p className="text-gray-400 text-sm">No plan assigned. Please contact support.</p>
+          <p className="text-[var(--color-text-muted)] text-sm">No plan assigned. Please contact support.</p>
         )}
       </div>
 
       {/* Payment Request Status */}
       {isPaymentPending && latestPaymentRequest && (
-        <div className="bg-blue-50 rounded-xl p-5 border border-blue-200">
+        <div className="bg-[var(--color-surface-elevated)] rounded-xl p-5 border border-blue-200">
           <div className="flex items-start gap-2">
             <Clock size={18} className="text-blue-500 mt-0.5 shrink-0" />
             <div>
@@ -200,8 +200,8 @@ export default function SubscriptionPage() {
 
       {/* UPI Payment Info */}
       {(isTrial || isExpired || (isPaymentPending && isRejected)) && (
-        <div className="bg-white rounded-xl p-5 border border-gray-100 shadow-sm">
-          <h3 className="font-medium text-gray-700 mb-4 flex items-center gap-2">
+        <div className="bg-[var(--color-surface)] rounded-xl p-5 border border-[var(--color-border)] shadow-sm">
+          <h3 className="font-medium text-[var(--color-text-secondary)] mb-4 flex items-center gap-2">
             <QrCode size={16} className="text-blue-500" /> Pay to Activate
           </h3>
 
@@ -215,39 +215,39 @@ export default function SubscriptionPage() {
                   ) : (
                     <QRCodeCanvas value={upiString} size={160} level="M" marginSize={2} />
                   )}
-                  <p className="text-xs text-gray-400">Scan to pay via UPI</p>
+                  <p className="text-xs text-[var(--color-text-muted)]">Scan to pay via UPI</p>
                 </div>
                 <div className="space-y-3 text-sm">
                   <div>
-                    <p className="text-xs text-gray-400">UPI ID</p>
-                    <p className="font-mono font-medium text-gray-800 select-all">{paymentInfo.upiId}</p>
+                    <p className="text-xs text-[var(--color-text-muted)]">UPI ID</p>
+                    <p className="font-mono font-medium text-[var(--color-text-primary)] select-all">{paymentInfo.upiId}</p>
                   </div>
                   {paymentInfo.upiAccountName && (
                     <div>
-                      <p className="text-xs text-gray-400">Account Name</p>
-                      <p className="font-medium text-gray-800">{paymentInfo.upiAccountName}</p>
+                      <p className="text-xs text-[var(--color-text-muted)]">Account Name</p>
+                      <p className="font-medium text-[var(--color-text-primary)]">{paymentInfo.upiAccountName}</p>
                     </div>
                   )}
                   {currentPlan && (
                     <div>
-                      <p className="text-xs text-gray-400">Amount to Pay</p>
-                      <p className="text-xl font-bold text-gray-800">₹{Number(currentPlan.price).toLocaleString()}</p>
+                      <p className="text-xs text-[var(--color-text-muted)]">Amount to Pay</p>
+                      <p className="text-xl font-bold text-[var(--color-text-primary)]">₹{Number(currentPlan.price).toLocaleString()}</p>
                     </div>
                   )}
                 </div>
               </div>
             );
           })() : (
-            <p className="text-sm text-gray-400">UPI payment details not configured yet. You can still submit your proof below once you have paid through a shared payment link or bank transfer.</p>
+            <p className="text-sm text-[var(--color-text-muted)]">UPI payment details not configured yet. You can still submit your proof below once you have paid through a shared payment link or bank transfer.</p>
           )}
         </div>
       )}
 
       {/* Submit Payment Proof */}
       {canSubmitProof && (
-        <div className="bg-white rounded-xl p-5 border border-gray-100 shadow-sm">
+        <div className="bg-[var(--color-surface)] rounded-xl p-5 border border-[var(--color-border)] shadow-sm">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="font-medium text-gray-700 flex items-center gap-2">
+            <h3 className="font-medium text-[var(--color-text-secondary)] flex items-center gap-2">
               <Send size={16} className="text-green-500" /> Submit Payment Proof
             </h3>
             {!showForm && (
@@ -257,16 +257,16 @@ export default function SubscriptionPage() {
 
           {showForm && (
             <form onSubmit={handleSubmit(d => submitProof.mutate(d))} className="space-y-4">
-              <div className="bg-amber-50 border border-amber-200 rounded-lg px-4 py-3 text-sm text-amber-800">
+              <div className="bg-[var(--color-surface-elevated)] border border-amber-200 rounded-lg px-4 py-3 text-sm text-amber-800">
                 <AlertCircle size={14} className="inline mr-1.5" />
                 After paying via UPI, upload your payment screenshot and enter the UTR number below.
               </div>
 
               {/* Screenshot file picker */}
               <div className="flex flex-col gap-1">
-                <label className="text-sm font-medium text-gray-700">Payment Screenshot</label>
+                <label className="text-sm font-medium text-[var(--color-text-secondary)]">Payment Screenshot</label>
                 <div
-                  className="flex items-center gap-3 rounded-lg border border-dashed border-gray-300 px-4 py-3 cursor-pointer hover:border-blue-400 transition-colors"
+                  className="flex items-center gap-3 rounded-lg border border-dashed border-[var(--color-border-strong)] px-4 py-3 cursor-pointer hover:border-blue-400 transition-colors"
                   onClick={() => fileRef.current?.click()}
                 >
                   <input
@@ -277,7 +277,7 @@ export default function SubscriptionPage() {
                     onChange={handleFileChange}
                   />
                   {uploading ? (
-                    <p className="text-sm text-gray-500">Uploading…</p>
+                    <p className="text-sm text-[var(--color-text-muted)]">Uploading…</p>
                   ) : screenshotFile ? (
                     <div className="flex items-center gap-3 w-full">
                       <img
@@ -286,7 +286,7 @@ export default function SubscriptionPage() {
                         className="h-12 w-12 rounded object-cover border"
                       />
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-gray-700 truncate">{screenshotFile.name}</p>
+                        <p className="text-sm font-medium text-[var(--color-text-secondary)] truncate">{screenshotFile.name}</p>
                         <p className="text-xs text-green-600">Uploaded successfully</p>
                       </div>
                       <Button
@@ -299,7 +299,7 @@ export default function SubscriptionPage() {
                       </Button>
                     </div>
                   ) : (
-                    <p className="text-sm text-gray-400">Click to upload screenshot (JPG, PNG, WebP)</p>
+                    <p className="text-sm text-[var(--color-text-muted)]">Click to upload screenshot (JPG, PNG, WebP)</p>
                   )}
                 </div>
                 {!screenshotFile && !uploading && (
@@ -336,7 +336,7 @@ export default function SubscriptionPage() {
           )}
 
           {latestPaymentRequest?.status === 'REJECTED' && (
-            <div className="mt-3 bg-red-50 border border-red-200 rounded-lg px-4 py-3 text-sm text-red-700">
+            <div className="mt-3 bg-[var(--color-surface-elevated)] border border-red-200 rounded-lg px-4 py-3 text-sm text-red-700">
               Your previous payment request was rejected. Please re-submit with correct details.
             </div>
           )}
@@ -345,20 +345,20 @@ export default function SubscriptionPage() {
 
       {/* Billing History */}
       {billingHistory && billingHistory.length > 0 && (
-        <div className="bg-white rounded-xl p-5 border border-gray-100 shadow-sm">
-          <h3 className="font-medium text-gray-700 mb-4 flex items-center gap-2">
-            <FileText size={16} className="text-gray-400" /> Billing History
+        <div className="bg-[var(--color-surface)] rounded-xl p-5 border border-[var(--color-border)] shadow-sm">
+          <h3 className="font-medium text-[var(--color-text-secondary)] mb-4 flex items-center gap-2">
+            <FileText size={16} className="text-[var(--color-text-muted)]" /> Billing History
           </h3>
           <div className="space-y-2">
             {billingHistory.map(bill => (
               <div key={bill.id} className="flex items-center justify-between py-2 border-b border-gray-50 last:border-0">
                 <div>
-                  <p className="text-sm font-medium text-gray-700">₹{Number(bill.amount).toLocaleString()}</p>
-                  <p className="text-xs text-gray-400">{dayjs(bill.createdAt).format('DD MMM YYYY')}</p>
+                  <p className="text-sm font-medium text-[var(--color-text-secondary)]">₹{Number(bill.amount).toLocaleString()}</p>
+                  <p className="text-xs text-[var(--color-text-muted)]">{dayjs(bill.createdAt).format('DD MMM YYYY')}</p>
                 </div>
                 <div className="text-right">
                   <Badge variant={bill.status === 'PAID' ? 'success' : 'warning'}>{bill.status}</Badge>
-                  {bill.paidAt && <p className="text-xs text-gray-400 mt-1">Paid {dayjs(bill.paidAt).format('DD MMM YYYY')}</p>}
+                  {bill.paidAt && <p className="text-xs text-[var(--color-text-muted)] mt-1">Paid {dayjs(bill.paidAt).format('DD MMM YYYY')}</p>}
                 </div>
               </div>
             ))}

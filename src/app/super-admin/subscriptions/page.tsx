@@ -51,10 +51,10 @@ export default function SubscriptionsPage() {
 
   return (
     <div className="max-w-2xl space-y-8">
-      <h2 className="text-xl font-semibold text-gray-800">Subscriptions</h2>
+      <h2 className="text-xl font-semibold text-[var(--color-text-primary)]">Subscriptions</h2>
 
-      <div className="bg-white rounded-xl p-6 border border-gray-100 shadow-sm">
-        <h3 className="font-medium text-gray-700 mb-4">Create Subscription</h3>
+      <div className="bg-[var(--color-surface)] rounded-xl p-6 border border-[var(--color-border)] shadow-sm">
+        <h3 className="font-medium text-[var(--color-text-secondary)] mb-4">Create Subscription</h3>
         <form onSubmit={hc(d => createMutation.mutate(d))} className="grid grid-cols-2 gap-4">
           <Select label="Tenant" options={tenantOptions} placeholder="Select Tenant" {...rc('tenantId')} error={ec.tenantId?.message} />
           <Select label="Plan" options={planOptions} placeholder="Select Plan" {...rc('planId')} error={ec.planId?.message} />
@@ -64,8 +64,8 @@ export default function SubscriptionsPage() {
         </form>
       </div>
 
-      <div className="bg-white rounded-xl p-6 border border-gray-100 shadow-sm">
-        <h3 className="font-medium text-gray-700 mb-4">Renew Subscription</h3>
+      <div className="bg-[var(--color-surface)] rounded-xl p-6 border border-[var(--color-border)] shadow-sm">
+        <h3 className="font-medium text-[var(--color-text-secondary)] mb-4">Renew Subscription</h3>
         <form onSubmit={hr(d => renewMutation.mutate(d))} className="grid grid-cols-2 gap-4">
           <Input label="Subscription ID" placeholder="sub_xxxx" {...rr('subscriptionId')} error={er.subscriptionId?.message} />
           <Input label="New End Date" type="date" {...rr('endDate')} error={er.endDate?.message} />

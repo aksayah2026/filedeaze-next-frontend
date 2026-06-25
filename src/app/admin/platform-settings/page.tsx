@@ -31,16 +31,16 @@ export default function PlatformSettingsPage() {
   const CheckField = ({ name, label }: { name: keyof AppSettings; label: string }) => (
     <div className="flex items-center gap-2">
       <input type="checkbox" id={name as string} {...register(name as keyof Omit<AppSettings, 'id'>)} className="h-4 w-4" />
-      <label htmlFor={name as string} className="text-sm text-gray-700">{label}</label>
+      <label htmlFor={name as string} className="text-sm text-[var(--color-text-secondary)]">{label}</label>
     </div>
   );
 
   return (
     <div className="max-w-2xl">
-      <h2 className="text-xl font-semibold text-gray-800 mb-6">Platform Settings</h2>
-      <form onSubmit={handleSubmit(d => saveMutation.mutate(d))} className="bg-white rounded-xl p-6 border border-gray-100 shadow-sm space-y-6">
+      <h2 className="text-xl font-semibold text-[var(--color-text-primary)] mb-6">Platform Settings</h2>
+      <form onSubmit={handleSubmit(d => saveMutation.mutate(d))} className="bg-[var(--color-surface)] rounded-xl p-6 border border-[var(--color-border)] shadow-sm space-y-6">
         <div>
-          <h3 className="font-medium text-gray-700 mb-4">Charges</h3>
+          <h3 className="font-medium text-[var(--color-text-secondary)] mb-4">Charges</h3>
           <div className="grid grid-cols-2 gap-4">
             <Input label="Platform Fee (₹)" type="number" step="0.01" {...register('platformFee', { valueAsNumber: true })} />
             <Input label="Tax (%)" type="number" step="0.01" {...register('taxPercentage', { valueAsNumber: true })} />
@@ -56,7 +56,7 @@ export default function PlatformSettingsPage() {
         </div>
 
         <div>
-          <h3 className="font-medium text-gray-700 mb-4">Discounts</h3>
+          <h3 className="font-medium text-[var(--color-text-secondary)] mb-4">Discounts</h3>
           <div className="grid grid-cols-3 gap-4">
             {(['daily', 'weekly', 'monthly'] as const).map(period => (
               <div key={period} className="flex flex-col gap-2">

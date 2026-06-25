@@ -35,7 +35,7 @@ export default function CustomersPage() {
 
   return (
     <div>
-      <h2 className="text-xl font-semibold text-gray-800 mb-6">Customers</h2>
+      <h2 className="text-xl font-semibold text-[var(--color-text-primary)] mb-6">Customers</h2>
       <div className="flex gap-3 mb-4">
         <Input placeholder="Search by name or phone..." value={search} onChange={e => setSearch(e.target.value)} className="w-72" />
         <Button variant="secondary" onClick={() => setQuery(search)}>Search</Button>

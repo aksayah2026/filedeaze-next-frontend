@@ -48,7 +48,7 @@ export default function PaymentsPage() {
       accessorKey: 'ticket.ticketNumber',
       header: 'Ticket',
       cell: ({ row }) => (
-        <span className="font-medium text-gray-800">
+        <span className="font-medium text-[var(--color-text-primary)]">
           {row.original.ticket?.ticketNumber ?? row.original.ticketId}
         </span>
       ),
@@ -57,7 +57,7 @@ export default function PaymentsPage() {
       accessorKey: 'amount',
       header: 'Amount',
       cell: ({ row }) => (
-        <span className="tabular-nums font-semibold text-gray-900">
+        <span className="tabular-nums font-semibold text-[var(--color-text-primary)]">
           ₹{row.original.amount.toLocaleString()}
         </span>
       ),
@@ -71,14 +71,14 @@ export default function PaymentsPage() {
       accessorKey: 'method',
       header: 'Method',
       cell: ({ row }) => (
-        <span className="text-gray-600">{row.original.method ?? '—'}</span>
+        <span className="text-[var(--color-text-secondary)]">{row.original.method ?? '—'}</span>
       ),
     },
     {
       accessorKey: 'createdAt',
       header: 'Date',
       cell: ({ row }) => (
-        <span className="text-xs text-gray-400 tabular-nums">
+        <span className="text-xs text-[var(--color-text-muted)] tabular-nums">
           {dayjs(row.original.createdAt).format('DD MMM YYYY')}
         </span>
       ),
@@ -106,22 +106,22 @@ export default function PaymentsPage() {
       {/* Page header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h2 className="text-2xl font-semibold tracking-tight text-gray-900">Payments</h2>
-          <p className="mt-0.5 text-sm text-gray-500">Track and verify collected payments</p>
+          <h2 className="text-2xl font-semibold tracking-tight text-[var(--color-text-primary)]">Payments</h2>
+          <p className="mt-0.5 text-sm text-[var(--color-text-muted)]">Track and verify collected payments</p>
         </div>
 
         {/* Stat card */}
-        <div className="flex items-center gap-4 rounded-xl border border-green-100 bg-white shadow-sm overflow-hidden">
+        <div className="flex items-center gap-4 rounded-xl border border-green-100 bg-[var(--color-surface)] shadow-sm overflow-hidden">
           <div className="self-stretch w-1.5 bg-green-500 shrink-0" />
           <div className="flex items-center gap-3 px-4 py-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-green-50 shrink-0">
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[var(--color-surface-elevated)] shrink-0">
               <DollarSign size={18} className="text-green-600" />
             </div>
             <div>
               <p className="text-xs font-medium uppercase tracking-widest text-green-600">
                 Total Verified
               </p>
-              <p className="text-xl font-bold tabular-nums text-gray-900">
+              <p className="text-xl font-bold tabular-nums text-[var(--color-text-primary)]">
                 ₹{totalVerified.toLocaleString()}
               </p>
             </div>
@@ -130,8 +130,8 @@ export default function PaymentsPage() {
       </div>
 
       {/* Filter bar */}
-      <div className="flex flex-wrap items-end gap-3 rounded-xl border border-gray-100 bg-white p-4 shadow-sm">
-        <div className="flex items-center gap-1.5 text-xs font-medium uppercase tracking-widest text-gray-400 self-center mr-1">
+      <div className="flex flex-wrap items-end gap-3 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4 shadow-sm">
+        <div className="flex items-center gap-1.5 text-xs font-medium uppercase tracking-widest text-[var(--color-text-muted)] self-center mr-1">
           <Filter size={13} />
           Filters
         </div>
@@ -147,11 +147,11 @@ export default function PaymentsPage() {
           className="w-40"
         />
         <div className="flex flex-col gap-1">
-          <label className="text-xs font-medium text-gray-500">From</label>
+          <label className="text-xs font-medium text-[var(--color-text-muted)]">From</label>
           <Input type="date" value={from} onChange={e => setFrom(e.target.value)} />
         </div>
         <div className="flex flex-col gap-1">
-          <label className="text-xs font-medium text-gray-500">To</label>
+          <label className="text-xs font-medium text-[var(--color-text-muted)]">To</label>
           <Input type="date" value={to} onChange={e => setTo(e.target.value)} />
         </div>
         <Button variant="secondary" onClick={() => setParams({ status, from, to })}>
@@ -160,13 +160,13 @@ export default function PaymentsPage() {
       </div>
 
       {/* Table */}
-      <div className="rounded-xl border border-gray-100 bg-white shadow-sm overflow-hidden">
+      <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-sm overflow-hidden">
         {isLoading ? (
           <div className="divide-y divide-gray-50">
             {/* Skeleton header */}
-            <div className="flex gap-4 bg-gray-50 px-4 py-3">
+            <div className="flex gap-4 bg-[var(--color-surface-elevated)] px-4 py-3">
               {[120, 80, 90, 80, 90, 60].map((w, i) => (
-                <div key={i} className="h-3 rounded bg-gray-200 animate-pulse" style={{ width: w }} />
+                <div key={i} className="h-3 rounded bg-[var(--color-border)] animate-pulse" style={{ width: w }} />
               ))}
             </div>
             {/* Skeleton rows */}
@@ -187,11 +187,11 @@ export default function PaymentsPage() {
           </div>
         ) : data.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 text-center">
-            <div className="flex h-14 w-14 items-center justify-center rounded-full bg-gray-100 mb-4">
-              <DollarSign size={24} className="text-gray-400" />
+            <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[var(--color-surface-elevated)] mb-4">
+              <DollarSign size={24} className="text-[var(--color-text-muted)]" />
             </div>
-            <p className="text-sm font-medium text-gray-700">No payments found</p>
-            <p className="mt-1 text-xs text-gray-400">Try adjusting your filters</p>
+            <p className="text-sm font-medium text-[var(--color-text-secondary)]">No payments found</p>
+            <p className="mt-1 text-xs text-[var(--color-text-muted)]">Try adjusting your filters</p>
           </div>
         ) : (
           <DataTable data={data} columns={columns} isLoading={false} />

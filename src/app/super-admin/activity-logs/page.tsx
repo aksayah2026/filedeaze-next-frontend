@@ -60,7 +60,7 @@ export default function ActivityLogsPage() {
       accessorKey: 'user.name',
       header: 'User',
       cell: ({ row }) => (
-        <span className="font-medium text-slate-800">
+        <span className="font-medium text-[var(--color-text-primary)]">
           {row.original.user?.name ?? row.original.userId}
         </span>
       ),
@@ -78,14 +78,14 @@ export default function ActivityLogsPage() {
       accessorKey: 'module',
       header: 'Module',
       cell: ({ row }) => (
-        <span className="text-slate-500 text-xs">{row.original.module ?? '—'}</span>
+        <span className="text-[var(--color-text-muted)] text-xs">{row.original.module ?? '—'}</span>
       ),
     },
     {
       accessorKey: 'action',
       header: 'Action',
       cell: ({ row }) => (
-        <code className="text-xs text-slate-700 bg-slate-100 px-2 py-0.5 rounded font-mono">
+        <code className="text-xs text-[var(--color-text-secondary)] bg-[var(--color-surface-elevated)] px-2 py-0.5 rounded font-mono">
           {row.original.action}
         </code>
       ),
@@ -94,14 +94,14 @@ export default function ActivityLogsPage() {
       accessorKey: 'ipAddress',
       header: 'IP Address',
       cell: ({ row }) => (
-        <span className="text-xs font-mono text-slate-500">{row.original.ipAddress ?? '—'}</span>
+        <span className="text-xs font-mono text-[var(--color-text-muted)]">{row.original.ipAddress ?? '—'}</span>
       ),
     },
     {
       accessorKey: 'createdAt',
       header: 'Time',
       cell: ({ row }) => (
-        <span className="text-xs text-slate-500">
+        <span className="text-xs text-[var(--color-text-muted)]">
           {dayjs(row.original.createdAt).format('DD MMM YYYY HH:mm')}
         </span>
       ),
@@ -113,12 +113,12 @@ export default function ActivityLogsPage() {
       {/* Page Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="h-9 w-9 rounded-xl bg-slate-100 flex items-center justify-center">
-            <Activity size={17} className="text-slate-600" />
+          <div className="h-9 w-9 rounded-xl bg-[var(--color-surface-elevated)] flex items-center justify-center">
+            <Activity size={17} className="text-[var(--color-text-secondary)]" />
           </div>
           <div>
-            <h2 className="text-xl font-bold text-slate-900">Activity Logs</h2>
-            <p className="text-sm text-slate-500 mt-0.5">Audit trail of all super admin actions</p>
+            <h2 className="text-xl font-bold text-[var(--color-text-primary)]">Activity Logs</h2>
+            <p className="text-sm text-[var(--color-text-muted)] mt-0.5">Audit trail of all super admin actions</p>
           </div>
         </div>
         <Button
@@ -131,7 +131,7 @@ export default function ActivityLogsPage() {
       </div>
 
       {/* Filter Bar */}
-      <div className="flex flex-wrap gap-3 items-end rounded-xl border border-slate-200 bg-white p-4 shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
+      <div className="flex flex-wrap gap-3 items-end rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4 shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
         <Select
           label="Entity"
           options={[
@@ -147,7 +147,7 @@ export default function ActivityLogsPage() {
           className="w-44"
         />
         <div className="flex flex-col gap-1.5">
-          <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-500 invisible">_</span>
+          <span className="text-[10px] font-semibold uppercase tracking-wide text-[var(--color-text-muted)] invisible">_</span>
           <Button
             variant="secondary"
             onClick={() => { setFilters({ entity }); setPage(1); }}
@@ -158,7 +158,7 @@ export default function ActivityLogsPage() {
 
         {/* Active filter chip */}
         {filters.entity && (
-          <div className="flex items-center gap-1.5 bg-blue-50 border border-blue-100 rounded-lg px-3 py-2 text-xs text-blue-700">
+          <div className="flex items-center gap-1.5 bg-[var(--color-surface-elevated)] border border-blue-100 rounded-lg px-3 py-2 text-xs text-blue-700">
             <span className="font-medium">Entity:</span> {filters.entity}
             <button
               onClick={() => { setEntity(''); setFilters({ entity: '' }); setPage(1); }}

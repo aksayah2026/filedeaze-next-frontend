@@ -34,7 +34,7 @@ export default function TechniciansReportPage() {
 
   return (
     <div>
-      <h2 className="text-xl font-semibold text-gray-800 mb-6">Technician Report</h2>
+      <h2 className="text-xl font-semibold text-[var(--color-text-primary)] mb-6">Technician Report</h2>
       <DataTable data={data} columns={columns} isLoading={isLoading} />
     </div>
   );

@@ -31,22 +31,22 @@ export function DataTable<T>({ data, columns, isLoading }: DataTableProps<T>) {
   if (isLoading) return <PageSpinner />;
 
   return (
-    <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-[0_1px_3px_rgba(0,0,0,0.03)]">
+    <div className="overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-[0_1px_3px_rgba(0,0,0,0.03)]">
       <div className="overflow-x-auto table-sticky-head">
-        <table className="min-w-full divide-y divide-slate-100">
-          <thead className="bg-slate-50/80">
+        <table className="min-w-full divide-y divide-[var(--color-border)]">
+          <thead className="bg-[var(--color-surface-elevated)]/80">
             {table.getHeaderGroups().map(hg => (
               <tr key={hg.id}>
                 {hg.headers.map(h => (
                   <th
                     key={h.id}
-                    className="px-4 py-3 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap"
+                    className="px-4 py-3 text-left text-[11px] font-semibold text-[var(--color-text-muted)] uppercase tracking-wider whitespace-nowrap"
                   >
                     {h.isPlaceholder ? null : (
                       <div
                         className={cn(
                           'flex items-center gap-1.5',
-                          h.column.getCanSort() ? 'cursor-pointer select-none hover:text-slate-700 transition-colors' : ''
+                          h.column.getCanSort() ? 'cursor-pointer select-none hover:text-[var(--color-text-secondary)] transition-colors' : ''
                         )}
                         onClick={h.column.getToggleSortingHandler()}
                       >
@@ -54,7 +54,7 @@ export function DataTable<T>({ data, columns, isLoading }: DataTableProps<T>) {
                         {h.column.getCanSort() && (
                           <span className={cn(
                             'transition-colors',
-                            h.column.getIsSorted() ? 'text-[var(--color-primary)]' : 'text-slate-300'
+                            h.column.getIsSorted() ? 'text-[var(--color-primary)]' : 'text-[var(--color-border-strong)]'
                           )}>
                             {h.column.getIsSorted() === 'asc' ? (
                               <ChevronUp size={12} />
@@ -72,7 +72,7 @@ export function DataTable<T>({ data, columns, isLoading }: DataTableProps<T>) {
               </tr>
             ))}
           </thead>
-          <tbody className="divide-y divide-slate-50 bg-white">
+          <tbody className="divide-y divide-[var(--color-border)] bg-[var(--color-surface)]">
             {table.getRowModel().rows.length === 0 ? (
               <tr>
                 <td colSpan={columns.length}>
@@ -85,14 +85,14 @@ export function DataTable<T>({ data, columns, isLoading }: DataTableProps<T>) {
                   key={row.id}
                   className={cn(
                     'group transition-colors duration-100',
-                    idx % 2 === 0 ? 'bg-white' : 'bg-slate-50/40',
+                    idx % 2 === 0 ? 'bg-[var(--color-surface)]' : 'bg-[var(--color-surface-elevated)]/40',
                     'hover:bg-[var(--color-primary-light)]/40'
                   )}
                 >
                   {row.getVisibleCells().map(cell => (
                     <td
                       key={cell.id}
-                      className="px-4 py-3 text-sm text-slate-700 whitespace-nowrap"
+                      className="px-4 py-3 text-sm text-[var(--color-text-secondary)] whitespace-nowrap"
                     >
                       {flexRender(cell.column.columnDef.cell, cell.getContext())}
                     </td>

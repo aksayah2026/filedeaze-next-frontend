@@ -78,7 +78,7 @@ export default function PaymentRequestsPage() {
   return (
     <div className="space-y-5">
       <div className="flex items-center justify-between">
-        <h2 className="text-xl font-semibold text-gray-800">Payment Requests</h2>
+        <h2 className="text-xl font-semibold text-[var(--color-text-primary)]">Payment Requests</h2>
         <div className="flex gap-2">
           {filterOptions.map(opt => (
             <button
@@ -87,7 +87,7 @@ export default function PaymentRequestsPage() {
               className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
                 filter === opt.value
                   ? 'bg-violet-600 text-white'
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  : 'bg-[var(--color-surface-elevated)] text-[var(--color-text-secondary)] hover:bg-[var(--color-border)]'
               }`}
             >
               {opt.label}
@@ -99,48 +99,48 @@ export default function PaymentRequestsPage() {
       {isLoading ? (
         <PageSpinner />
       ) : requests.length === 0 ? (
-        <div className="bg-white rounded-xl p-10 text-center border border-gray-100">
+        <div className="bg-[var(--color-surface)] rounded-xl p-10 text-center border border-[var(--color-border)]">
           <Clock size={32} className="text-gray-300 mx-auto mb-3" />
-          <p className="text-gray-400 text-sm">No {filter === 'PENDING_REVIEW' ? 'pending' : ''} payment requests.</p>
+          <p className="text-[var(--color-text-muted)] text-sm">No {filter === 'PENDING_REVIEW' ? 'pending' : ''} payment requests.</p>
         </div>
       ) : (
         <div className="space-y-4">
           {requests.map(req => (
-            <div key={req.id} className="bg-white rounded-xl p-5 border border-gray-100 shadow-sm">
+            <div key={req.id} className="bg-[var(--color-surface)] rounded-xl p-5 border border-[var(--color-border)] shadow-sm">
               <div className="flex items-start justify-between gap-4">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <p className="font-semibold text-gray-800">{req.tenant.companyName}</p>
-                    <span className="text-xs text-gray-400">({req.tenant.tenantCode})</span>
+                    <p className="font-semibold text-[var(--color-text-primary)]">{req.tenant.companyName}</p>
+                    <span className="text-xs text-[var(--color-text-muted)]">({req.tenant.tenantCode})</span>
                     <Badge variant={statusVariant[req.status]}>{req.status.replace(/_/g, ' ')}</Badge>
                   </div>
 
                   <div className="mt-3 grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm">
                     <div>
-                      <p className="text-xs text-gray-400">Plan</p>
-                      <p className="font-medium text-gray-700">{req.plan?.name ?? '—'}</p>
+                      <p className="text-xs text-[var(--color-text-muted)]">Plan</p>
+                      <p className="font-medium text-[var(--color-text-secondary)]">{req.plan?.name ?? '—'}</p>
                     </div>
                     <div>
-                      <p className="text-xs text-gray-400">Amount</p>
-                      <p className="font-medium text-gray-700">₹{Number(req.amount).toLocaleString()}</p>
+                      <p className="text-xs text-[var(--color-text-muted)]">Amount</p>
+                      <p className="font-medium text-[var(--color-text-secondary)]">₹{Number(req.amount).toLocaleString()}</p>
                     </div>
                     <div>
-                      <p className="text-xs text-gray-400">Reference</p>
-                      <p className="font-mono text-gray-700 text-xs">{req.paymentReference}</p>
+                      <p className="text-xs text-[var(--color-text-muted)]">Reference</p>
+                      <p className="font-mono text-[var(--color-text-secondary)] text-xs">{req.paymentReference}</p>
                     </div>
                     <div>
-                      <p className="text-xs text-gray-400">Submitted</p>
-                      <p className="font-medium text-gray-700">{dayjs(req.submittedAt).format('DD MMM YYYY, h:mm A')}</p>
+                      <p className="text-xs text-[var(--color-text-muted)]">Submitted</p>
+                      <p className="font-medium text-[var(--color-text-secondary)]">{dayjs(req.submittedAt).format('DD MMM YYYY, h:mm A')}</p>
                     </div>
                     {req.transactionReference && (
                       <div>
-                        <p className="text-xs text-gray-400">UTR / Txn ID</p>
-                        <p className="font-mono text-gray-700">{req.transactionReference}</p>
+                        <p className="text-xs text-[var(--color-text-muted)]">UTR / Txn ID</p>
+                        <p className="font-mono text-[var(--color-text-secondary)]">{req.transactionReference}</p>
                       </div>
                     )}
                     {req.screenshotUrl && (
                       <div className="col-span-2">
-                        <p className="text-xs text-gray-400 mb-1">Screenshot</p>
+                        <p className="text-xs text-[var(--color-text-muted)] mb-1">Screenshot</p>
                         <a
                           href={req.screenshotUrl}
                           target="_blank"
@@ -153,14 +153,14 @@ export default function PaymentRequestsPage() {
                     )}
                     {(req.approvedAt ?? req.rejectedAt) && (
                       <div>
-                        <p className="text-xs text-gray-400">Reviewed</p>
-                        <p className="font-medium text-gray-700">{dayjs(req.approvedAt ?? req.rejectedAt).format('DD MMM YYYY')}</p>
+                        <p className="text-xs text-[var(--color-text-muted)]">Reviewed</p>
+                        <p className="font-medium text-[var(--color-text-secondary)]">{dayjs(req.approvedAt ?? req.rejectedAt).format('DD MMM YYYY')}</p>
                       </div>
                     )}
                     {req.rejectionNotes && (
                       <div className="col-span-2">
-                        <p className="text-xs text-gray-400">Rejection Reason</p>
-                        <p className="text-gray-700">{req.rejectionNotes}</p>
+                        <p className="text-xs text-[var(--color-text-muted)]">Rejection Reason</p>
+                        <p className="text-[var(--color-text-secondary)]">{req.rejectionNotes}</p>
                       </div>
                     )}
                   </div>
@@ -189,7 +189,7 @@ export default function PaymentRequestsPage() {
               {rejectId === req.id && (
                 <form
                   onSubmit={handleSubmit(d => rejectMutation.mutate({ id: req.id, rejectionNotes: d.rejectionNotes }))}
-                  className="mt-4 pt-4 border-t border-gray-100 flex gap-3 items-end"
+                  className="mt-4 pt-4 border-t border-[var(--color-border)] flex gap-3 items-end"
                 >
                   <Input
                     label="Rejection Reason"

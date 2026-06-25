@@ -27,26 +27,28 @@ export function StatsCard({
   return (
     <div
       className={cn(
-        'group relative overflow-hidden rounded-xl bg-white border border-slate-100 p-5 card-hover',
-        'shadow-[0_1px_3px_rgba(0,0,0,0.03)] animate-fe-fade-in'
+        'group relative overflow-hidden rounded-xl bg-[var(--color-surface)] border border-[var(--color-border)] p-5 card-hover',
+        'shadow-[var(--shadow-sm)] animate-fe-fade-in transition-all duration-250 ease-in-out'
       )}
     >
-      {/* Left accent bar */}
-      <div className={cn('absolute left-0 top-0 bottom-0 w-1 rounded-l-xl', accentColor)} />
+      {/* Left accent bar — slim 2px, more premium */}
+      <div className={cn('absolute left-0 top-3 bottom-3 w-0.5 rounded-full', accentColor)} />
 
       <div className="flex items-start justify-between">
-        <div className="flex-1 min-w-0 pr-3">
-          <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1 select-none">
+        <div className="flex-1 min-w-0 pr-3 pl-2">
+          <p className="text-[10px] font-semibold text-[var(--color-text-muted)] uppercase tracking-widest mb-1.5 select-none">
             {title}
           </p>
-          <p className="text-2xl font-bold text-slate-900 tabular-nums">{value}</p>
+          <p className="text-2xl font-bold text-[var(--color-text-primary)] tabular-nums">{value}</p>
           {subtitle && (
-            <p className="mt-1 text-xs text-slate-400 truncate">{subtitle}</p>
+            <p className="mt-1 text-xs text-[var(--color-text-muted)] truncate">{subtitle}</p>
           )}
           {trend && (
             <div className={cn(
-              'mt-2 inline-flex items-center gap-1 text-xs font-semibold',
-              trendPositive ? 'text-emerald-600' : 'text-red-500'
+              'mt-2 inline-flex items-center gap-1 text-xs font-semibold px-1.5 py-0.5 rounded-md',
+              trendPositive
+                ? 'text-[var(--color-success)] bg-[var(--color-success-light)]'
+                : 'text-[var(--color-danger)] bg-[var(--color-danger-light)]'
             )}>
               {trendPositive
                 ? <TrendingUp size={11} />
@@ -59,11 +61,11 @@ export function StatsCard({
 
         {Icon && (
           <div className={cn(
-            'flex-shrink-0 h-11 w-11 rounded-xl flex items-center justify-center',
+            'flex-shrink-0 h-10 w-10 rounded-xl flex items-center justify-center',
             'transition-transform duration-200 group-hover:scale-105',
-            iconBg
+            'bg-[var(--color-surface-elevated)]',
           )}>
-            <Icon size={20} className={iconColor} />
+            <Icon size={18} className={iconColor} />
           </div>
         )}
       </div>

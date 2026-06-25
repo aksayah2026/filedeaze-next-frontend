@@ -65,7 +65,7 @@ export default function TicketDetailPage() {
       {/* Back link */}
       <Link
         href="/manager/tickets"
-        className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-500 hover:text-slate-700 transition-colors"
+        className="inline-flex items-center gap-1.5 text-xs font-medium text-[var(--color-text-muted)] hover:text-[var(--color-text-secondary)] transition-colors"
       >
         <ChevronLeft size={14} />
         Back to Tickets
@@ -73,9 +73,9 @@ export default function TicketDetailPage() {
 
       <div className="flex items-start justify-between">
         <div>
-          <p className="text-sm text-gray-400 font-mono">{ticket.ticketNumber}</p>
-          <h2 className="text-xl font-semibold text-gray-800 mt-0.5">{ticket.customer?.name}</h2>
-          <p className="text-sm text-gray-500">{ticket.customer?.phone}</p>
+          <p className="text-sm text-[var(--color-text-muted)] font-mono">{ticket.ticketNumber}</p>
+          <h2 className="text-xl font-semibold text-[var(--color-text-primary)] mt-0.5">{ticket.customer?.name}</h2>
+          <p className="text-sm text-[var(--color-text-muted)]">{ticket.customer?.phone}</p>
         </div>
         <div className="flex flex-col items-end gap-2">
           <TicketStatusBadge status={ticket.status} />
@@ -89,54 +89,54 @@ export default function TicketDetailPage() {
       </div>
 
       <div className="grid grid-cols-2 gap-4">
-        <div className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm text-sm space-y-2">
-          <h3 className="font-medium text-gray-700">Details</h3>
-          <div className="text-gray-600 space-y-1">
-            <p><span className="text-gray-400">Category:</span> {ticket.serviceCategory?.name ?? '—'}</p>
-            <p><span className="text-gray-400">Sub Category:</span> {ticket.subCategory?.name ?? '—'}</p>
-            <p><span className="text-gray-400">Technician:</span> {ticket.technician?.name ?? 'Unassigned'}</p>
-            <p><span className="text-gray-400">Scheduled:</span> {ticket.scheduledAt ? dayjs(ticket.scheduledAt).format('DD MMM YYYY, HH:mm') : '—'}</p>
-            <p><span className="text-gray-400">Created:</span> {dayjs(ticket.createdAt).format('DD MMM YYYY, HH:mm')}</p>
+        <div className="bg-[var(--color-surface)] rounded-xl p-4 border border-[var(--color-border)] shadow-sm text-sm space-y-2">
+          <h3 className="font-medium text-[var(--color-text-secondary)]">Details</h3>
+          <div className="text-[var(--color-text-secondary)] space-y-1">
+            <p><span className="text-[var(--color-text-muted)]">Category:</span> {ticket.serviceCategory?.name ?? '—'}</p>
+            <p><span className="text-[var(--color-text-muted)]">Sub Category:</span> {ticket.subCategory?.name ?? '—'}</p>
+            <p><span className="text-[var(--color-text-muted)]">Technician:</span> {ticket.technician?.name ?? 'Unassigned'}</p>
+            <p><span className="text-[var(--color-text-muted)]">Scheduled:</span> {ticket.scheduledAt ? dayjs(ticket.scheduledAt).format('DD MMM YYYY, HH:mm') : '—'}</p>
+            <p><span className="text-[var(--color-text-muted)]">Created:</span> {dayjs(ticket.createdAt).format('DD MMM YYYY, HH:mm')}</p>
           </div>
         </div>
 
-        <div className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm text-sm space-y-2">
-          <h3 className="font-medium text-gray-700">Payment</h3>
+        <div className="bg-[var(--color-surface)] rounded-xl p-4 border border-[var(--color-border)] shadow-sm text-sm space-y-2">
+          <h3 className="font-medium text-[var(--color-text-secondary)]">Payment</h3>
           {ticket.payment ? (
-            <div className="space-y-1 text-gray-600">
+            <div className="space-y-1 text-[var(--color-text-secondary)]">
               <div className="flex items-center gap-2"><PaymentStatusBadge status={ticket.payment.status} /></div>
-              <p><span className="text-gray-400">Amount:</span> ₹{ticket.payment.amount.toLocaleString()}</p>
-              <p><span className="text-gray-400">Method:</span> {ticket.payment.method ?? '—'}</p>
+              <p><span className="text-[var(--color-text-muted)]">Amount:</span> ₹{ticket.payment.amount.toLocaleString()}</p>
+              <p><span className="text-[var(--color-text-muted)]">Method:</span> {ticket.payment.method ?? '—'}</p>
             </div>
-          ) : <p className="text-gray-400">No payment yet</p>}
+          ) : <p className="text-[var(--color-text-muted)]">No payment yet</p>}
 
           {ticket.feedback && (
             <>
-              <h3 className="font-medium text-gray-700 mt-3">Feedback</h3>
+              <h3 className="font-medium text-[var(--color-text-secondary)] mt-3">Feedback</h3>
               <div className="flex items-center gap-1">
                 {Array.from({ length: 5 }).map((_, i) => (
                   <Star key={i} size={14} className={i < ticket.feedback!.rating ? 'fill-yellow-400 text-yellow-400' : 'text-gray-200'} />
                 ))}
-                <span className="text-gray-500 ml-1 text-xs">{ticket.feedback.review}</span>
+                <span className="text-[var(--color-text-muted)] ml-1 text-xs">{ticket.feedback.review}</span>
               </div>
             </>
           )}
         </div>
       </div>
 
-      <div className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm">
-        <h3 className="font-medium text-gray-700 mb-3">Status Timeline</h3>
+      <div className="bg-[var(--color-surface)] rounded-xl p-4 border border-[var(--color-border)] shadow-sm">
+        <h3 className="font-medium text-[var(--color-text-secondary)] mb-3">Status Timeline</h3>
         <div className="space-y-3">
           {(ticket.statusLogs ?? []).map((log, i) => (
             <div key={log.id} className="flex gap-3">
               <div className="flex flex-col items-center">
-                <div className={`h-2.5 w-2.5 rounded-full mt-1 ${i === 0 ? 'bg-blue-500' : 'bg-gray-300'}`} />
-                {i < (ticket.statusLogs?.length ?? 0) - 1 && <div className="flex-1 w-px bg-gray-200 mt-1" />}
+                <div className={`h-2.5 w-2.5 rounded-full mt-1 ${i === 0 ? 'bg-blue-500' : 'bg-[var(--color-border-strong)]'}`} />
+                {i < (ticket.statusLogs?.length ?? 0) - 1 && <div className="flex-1 w-px bg-[var(--color-border)] mt-1" />}
               </div>
               <div className="pb-3">
                 <TicketStatusBadge status={log.status} />
-                <p className="text-xs text-gray-400 mt-0.5">{dayjs(log.createdAt).format('DD MMM YYYY, HH:mm')}</p>
-                {log.notes && <p className="text-xs text-gray-500 mt-0.5">{log.notes}</p>}
+                <p className="text-xs text-[var(--color-text-muted)] mt-0.5">{dayjs(log.createdAt).format('DD MMM YYYY, HH:mm')}</p>
+                {log.notes && <p className="text-xs text-[var(--color-text-muted)] mt-0.5">{log.notes}</p>}
               </div>
             </div>
           ))}
@@ -144,21 +144,21 @@ export default function TicketDetailPage() {
       </div>
 
       {ticket.images && ticket.images.length > 0 && (
-        <div className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm">
-          <h3 className="font-medium text-gray-700 mb-3">Work Photos</h3>
+        <div className="bg-[var(--color-surface)] rounded-xl p-4 border border-[var(--color-border)] shadow-sm">
+          <h3 className="font-medium text-[var(--color-text-secondary)] mb-3">Work Photos</h3>
           <div className="grid grid-cols-2 gap-4">
             {(['BEFORE', 'AFTER'] as TicketImage['type'][]).map(type => {
               const img = ticket.images!.find(i => i.type === type);
               return (
                 <div key={type}>
-                  <p className="text-xs text-gray-400 mb-2 uppercase tracking-wide">{type}</p>
+                  <p className="text-xs text-[var(--color-text-muted)] mb-2 uppercase tracking-wide">{type}</p>
                   {img ? (
                     <a href={img.imageUrl} target="_blank" rel="noopener noreferrer">
-                      <img src={img.imageUrl} alt={type} className="rounded-lg w-full object-cover aspect-video border border-gray-100 hover:opacity-90 transition-opacity" />
+                      <img src={img.imageUrl} alt={type} className="rounded-lg w-full object-cover aspect-video border border-[var(--color-border)] hover:opacity-90 transition-opacity" />
                     </a>
                   ) : (
-                    <div className="rounded-lg bg-gray-50 border border-dashed border-gray-200 aspect-video flex items-center justify-center">
-                      <p className="text-xs text-gray-400">No photo</p>
+                    <div className="rounded-lg bg-[var(--color-surface-elevated)] border border-dashed border-[var(--color-border)] aspect-video flex items-center justify-center">
+                      <p className="text-xs text-[var(--color-text-muted)]">No photo</p>
                     </div>
                   )}
                 </div>
@@ -167,9 +167,9 @@ export default function TicketDetailPage() {
           </div>
           {ticket.images.find(i => i.type === 'SIGNATURE') && (
             <div className="mt-4">
-              <p className="text-xs text-gray-400 mb-2 uppercase tracking-wide">Customer Signature</p>
+              <p className="text-xs text-[var(--color-text-muted)] mb-2 uppercase tracking-wide">Customer Signature</p>
               <a href={ticket.images.find(i => i.type === 'SIGNATURE')!.imageUrl} target="_blank" rel="noopener noreferrer">
-                <img src={ticket.images.find(i => i.type === 'SIGNATURE')!.imageUrl} alt="Signature" className="rounded-lg h-20 border border-gray-100 hover:opacity-90 transition-opacity" />
+                <img src={ticket.images.find(i => i.type === 'SIGNATURE')!.imageUrl} alt="Signature" className="rounded-lg h-20 border border-[var(--color-border)] hover:opacity-90 transition-opacity" />
               </a>
             </div>
           )}

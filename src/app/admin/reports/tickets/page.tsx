@@ -41,9 +41,9 @@ export default function TicketsReportPage() {
 
   return (
     <div className="space-y-6">
-      <h2 className="text-xl font-semibold text-gray-800">Ticket Report</h2>
+      <h2 className="text-xl font-semibold text-[var(--color-text-primary)]">Ticket Report</h2>
 
-      <div className="flex flex-wrap gap-3 items-end rounded-xl border border-gray-100 bg-white p-4 shadow-sm">
+      <div className="flex flex-wrap gap-3 items-end rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4 shadow-sm">
         <Input 
           label="From" 
           type="date" 
@@ -76,12 +76,12 @@ export default function TicketsReportPage() {
       </div>
 
       {isLoading ? <PageSpinner /> : error ? (
-        <div className="rounded-xl border border-red-100 bg-red-50 p-6 text-sm text-red-600">
+        <div className="rounded-xl border border-red-100 bg-[var(--color-surface-elevated)] p-6 text-sm text-red-600">
           Failed to load ticket report. Please try again.
         </div>
       ) : mounted && chartData.length > 0 ? (
-        <div className="bg-white rounded-xl p-6 border border-gray-100 shadow-sm max-w-xl">
-          <h3 className="text-sm font-medium text-gray-700 mb-4">Tickets by Status</h3>
+        <div className="bg-[var(--color-surface)] rounded-xl p-6 border border-[var(--color-border)] shadow-sm max-w-xl">
+          <h3 className="text-sm font-medium text-[var(--color-text-secondary)] mb-4">Tickets by Status</h3>
           <ResponsiveContainer width="100%" height={320}>
             <PieChart>
               <Pie
@@ -104,7 +104,7 @@ export default function TicketsReportPage() {
           </ResponsiveContainer>
         </div>
       ) : !isLoading && chartData.length === 0 ? (
-        <p className="text-sm text-gray-400">No ticket data for this period.</p>
+        <p className="text-sm text-[var(--color-text-muted)]">No ticket data for this period.</p>
       ) : null}
     </div>
   );

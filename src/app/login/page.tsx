@@ -135,16 +135,16 @@ export default function LoginPage() {
               <Zap size={30} className="text-white" />
             </div>
             <p className="text-white text-2xl font-bold tracking-tight">FieldEaze Platform</p>
-            <p className="text-slate-500 text-sm mt-1">Platform Administration</p>
+            <p className="text-[var(--color-text-muted)] text-sm mt-1">Platform Administration</p>
           </div>
         ) : brandingState === 'error' ? (
           // Branding failed — generic fallback
           <div className="flex flex-col items-center mb-8">
             <div className="h-16 w-16 rounded-2xl bg-slate-800 flex items-center justify-center shadow-lg mb-4">
-              <ShieldCheck size={28} className="text-slate-500" />
+              <ShieldCheck size={28} className="text-[var(--color-text-muted)]" />
             </div>
             <p className="text-white text-xl font-bold">Workspace Not Found</p>
-            <p className="text-slate-500 text-sm mt-1">Check the URL and try again</p>
+            <p className="text-[var(--color-text-muted)] text-sm mt-1">Check the URL and try again</p>
           </div>
         ) : (
           // Tenant branding
@@ -153,7 +153,7 @@ export default function LoginPage() {
               <img
                 src={branding.logoUrl}
                 alt={branding.companyName}
-                className="h-20 w-20 rounded-2xl object-contain bg-white p-2 shadow-lg mb-4"
+                className="h-20 w-20 rounded-2xl object-contain bg-[var(--color-surface)] p-2 shadow-lg mb-4"
               />
             ) : (
               <div
@@ -166,7 +166,7 @@ export default function LoginPage() {
             <p className="text-white text-2xl font-bold tracking-tight text-center">
               {branding?.companyName}
             </p>
-            <p className="text-slate-500 text-sm mt-1">Admin &amp; Manager Portal</p>
+            <p className="text-[var(--color-text-muted)] text-sm mt-1">Admin &amp; Manager Portal</p>
             {branding?.status === 'TRIAL' && (
               <div className="mt-3 flex items-center gap-1.5 bg-amber-500/10 border border-amber-500/20 rounded-lg px-3 py-1.5">
                 <Clock size={12} className="text-amber-400 shrink-0" />
@@ -199,7 +199,7 @@ export default function LoginPage() {
               <h2 className="text-white text-lg font-semibold">
                 {isSuper ? 'Super Admin Sign In' : 'Welcome back'}
               </h2>
-              <p className="text-slate-400 text-sm mt-1">
+              <p className="text-[var(--color-text-muted)] text-sm mt-1">
                 {isSuper
                   ? 'Sign in to access the FieldEaze admin dashboard.'
                   : 'Sign in to continue to your portal.'}
@@ -238,7 +238,7 @@ export default function LoginPage() {
                   <button
                     type="button"
                     onClick={() => setShowPw(v => !v)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 transition-colors"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--color-text-muted)] hover:text-slate-300 transition-colors"
                   >
                     {showPw ? <EyeOff size={16} /> : <Eye size={16} />}
                   </button>
@@ -272,7 +272,7 @@ export default function LoginPage() {
           </div>
         )}
 
-        <p className="text-center text-slate-700 text-xs mt-6">Powered by FieldEaze</p>
+        <p className="text-center text-[var(--color-text-secondary)] text-xs mt-6">Powered by FieldEaze</p>
       </div>
     </div>
   );

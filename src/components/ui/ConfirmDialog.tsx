@@ -25,12 +25,12 @@ export function ConfirmDialog({
     <Modal open={open} onClose={onClose} size="sm">
       <div className="flex flex-col items-center text-center gap-4">
         {/* Warning icon */}
-        <div className="h-12 w-12 rounded-full bg-red-50 flex items-center justify-center">
+        <div className="h-12 w-12 rounded-full bg-[var(--color-surface-elevated)] flex items-center justify-center">
           <AlertTriangle size={22} className="text-red-500" />
         </div>
         <div>
-          <h3 className="text-base font-semibold text-slate-900 mb-1.5">{title}</h3>
-          <p className="text-sm text-slate-500 leading-relaxed">{message}</p>
+          <h3 className="text-base font-semibold text-[var(--color-text-primary)] mb-1.5">{title}</h3>
+          <p className="text-sm text-[var(--color-text-muted)] leading-relaxed">{message}</p>
         </div>
         <div className="flex gap-3 w-full mt-1">
           <Button

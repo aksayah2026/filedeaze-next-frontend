@@ -37,13 +37,13 @@ export default function FeedbackPage() {
     { accessorKey: 'customer.name', header: 'Customer', cell: ({ row }) => row.original.customer?.name ?? '—' },
     { accessorKey: 'technician.name', header: 'Technician', cell: ({ row }) => row.original.technician?.name ?? '—' },
     { accessorKey: 'rating', header: 'Rating', cell: ({ row }) => <Stars rating={row.original.rating} /> },
-    { accessorKey: 'review', header: 'Review', cell: ({ row }) => <span className="text-gray-500 text-xs">{row.original.review ?? '—'}</span> },
+    { accessorKey: 'review', header: 'Review', cell: ({ row }) => <span className="text-[var(--color-text-muted)] text-xs">{row.original.review ?? '—'}</span> },
     { accessorKey: 'createdAt', header: 'Date', cell: ({ row }) => dayjs(row.original.createdAt).format('DD MMM YYYY') },
   ];
 
   return (
     <div>
-      <h2 className="text-xl font-semibold text-gray-800 mb-6">Feedback</h2>
+      <h2 className="text-xl font-semibold text-[var(--color-text-primary)] mb-6">Feedback</h2>
       <div className="flex gap-3 mb-4 items-end">
         <Input type="date" value={from} onChange={e => setFrom(e.target.value)} />
         <Input type="date" value={to} onChange={e => setTo(e.target.value)} />

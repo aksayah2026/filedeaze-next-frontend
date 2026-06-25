@@ -47,10 +47,10 @@ export default function SuperAdminLogin() {
             <Zap size={24} className="text-white" />
           </div>
           <h1 className="text-xl font-bold text-white">FieldEaze</h1>
-          <p className="text-sm text-slate-400 mt-1">Super Admin Portal</p>
+          <p className="text-sm text-[var(--color-text-muted)] mt-1">Super Admin Portal</p>
         </div>
-        <form onSubmit={handleSubmit(onSubmit)} className="bg-white rounded-2xl p-8 shadow-2xl space-y-4">
-          <h2 className="text-lg font-semibold text-gray-800 mb-2">Sign In</h2>
+        <form onSubmit={handleSubmit(onSubmit)} className="bg-[var(--color-surface)] rounded-2xl p-8 shadow-2xl space-y-4">
+          <h2 className="text-lg font-semibold text-[var(--color-text-primary)] mb-2">Sign In</h2>
           <Input label="Email" type="email" placeholder="admin@fieldeaze.com" {...register('email')} error={errors.email?.message} />
           <Input label="Password" type="password" placeholder="••••••••" {...register('password')} error={errors.password?.message} />
           <Button type="submit" loading={isSubmitting} className="w-full mt-2">Sign In</Button>

@@ -71,7 +71,7 @@ export default function PaymentHistoryPage() {
       id: 'ref',
       header: 'Ref',
       cell: ({ row }) => (
-        <span className="font-mono text-xs text-gray-500">{row.original.id.slice(0, 8).toUpperCase()}</span>
+        <span className="font-mono text-xs text-[var(--color-text-muted)]">{row.original.id.slice(0, 8).toUpperCase()}</span>
       ),
     },
     { accessorKey: 'tenant.companyName', header: 'Tenant', cell: ({ row }) => row.original.tenant?.companyName ?? '—' },
@@ -98,15 +98,15 @@ export default function PaymentHistoryPage() {
       accessorKey: 'paidAt',
       header: 'Payment Date',
       cell: ({ row }) => row.original.paidAt
-        ? <span className="text-xs text-gray-500">{dayjs(row.original.paidAt).format('DD MMM YYYY')}</span>
-        : <span className="text-xs text-gray-400">—</span>,
+        ? <span className="text-xs text-[var(--color-text-muted)]">{dayjs(row.original.paidAt).format('DD MMM YYYY')}</span>
+        : <span className="text-xs text-[var(--color-text-muted)]">—</span>,
     },
     {
       id: 'endDate',
       header: 'Sub. End Date',
       cell: ({ row }) => row.original.subscription?.endDate
-        ? <span className="text-xs text-gray-500">{dayjs(row.original.subscription.endDate).format('DD MMM YYYY')}</span>
-        : <span className="text-xs text-gray-400">—</span>,
+        ? <span className="text-xs text-[var(--color-text-muted)]">{dayjs(row.original.subscription.endDate).format('DD MMM YYYY')}</span>
+        : <span className="text-xs text-[var(--color-text-muted)]">—</span>,
     },
   ];
 
@@ -114,8 +114,8 @@ export default function PaymentHistoryPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-semibold tracking-tight text-gray-900">Payment History</h2>
-          <p className="mt-0.5 text-sm text-gray-500">Subscription payment records across all tenants</p>
+          <h2 className="text-2xl font-semibold tracking-tight text-[var(--color-text-primary)]">Payment History</h2>
+          <p className="mt-0.5 text-sm text-[var(--color-text-muted)]">Subscription payment records across all tenants</p>
         </div>
         <Button
           variant="secondary"
@@ -129,7 +129,7 @@ export default function PaymentHistoryPage() {
       {/* Summary */}
       {data?.summary && (
         <div className="grid grid-cols-2 gap-4 max-w-xs">
-          <div className="bg-green-50 rounded-xl p-4 border border-green-100">
+          <div className="bg-[var(--color-surface-elevated)] rounded-xl p-4 border border-green-100">
             <p className="text-xs text-green-600">Total Paid</p>
             <p className="text-xl font-bold text-green-700 tabular-nums">₹{data.summary.totalPaid.toLocaleString()}</p>
           </div>
@@ -141,7 +141,7 @@ export default function PaymentHistoryPage() {
       )}
 
       {/* Filters */}
-      <div className="flex flex-wrap gap-3 items-end rounded-xl border border-gray-100 bg-white p-4 shadow-sm">
+      <div className="flex flex-wrap gap-3 items-end rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4 shadow-sm">
         <Select
           options={tenantOptions}
           value={tenantId}
@@ -159,7 +159,7 @@ export default function PaymentHistoryPage() {
           className="w-36"
         />
         <div className="flex flex-col gap-1">
-          <label className="text-xs font-medium text-gray-500">From</label>
+          <label className="text-xs font-medium text-[var(--color-text-muted)]">From</label>
           <Input 
             type="date" 
             value={from} 
@@ -174,7 +174,7 @@ export default function PaymentHistoryPage() {
           />
         </div>
         <div className="flex flex-col gap-1">
-          <label className="text-xs font-medium text-gray-500">To</label>
+          <label className="text-xs font-medium text-[var(--color-text-muted)]">To</label>
           <Input 
             type="date" 
             value={to} 

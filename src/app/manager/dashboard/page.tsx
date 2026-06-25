@@ -14,11 +14,11 @@ export default function ManagerDashboardPage() {
   });
 
   return (
-    <div className="space-y-6 animate-fe-fade-in bg-[#F8FAFC]">
+    <div className="space-y-6 animate-fe-fade-in">
       {/* Page Header */}
       <div>
-        <h2 className="text-xl font-bold text-slate-900">Dashboard</h2>
-        <p className="text-sm text-slate-500 mt-0.5">Manager-wide metrics and performance overview</p>
+        <h2 className="text-xl font-bold text-[var(--color-text-primary)] transition-colors duration-250">Dashboard</h2>
+        <p className="text-sm text-[var(--color-text-muted)] mt-0.5 transition-colors duration-250">Manager-wide metrics and performance overview</p>
       </div>
 
       {/* KPI Grid */}
@@ -34,16 +34,16 @@ export default function ManagerDashboardPage() {
             title="Total Tickets"
             value={data.totalTickets}
             icon={Ticket}
-            iconBg="bg-slate-100"
-            iconColor="text-slate-600"
-            accentColor="bg-slate-400"
+            iconBg="bg-[var(--color-surface-elevated)]"
+            iconColor="text-[var(--color-text-secondary)]"
+            accentColor="bg-[var(--color-surface-elevated)]"
             subtitle="All tickets in system"
           />
           <StatsCard
             title="New Tickets"
             value={data.newTickets}
             icon={ClipboardList}
-            iconBg="bg-violet-50"
+            iconBg="bg-[var(--color-surface-elevated)]"
             iconColor="text-violet-650"
             accentColor="bg-violet-500"
             subtitle="Awaiting assignment"
@@ -52,7 +52,7 @@ export default function ManagerDashboardPage() {
             title="Assigned"
             value={data.assignedTickets}
             icon={ClipboardCheck}
-            iconBg="bg-blue-50"
+            iconBg="bg-[var(--color-surface-elevated)]"
             iconColor="text-blue-650"
             accentColor="bg-blue-500"
             subtitle="Assigned to technicians"
@@ -70,7 +70,7 @@ export default function ManagerDashboardPage() {
             title="Pending"
             value={data.pendingTickets}
             icon={AlertCircle}
-            iconBg="bg-amber-50"
+            iconBg="bg-[var(--color-surface-elevated)]"
             iconColor="text-amber-655"
             accentColor="bg-amber-500"
             subtitle="On hold or blocked"
@@ -79,7 +79,7 @@ export default function ManagerDashboardPage() {
             title="Completed"
             value={data.completedTickets}
             icon={CheckCircle}
-            iconBg="bg-emerald-50"
+            iconBg="bg-[var(--color-surface-elevated)]"
             iconColor="text-emerald-600"
             accentColor="bg-emerald-500"
             subtitle="Successfully resolved"
@@ -88,7 +88,7 @@ export default function ManagerDashboardPage() {
             title="Technicians"
             value={data.totalTechnicians}
             icon={Users}
-            iconBg="bg-indigo-50"
+            iconBg="bg-[var(--color-surface-elevated)]"
             iconColor="text-indigo-655"
             accentColor="bg-indigo-500"
             subtitle="Active service agents"

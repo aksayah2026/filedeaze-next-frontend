@@ -79,10 +79,10 @@ export default function TenantsPage() {
       header: 'Company',
       cell: ({ row }) => (
         <div className="flex items-center gap-2.5">
-          <div className="h-7 w-7 rounded-lg bg-blue-50 flex items-center justify-center shrink-0">
-            <Building2 size={13} className="text-blue-600" />
+          <div className="h-7 w-7 rounded-lg bg-[var(--color-primary-light)] flex items-center justify-center shrink-0">
+            <Building2 size={13} className="text-[var(--color-primary)]" />
           </div>
-          <span className="font-medium text-slate-900">{row.original.companyName}</span>
+          <span className="font-medium text-[var(--color-text-primary)]">{row.original.companyName}</span>
         </div>
       ),
     },
@@ -90,7 +90,7 @@ export default function TenantsPage() {
       accessorKey: 'tenantCode',
       header: 'Code',
       cell: ({ row }) => (
-        <code className="text-xs bg-slate-100 text-slate-700 px-2 py-0.5 rounded-md font-mono">
+        <code className="text-xs bg-[var(--color-surface-elevated)] text-[var(--color-text-muted)] px-2 py-0.5 rounded-md font-mono border border-[var(--color-border)]">
           {row.original.tenantCode}
         </code>
       ),
@@ -107,14 +107,14 @@ export default function TenantsPage() {
       header: 'Plan',
       cell: ({ row }) => {
         const name = row.original.plan?.name;
-        if (!name) return <span className="text-slate-400">—</span>;
+        if (!name) return <span className="text-[var(--color-text-muted)]">—</span>;
         const colors: Record<string, string> = {
-          STARTER: 'bg-slate-100 text-slate-700',
-          PROFESSIONAL: 'bg-blue-50 text-blue-700',
-          ENTERPRISE: 'bg-violet-50 text-violet-700',
+          STARTER: 'bg-[var(--color-surface-elevated)] text-[var(--color-text-muted)] border border-[var(--color-border)]',
+          PROFESSIONAL: 'bg-[var(--color-primary-light)] text-[var(--color-primary)]',
+          ENTERPRISE: 'bg-[rgba(122,90,248,0.12)] text-[#7A5AF8]',
         };
         return (
-          <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${colors[name] ?? 'bg-slate-100 text-slate-600'}`}>
+          <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${colors[name] ?? 'bg-[var(--color-surface-elevated)] text-[var(--color-text-muted)]'}`}>
             {name}
           </span>
         );
@@ -124,7 +124,7 @@ export default function TenantsPage() {
       accessorKey: 'createdAt',
       header: 'Created',
       cell: ({ row }) => (
-        <span className="text-slate-500 text-xs">
+        <span className="text-[var(--color-text-muted)] text-xs">
           {dayjs(row.original.createdAt).format('DD MMM YYYY')}
         </span>
       ),
@@ -159,7 +159,7 @@ export default function TenantsPage() {
             variant="ghost"
             size="sm"
             onClick={() => setDeleteId(row.original.id)}
-            className="text-red-500 hover:bg-red-50 hover:text-red-600"
+            className="text-red-500 hover:bg-[var(--color-surface-elevated)] hover:text-red-600"
             title="Delete tenant"
           >
             <Trash2 size={14} />
@@ -174,8 +174,8 @@ export default function TenantsPage() {
       {/* Page Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-xl font-bold text-slate-900">Tenants</h2>
-          <p className="text-sm text-slate-500 mt-0.5">Manage all platform tenants</p>
+          <h2 className="text-xl font-bold text-[var(--color-text-primary)]">Tenants</h2>
+          <p className="text-sm text-[var(--color-text-muted)] mt-0.5">Manage all platform tenants</p>
         </div>
         <Button onClick={() => setShowCreate(true)}>
           <Plus size={15} /> New Tenant
@@ -183,16 +183,16 @@ export default function TenantsPage() {
       </div>
 
       {/* Filter Bar */}
-      <div className="flex flex-wrap gap-3 items-end rounded-xl border border-slate-200 bg-white p-4 shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
+      <div className="flex flex-wrap gap-3 items-end rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4 shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
         <div className="flex flex-col gap-1.5">
-          <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">Search</span>
+          <span className="text-[10px] font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">Search</span>
           <div className="relative">
-            <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+            <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--color-text-muted)]" />
             <input
               placeholder="Company or code…"
               value={search}
               onChange={e => setSearch(e.target.value)}
-              className="w-52 rounded-lg border border-slate-200 bg-white pl-8 pr-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100 transition-all"
+              className="w-52 rounded-[10px] border border-[var(--color-border-input)] bg-[var(--color-input-bg)] pl-8 pr-3 py-2 text-sm text-[var(--color-text-primary)] placeholder:text-[var(--color-text-muted)] focus:border-[var(--color-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-ring)] transition-all"
             />
           </div>
         </div>
@@ -221,7 +221,7 @@ export default function TenantsPage() {
           className="w-40"
         />
         <div className="flex flex-col gap-1.5">
-          <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-500 invisible">_</span>
+          <span className="text-[10px] font-semibold uppercase tracking-wide text-[var(--color-text-muted)] invisible">_</span>
           <Button
             variant="secondary"
             onClick={() => setParams({ search, status: statusFilter, plan: planFilter })}
@@ -244,8 +244,8 @@ export default function TenantsPage() {
             <Input label="Address" {...register('address')} error={errors.address?.message} className="sm:col-span-2" />
           </div>
 
-          <div className="pt-1 border-t border-slate-100">
-            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-3">Admin Account</p>
+          <div className="pt-1 border-t border-[var(--color-border)]">
+            <p className="text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wide mb-3">Admin Account</p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <Input label="Admin Name" {...register('adminName')} error={errors.adminName?.message} />
               <Input label="Admin Email" type="email" {...register('adminEmail')} error={errors.adminEmail?.message} />
@@ -274,7 +274,7 @@ export default function TenantsPage() {
       {createdTenant && (
         <Modal open={!!createdTenant} onClose={() => setCreatedTenant(null)} title="Tenant Created" size="sm">
           <div className="space-y-4">
-            <div className="flex items-center gap-3 bg-emerald-50 border border-emerald-100 rounded-xl p-4">
+            <div className="flex items-center gap-3 bg-[var(--color-surface-elevated)] border border-emerald-100 rounded-xl p-4">
               <div className="w-9 h-9 rounded-full bg-emerald-100 flex items-center justify-center shrink-0">
                 <CheckCheck size={17} className="text-emerald-600" />
               </div>
@@ -286,18 +286,18 @@ export default function TenantsPage() {
 
             <div className="space-y-3">
               <div>
-                <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide mb-1">Workspace</p>
-                <p className="text-sm font-semibold text-slate-800">{createdTenant.companyName}</p>
+                <p className="text-[10px] font-semibold text-[var(--color-text-muted)] uppercase tracking-wide mb-1">Workspace</p>
+                <p className="text-sm font-semibold text-[var(--color-text-primary)]">{createdTenant.companyName}</p>
               </div>
 
               <div>
-                <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide mb-1.5">Login URL</p>
-                <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2.5">
-                  <Link2 size={12} className="text-slate-400 shrink-0" />
+                <p className="text-[10px] font-semibold text-[var(--color-text-muted)] uppercase tracking-wide mb-1.5">Login URL</p>
+                <div className="flex items-center gap-2 bg-[var(--color-surface-elevated)] border border-[var(--color-border)] rounded-lg px-3 py-2.5">
+                  <Link2 size={12} className="text-[var(--color-text-muted)] shrink-0" />
                   <code className="text-xs text-blue-600 flex-1 truncate">{createdTenant.url}</code>
                   <button
                     onClick={() => { navigator.clipboard.writeText(createdTenant.url); toast.success('URL copied!'); }}
-                    className="text-slate-400 hover:text-slate-700 transition-colors"
+                    className="text-[var(--color-text-muted)] hover:text-[var(--color-text-secondary)] transition-colors"
                   >
                     <Copy size={12} />
                   </button>
@@ -305,12 +305,12 @@ export default function TenantsPage() {
               </div>
 
               <div>
-                <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide mb-1.5">Admin Email</p>
-                <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2.5">
-                  <code className="text-xs text-slate-700 flex-1">{createdTenant.adminEmail}</code>
+                <p className="text-[10px] font-semibold text-[var(--color-text-muted)] uppercase tracking-wide mb-1.5">Admin Email</p>
+                <div className="flex items-center gap-2 bg-[var(--color-surface-elevated)] border border-[var(--color-border)] rounded-lg px-3 py-2.5">
+                  <code className="text-xs text-[var(--color-text-secondary)] flex-1">{createdTenant.adminEmail}</code>
                   <button
                     onClick={() => { navigator.clipboard.writeText(createdTenant.adminEmail); toast.success('Email copied!'); }}
-                    className="text-slate-400 hover:text-slate-700 transition-colors"
+                    className="text-[var(--color-text-muted)] hover:text-[var(--color-text-secondary)] transition-colors"
                   >
                     <Copy size={12} />
                   </button>

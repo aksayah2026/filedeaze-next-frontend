@@ -19,10 +19,10 @@ export default function AdminDashboardPage() {
   const showTrialBanner = sub?.isTrial;
 
   return (
-    <div className="space-y-6 animate-fe-fade-in bg-[#F8FAFC]">
+    <div className="space-y-6 animate-fe-fade-in">
       {/* Trial Banner */}
       {showTrialBanner && (
-        <div className="flex items-center gap-3 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 text-sm text-amber-800">
+        <div className="flex items-center gap-3 bg-[var(--color-surface-elevated)] border border-amber-200 rounded-xl px-4 py-3 text-sm text-amber-800">
           <AlertTriangle className="w-4 h-4 shrink-0 text-amber-500" />
           <span>
             You are on a <strong>{sub?.currentPlan?.name ?? 'STARTER'}</strong> free trial.{' '}
@@ -36,8 +36,8 @@ export default function AdminDashboardPage() {
 
       {/* Page Header */}
       <div>
-        <h2 className="text-xl font-bold text-slate-900">Dashboard</h2>
-        <p className="text-sm text-slate-500 mt-0.5">Tenant-wide metrics and resource usage overview</p>
+        <h2 className="text-xl font-bold text-[var(--color-text-primary)] transition-colors duration-250">Dashboard</h2>
+        <p className="text-sm text-[var(--color-text-muted)] mt-0.5 transition-colors duration-250">Tenant-wide metrics and resource usage overview</p>
       </div>
 
       {/* Main Content Areas */}
@@ -48,7 +48,7 @@ export default function AdminDashboardPage() {
               <SkeletonCard key={i} />
             ))}
           </div>
-          <div className="bg-white rounded-xl p-6 border border-slate-200 shadow-sm max-w-xl space-y-5">
+          <div className="bg-[var(--color-surface)] rounded-xl p-6 border border-[var(--color-border)] shadow-sm max-w-xl space-y-5 transition-colors duration-250">
             <SkeletonLine className="w-48 h-5 mb-4" />
             <SkeletonLine className="w-full h-6" />
             <SkeletonLine className="w-full h-6" />
@@ -63,9 +63,9 @@ export default function AdminDashboardPage() {
               title="Total Tickets"
               value={data.totalTickets}
               icon={Ticket}
-              iconBg="bg-slate-100"
-              iconColor="text-slate-600"
-              accentColor="bg-slate-400"
+              iconBg="bg-[var(--color-surface-elevated)]"
+              iconColor="text-[var(--color-text-secondary)]"
+              accentColor="bg-[var(--color-surface-elevated)]"
               subtitle="All-time created tickets"
             />
             <StatsCard
@@ -81,7 +81,7 @@ export default function AdminDashboardPage() {
               title="Total Technicians"
               value={data.totalTechnicians}
               icon={Users}
-              iconBg="bg-emerald-50"
+              iconBg="bg-[var(--color-surface-elevated)]"
               iconColor="text-emerald-600"
               accentColor="bg-emerald-500"
               subtitle="Registered service providers"
@@ -99,7 +99,7 @@ export default function AdminDashboardPage() {
               title="Monthly Revenue"
               value={`₹${data.monthlyRevenue.toLocaleString()}`}
               icon={DollarSign}
-              iconBg="bg-green-50"
+              iconBg="bg-[var(--color-surface-elevated)]"
               iconColor="text-green-600"
               accentColor="bg-emerald-500"
               subtitle="Collected revenue this month"
@@ -107,12 +107,12 @@ export default function AdminDashboardPage() {
           </div>
 
           {/* Plan Usage Section */}
-          <div className="relative overflow-hidden bg-white rounded-xl p-6 border border-slate-200/60 shadow-[0_2px_8px_rgba(0,0,0,0.04)] max-w-xl group">
+          <div className="relative overflow-hidden bg-[var(--color-surface)] rounded-xl p-6 border border-[var(--color-border)] shadow-[0_2px_8px_rgba(0,0,0,0.04)] dark:shadow-none max-w-xl group transition-colors duration-250">
             {/* Top accent bar */}
             <div className="absolute left-0 top-0 right-0 h-1 bg-[var(--color-primary)] rounded-t-xl" />
 
-            <h3 className="font-bold text-slate-900 flex items-center justify-between gap-2 mb-6">
-              <span className="text-sm font-bold uppercase tracking-wider text-slate-700">Plan Resource Usage</span>
+            <h3 className="font-bold text-[var(--color-text-primary)] flex items-center justify-between gap-2 mb-6 transition-colors duration-250">
+              <span className="text-sm font-bold uppercase tracking-wider text-[var(--color-text-secondary)]">Plan Resource Usage</span>
               {data.planUsage && (
                 <span className="inline-flex items-center rounded-full bg-[var(--color-primary-light)] px-2.5 py-0.5 text-xs font-semibold text-[var(--color-primary)] border border-[var(--color-primary-ring)]">
                   {data.planUsage.plan}
@@ -145,9 +145,9 @@ export default function AdminDashboardPage() {
                 />
               </div>
             ) : (
-              <div className="text-center py-6 text-slate-400">
+              <div className="text-center py-6 text-[var(--color-text-muted)]">
                 <p className="text-sm">No active subscription plan allocated.</p>
-                <p className="text-xs mt-1 text-slate-400">Please assign a plan from the Super Admin portal.</p>
+                <p className="text-xs mt-1 text-[var(--color-text-muted)]">Please assign a plan from the Super Admin portal.</p>
               </div>
             )}
           </div>

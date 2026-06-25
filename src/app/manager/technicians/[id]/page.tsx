@@ -62,26 +62,26 @@ export default function TechnicianDetailPage() {
       {/* Back link */}
       <Link
         href="/manager/technicians"
-        className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-500 hover:text-slate-700 transition-colors"
+        className="inline-flex items-center gap-1.5 text-xs font-medium text-[var(--color-text-muted)] hover:text-[var(--color-text-secondary)] transition-colors"
       >
         <ChevronLeft size={14} />
         Back to Technicians
       </Link>
 
       <div className="flex items-center gap-3">
-        <h2 className="text-xl font-semibold text-gray-800">{tech.name}</h2>
+        <h2 className="text-xl font-semibold text-[var(--color-text-primary)]">{tech.name}</h2>
         <Badge variant={tech.isActive ? 'success' : 'default'}>{tech.isActive ? 'Active' : 'Inactive'}</Badge>
         {tech.rating && <div className="flex items-center gap-1 text-sm"><Star size={13} className="fill-yellow-400 text-yellow-400" />{tech.rating.toFixed(1)}</div>}
       </div>
 
-      <div className="bg-white rounded-xl p-5 border border-gray-100 shadow-sm">
-        <h3 className="font-medium text-gray-700 mb-4">Edit Info</h3>
+      <div className="bg-[var(--color-surface)] rounded-xl p-5 border border-[var(--color-border)] shadow-sm">
+        <h3 className="font-medium text-[var(--color-text-secondary)] mb-4">Edit Info</h3>
         <form onSubmit={hi(d => updateMutation.mutate(d))} className="grid grid-cols-2 gap-4">
           <Input label="Name" {...ri('name')} />
           <Input label="Phone" {...ri('phone')} />
           <div className="flex items-center gap-2 col-span-2">
             <input type="checkbox" id="isActive" {...ri('isActive')} className="h-4 w-4" />
-            <label htmlFor="isActive" className="text-sm text-gray-700">Active</label>
+            <label htmlFor="isActive" className="text-sm text-[var(--color-text-secondary)]">Active</label>
           </div>
           <div className="col-span-2 flex justify-between">
             <Button variant="outline" size="sm" type="button" onClick={() => setShowResetPw(true)}><Key size={14} /> Reset Password</Button>
@@ -90,42 +90,42 @@ export default function TechnicianDetailPage() {
         </form>
       </div>
 
-      <div className="bg-white rounded-xl p-5 border border-gray-100 shadow-sm">
+      <div className="bg-[var(--color-surface)] rounded-xl p-5 border border-[var(--color-border)] shadow-sm">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="font-medium text-gray-700 flex items-center gap-2"><MapPin size={15} /> Live Location</h3>
+          <h3 className="font-medium text-[var(--color-text-secondary)] flex items-center gap-2"><MapPin size={15} /> Live Location</h3>
         </div>
         {location ? (
           <div className="grid grid-cols-2 gap-3 text-sm">
-            <div><span className="text-gray-500">Latitude:</span> <span className="font-mono">{location.lat}</span></div>
-            <div><span className="text-gray-500">Longitude:</span> <span className="font-mono">{location.lng}</span></div>
+            <div><span className="text-[var(--color-text-muted)]">Latitude:</span> <span className="font-mono">{location.lat}</span></div>
+            <div><span className="text-[var(--color-text-muted)]">Longitude:</span> <span className="font-mono">{location.lng}</span></div>
           </div>
-        ) : <p className="text-sm text-gray-400">Location not available</p>}
+        ) : <p className="text-sm text-[var(--color-text-muted)]">Location not available</p>}
       </div>
 
-      <div className="bg-white rounded-xl p-5 border border-gray-100 shadow-sm">
+      <div className="bg-[var(--color-surface)] rounded-xl p-5 border border-[var(--color-border)] shadow-sm">
         <div className="flex items-center gap-2 mb-4">
-          <Route size={15} className="text-gray-600" />
-          <h3 className="font-medium text-gray-700">Route History</h3>
+          <Route size={15} className="text-[var(--color-text-secondary)]" />
+          <h3 className="font-medium text-[var(--color-text-secondary)]">Route History</h3>
           <Input type="date" value={routeDate} onChange={e => setRouteDate(e.target.value)} className="ml-auto w-40" />
         </div>
         {Array.isArray(route) && route.length > 0 ? (
-          <pre className="text-xs bg-gray-50 rounded-lg p-3 overflow-auto max-h-40">{JSON.stringify(route, null, 2)}</pre>
-        ) : <p className="text-sm text-gray-400">No route data for this date</p>}
+          <pre className="text-xs bg-[var(--color-surface-elevated)] rounded-lg p-3 overflow-auto max-h-40">{JSON.stringify(route, null, 2)}</pre>
+        ) : <p className="text-sm text-[var(--color-text-muted)]">No route data for this date</p>}
       </div>
 
-      <div className="bg-white rounded-xl p-5 border border-gray-100 shadow-sm">
+      <div className="bg-[var(--color-surface)] rounded-xl p-5 border border-[var(--color-border)] shadow-sm">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="font-medium text-gray-700">Skills</h3>
+          <h3 className="font-medium text-[var(--color-text-secondary)]">Skills</h3>
           <Button variant="outline" size="sm" onClick={() => setShowAddSkill(true)}><Plus size={13} /> Add Skill</Button>
         </div>
-        {skills.length === 0 ? <p className="text-sm text-gray-400">No skills assigned</p> : (
+        {skills.length === 0 ? <p className="text-sm text-[var(--color-text-muted)]">No skills assigned</p> : (
           <div className="space-y-2">
             {skills.map(ts => (
-              <div key={ts.skillId} className="flex items-center justify-between rounded-lg bg-gray-50 px-3 py-2 text-sm">
+              <div key={ts.skillId} className="flex items-center justify-between rounded-lg bg-[var(--color-surface-elevated)] px-3 py-2 text-sm">
                 <div>
                   <span className="font-medium">{ts.skill.name}</span>
-                  <span className="ml-2 text-gray-400">• {ts.experienceLevel}</span>
-                  {ts.certificationNumber && <span className="ml-2 text-gray-400 text-xs">{ts.certificationNumber}</span>}
+                  <span className="ml-2 text-[var(--color-text-muted)]">• {ts.experienceLevel}</span>
+                  {ts.certificationNumber && <span className="ml-2 text-[var(--color-text-muted)] text-xs">{ts.certificationNumber}</span>}
                 </div>
                 <Button variant="ghost" size="sm" onClick={() => setRemoveSkillId(ts.skillId)} className="text-red-400"><Trash2 size={13} /></Button>
               </div>

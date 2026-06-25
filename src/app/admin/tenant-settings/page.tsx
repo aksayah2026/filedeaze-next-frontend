@@ -42,19 +42,19 @@ export default function TenantSettingsPage() {
 
   return (
     <div className="max-w-2xl">
-      <h2 className="text-xl font-semibold text-gray-800 mb-6">Tenant Settings</h2>
-      <form onSubmit={handleSubmit(d => updateMutation.mutate(d))} className="bg-white rounded-xl p-6 border border-gray-100 shadow-sm space-y-6">
+      <h2 className="text-xl font-semibold text-[var(--color-text-primary)] mb-6">Tenant Settings</h2>
+      <form onSubmit={handleSubmit(d => updateMutation.mutate(d))} className="bg-[var(--color-surface)] rounded-xl p-6 border border-[var(--color-border)] shadow-sm space-y-6">
         <div>
-          <h3 className="font-medium text-gray-700 mb-4">GST Settings</h3>
+          <h3 className="font-medium text-[var(--color-text-secondary)] mb-4">GST Settings</h3>
           <div className="flex items-center gap-2 mb-3">
             <input type="checkbox" id="gstEnabled" {...register('gstEnabled')} className="h-4 w-4" />
-            <label htmlFor="gstEnabled" className="text-sm text-gray-700">Enable GST</label>
+            <label htmlFor="gstEnabled" className="text-sm text-[var(--color-text-secondary)]">Enable GST</label>
           </div>
           {gstEnabled && <Input label="GST %" type="number" step="0.01" {...register('gstPercent', { valueAsNumber: true })} className="w-40" />}
         </div>
 
         <div>
-          <h3 className="font-medium text-gray-700 mb-4">Invoice Settings</h3>
+          <h3 className="font-medium text-[var(--color-text-secondary)] mb-4">Invoice Settings</h3>
           <div className="grid grid-cols-2 gap-4">
             <Input label="Invoice Prefix" placeholder="INV-" {...register('invoicePrefix')} />
             <Input label="Number Format" placeholder="0001" {...register('invoiceNumberFormat')} />
@@ -62,7 +62,7 @@ export default function TenantSettingsPage() {
         </div>
 
         <div>
-          <h3 className="font-medium text-gray-700 mb-4">UPI Settings</h3>
+          <h3 className="font-medium text-[var(--color-text-secondary)] mb-4">UPI Settings</h3>
           <div className="grid grid-cols-2 gap-4">
             <Input label="UPI ID" placeholder="name@upi" {...register('upiId')} />
             <Input label="UPI Account Name" {...register('upiAccountName')} />

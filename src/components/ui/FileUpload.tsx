@@ -26,9 +26,9 @@ export function FileUpload({ label, accept = 'image/*', onFile, loading, preview
 
   return (
     <div className="flex flex-col gap-2">
-      {label && <p className="text-sm font-medium text-gray-700">{label}</p>}
+      {label && <p className="text-sm font-medium text-[var(--color-text-secondary)]">{label}</p>}
       {src && (
-        <img src={src} alt="preview" className="h-20 w-20 rounded-lg object-cover border border-gray-200" />
+        <img src={src} alt="preview" className="h-20 w-20 rounded-lg object-cover border border-[var(--color-border)]" />
       )}
       <input ref={inputRef} type="file" accept={accept} className="hidden" onChange={handleChange} />
       <Button variant="outline" size="sm" type="button" onClick={() => inputRef.current?.click()} loading={loading}>

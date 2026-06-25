@@ -74,7 +74,7 @@ export default function TechniciansPage() {
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
-        <h2 className="text-xl font-semibold text-gray-800">Technicians</h2>
+        <h2 className="text-xl font-semibold text-[var(--color-text-primary)]">Technicians</h2>
         <Button onClick={() => setShowCreate(true)}><Plus size={15} /> Add Technician</Button>
       </div>
       <DataTable data={techs} columns={columns} isLoading={isLoading} />

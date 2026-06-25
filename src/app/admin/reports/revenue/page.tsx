@@ -78,14 +78,14 @@ export default function RevenueReportPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-xl font-semibold text-gray-800">Revenue Report</h2>
+        <h2 className="text-xl font-semibold text-[var(--color-text-primary)]">Revenue Report</h2>
         <Button variant="secondary" onClick={() => exportCsv(payments)} disabled={!payments.length}>
           <Download size={14} /> Export CSV
         </Button>
       </div>
 
       {/* Filters */}
-      <div className="flex flex-wrap gap-3 items-end rounded-xl border border-gray-100 bg-white p-4 shadow-sm">
+      <div className="flex flex-wrap gap-3 items-end rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4 shadow-sm">
         <Input 
           label="From" 
           type="date" 
@@ -118,17 +118,17 @@ export default function RevenueReportPage() {
       </div>
 
       {isLoading ? <PageSpinner /> : error ? (
-        <div className="rounded-xl border border-red-100 bg-red-50 p-6 text-sm text-red-600">
+        <div className="rounded-xl border border-red-100 bg-[var(--color-surface-elevated)] p-6 text-sm text-red-600">
           Failed to load revenue report. Please try again.
         </div>
       ) : (
         <>
           {/* Total */}
-          <div className="inline-flex items-center gap-3 rounded-xl border border-emerald-100 bg-emerald-50 px-5 py-3">
+          <div className="inline-flex items-center gap-3 rounded-xl border border-emerald-100 bg-[var(--color-surface-elevated)] px-5 py-3">
             <TrendingUp size={18} className="text-emerald-600" />
             <div>
               <p className="text-xs font-medium uppercase tracking-widest text-emerald-600">Total Revenue</p>
-              <p className="text-2xl font-bold tabular-nums text-gray-900">
+              <p className="text-2xl font-bold tabular-nums text-[var(--color-text-primary)]">
                 ₹{(data?.total ?? 0).toLocaleString()}
               </p>
             </div>
@@ -136,8 +136,8 @@ export default function RevenueReportPage() {
 
           {/* Chart — only render after mount to avoid SSR mismatch */}
           {mounted && chartData.length > 0 && (
-            <div className="bg-white rounded-xl p-5 border border-gray-100 shadow-sm">
-              <h3 className="text-sm font-medium text-gray-700 mb-4">Revenue by Payment Method</h3>
+            <div className="bg-[var(--color-surface)] rounded-xl p-5 border border-[var(--color-border)] shadow-sm">
+              <h3 className="text-sm font-medium text-[var(--color-text-secondary)] mb-4">Revenue by Payment Method</h3>
               <ResponsiveContainer width="100%" height={220}>
                 <BarChart data={chartData} margin={{ top: 4, right: 16, bottom: 4, left: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" vertical={false} />
@@ -159,7 +159,7 @@ export default function RevenueReportPage() {
           )}
 
           {chartData.length === 0 && !isLoading && (
-            <p className="text-sm text-gray-400">No revenue data for this period.</p>
+            <p className="text-sm text-[var(--color-text-muted)]">No revenue data for this period.</p>
           )}
 
           <DataTable data={payments} columns={columns} isLoading={false} />

@@ -22,15 +22,15 @@ export function ProgressBar({ label, used, limit, unit = '' }: ProgressBarProps)
   return (
     <div className="space-y-1.5">
       <div className="flex justify-between text-xs">
-        <span className="font-medium text-slate-600">{label}</span>
-        <span className="font-semibold text-slate-900">
+        <span className="font-medium text-[var(--color-text-secondary)]">{label}</span>
+        <span className="font-semibold text-[var(--color-text-primary)]">
           {used}
           {unit}
-          <span className="text-slate-400 font-normal"> / </span>
+          <span className="text-[var(--color-text-muted)] font-normal"> / </span>
           {isUnlimited ? limit : `${limit}${unit}`}
         </span>
       </div>
-      <div className="h-2 w-full rounded-full bg-slate-100 overflow-hidden shadow-inner">
+      <div className="h-2 w-full rounded-full bg-[var(--color-surface-elevated)] overflow-hidden shadow-inner">
         <div
           className={cn(
             'h-full rounded-full transition-all duration-500 ease-out shadow-[0_1px_2px_rgba(0,0,0,0.1)]',
@@ -40,7 +40,7 @@ export function ProgressBar({ label, used, limit, unit = '' }: ProgressBarProps)
         />
       </div>
       <div className="flex justify-end">
-        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+        <span className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-wider">
           {isUnlimited ? 'Unlimited' : `${pct}% Used`}
         </span>
       </div>

@@ -27,11 +27,11 @@ export function Pagination({ page, totalPages, total, limit, onPageChange }: Pag
 
   return (
     <div className="flex items-center justify-between px-1 py-4 mt-1 select-none">
-      <p className="text-xs text-slate-500">
+      <p className="text-xs text-[var(--color-text-muted)]">
         Showing{' '}
-        <span className="font-semibold text-slate-700">{from}–{to}</span>
+        <span className="font-semibold text-[var(--color-text-secondary)]">{from}–{to}</span>
         {' '}of{' '}
-        <span className="font-semibold text-slate-700">{total}</span>
+        <span className="font-semibold text-[var(--color-text-secondary)]">{total}</span>
         {' '}results
       </p>
 
@@ -41,8 +41,8 @@ export function Pagination({ page, totalPages, total, limit, onPageChange }: Pag
           disabled={page === 1}
           className={cn(
             'flex h-8 w-8 items-center justify-center rounded-md border text-xs transition-all',
-            'border-slate-200 bg-white text-slate-600',
-            'hover:bg-slate-50 hover:border-slate-300',
+            'border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text-secondary)]',
+            'hover:bg-[var(--color-surface-elevated)] hover:border-[var(--color-border-strong)]',
             'disabled:opacity-40 disabled:cursor-not-allowed'
           )}
         >
@@ -57,7 +57,7 @@ export function Pagination({ page, totalPages, total, limit, onPageChange }: Pag
               'flex h-8 w-8 items-center justify-center rounded-md border text-xs font-semibold transition-all',
               p === page
                 ? 'border-[var(--color-primary)] bg-[var(--color-primary)] text-white shadow-sm shadow-[var(--color-primary-ring)]'
-                : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50 hover:border-slate-300'
+                : 'border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-elevated)] hover:border-[var(--color-border-strong)]'
             )}
           >
             {p}
@@ -69,8 +69,8 @@ export function Pagination({ page, totalPages, total, limit, onPageChange }: Pag
           disabled={page === totalPages}
           className={cn(
             'flex h-8 w-8 items-center justify-center rounded-md border text-xs transition-all',
-            'border-slate-200 bg-white text-slate-600',
-            'hover:bg-slate-50 hover:border-slate-300',
+            'border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text-secondary)]',
+            'hover:bg-[var(--color-surface-elevated)] hover:border-[var(--color-border-strong)]',
             'disabled:opacity-40 disabled:cursor-not-allowed'
           )}
         >

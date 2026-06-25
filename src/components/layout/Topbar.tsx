@@ -7,6 +7,7 @@ import api from '@/lib/axios';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { RefreshButton } from '@/components/ui/RefreshButton';
+import { ThemeToggle } from '@/components/common/ThemeToggle';
 
 interface TopbarProps {
   title?: string;
@@ -22,9 +23,9 @@ const roleLabels: Record<string, string> = {
 };
 
 const roleBadgeStyles: Record<string, string> = {
-  SUPER_ADMIN: 'bg-blue-50 text-blue-700 border-blue-100',
-  ADMIN: 'bg-teal-50 text-teal-700 border-teal-100',
-  MANAGER: 'bg-green-50 text-green-700 border-green-100',
+  SUPER_ADMIN: 'bg-[var(--color-surface-elevated)] text-blue-700 border-blue-100 dark:bg-blue-500/10 dark:text-blue-400 dark:border-blue-500/20',
+  ADMIN: 'bg-[var(--color-surface-elevated)] text-teal-700 border-teal-100 dark:bg-teal-500/10 dark:text-teal-400 dark:border-teal-500/20',
+  MANAGER: 'bg-[var(--color-surface-elevated)] text-green-700 border-green-100 dark:bg-green-500/10 dark:text-green-400 dark:border-green-500/20',
 };
 
 const breadcrumbLabels: Record<string, string> = {
@@ -98,30 +99,28 @@ export function Topbar({ title, onMenuClick, isCollapsed, onToggleCollapse }: To
   // Dynamic Breadcrumb Generator
   const segments = pathname.split('/').filter(Boolean);
   const crumbs = segments.map((seg, index) => {
-    const isId = seg.length > 20 || /^[a-f0-9-]+$/i.test(seg);
-    const label = isId ? 'Details' : (breadcrumbLabels[seg] ?? seg.charAt(0).toUpperCase() + seg.slice(1));
-    const url = '/' + segments.slice(0, index + 1).join('/');
     const isLast = index === segments.length - 1;
+    const label = breadcrumbLabels[seg] || seg.replace(/-/g, ' ');
 
     return (
-      <span key={url} className="flex items-center gap-1.5">
-        {index > 0 && <span className="text-slate-300 text-[10px] font-bold">/</span>}
+      <span key={seg} className="flex items-center">
+        {index > 0 && <span className="text-[var(--color-text-muted)] mx-1 text-xs">/</span>}
         {isLast ? (
-          <span className="font-semibold text-slate-700 text-xs truncate max-w-[120px] sm:max-w-none">{label}</span>
+          <span className="font-semibold text-[var(--color-text-primary)] text-xs truncate max-w-[120px] sm:max-w-none">{label}</span>
         ) : (
-          <span className="text-slate-400 font-medium text-xs">{label}</span>
+          <span className="text-[var(--color-text-secondary)] font-medium text-xs">{label}</span>
         )}
       </span>
     );
   });
 
   return (
-    <header className="sticky top-0 z-10 h-16 flex items-center justify-between px-4 sm:px-6 shrink-0 bg-white border-b border-slate-200/80 shadow-[0_1px_2px_rgba(0,0,0,0.03)]">
+    <header className="sticky top-0 z-10 h-16 flex items-center justify-between px-4 sm:px-6 shrink-0 bg-[var(--color-header-bg)] border-b border-[var(--color-border)] shadow-sm transition-colors duration-250 ease-in-out">
       {/* Left — Menu Toggle + Breadcrumbs */}
       <div className="flex items-center gap-3 min-w-0">
         <button
           onClick={onMenuClick}
-          className="lg:hidden flex items-center justify-center h-8 w-8 rounded-lg text-slate-500 hover:bg-slate-100 hover:text-slate-700 transition-colors"
+          className="lg:hidden flex items-center justify-center h-8 w-8 rounded-lg text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-text-primary)] transition-colors"
           aria-label="Toggle mobile sidebar"
         >
           <Menu size={18} />
@@ -129,7 +128,7 @@ export function Topbar({ title, onMenuClick, isCollapsed, onToggleCollapse }: To
 
         <button
           onClick={onToggleCollapse}
-          className="hidden lg:flex items-center justify-center h-8 w-8 rounded-lg text-slate-500 hover:bg-slate-100 hover:text-slate-700 transition-colors"
+          className="hidden lg:flex items-center justify-center h-8 w-8 rounded-lg text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-text-primary)] transition-colors"
           aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
         >
           {isCollapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
@@ -138,23 +137,27 @@ export function Topbar({ title, onMenuClick, isCollapsed, onToggleCollapse }: To
         {crumbs.length > 0 ? (
           <nav className="flex items-center gap-1.5 overflow-hidden">{crumbs}</nav>
         ) : title ? (
-          <h1 className="text-xs font-semibold text-slate-800">{title}</h1>
+          <h1 className="text-xs font-semibold text-[var(--color-text-primary)]">{title}</h1>
         ) : null}
       </div>
 
       {/* Right — User Actions */}
       <div className="flex items-center gap-2 shrink-0">
+        <div className="hidden sm:block">
+          <ThemeToggle />
+        </div>
+
         {/* Refresh Button */}
         <RefreshButton />
 
         {/* Notification Bell */}
-        <button className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-50 hover:text-slate-600 transition-colors relative">
+        <button className="flex h-8 w-8 items-center justify-center rounded-lg text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-text-primary)] transition-colors relative">
           <Bell size={16} />
           <span className="absolute top-1.5 right-1.5 h-1.5 w-1.5 rounded-full bg-red-500" />
         </button>
 
         {/* Divider */}
-        <div className="h-5 w-px bg-slate-100 mx-1" />
+        <div className="h-5 w-px bg-[var(--color-border)] mx-1" />
 
         {/* User Card */}
         <div className="flex items-center gap-2.5">
@@ -163,11 +166,11 @@ export function Topbar({ title, onMenuClick, isCollapsed, onToggleCollapse }: To
             <img
               src={user.photo}
               alt={user.name}
-              className="h-8 w-8 rounded-full object-cover ring-2 ring-slate-100 shadow-sm"
+              className="h-8 w-8 rounded-full object-cover ring-2 ring-[var(--color-border)] shadow-sm"
             />
           ) : (
             <div className={cn(
-              'h-8 w-8 rounded-full bg-gradient-to-br flex items-center justify-center text-white text-xs font-bold shadow-sm ring-2 ring-slate-100',
+              'h-8 w-8 rounded-full bg-gradient-to-br flex items-center justify-center text-white text-xs font-bold shadow-sm ring-2 ring-[var(--color-border)]',
               gradient
             )}>
               {getInitials(user?.name)}
@@ -176,11 +179,11 @@ export function Topbar({ title, onMenuClick, isCollapsed, onToggleCollapse }: To
 
           {/* Name & Role Badge */}
           <div className="hidden sm:block">
-            <p className="text-xs font-semibold text-slate-800 leading-tight">{user?.name ?? 'User'}</p>
+            <p className="text-xs font-semibold text-[var(--color-text-primary)] leading-tight">{user?.name ?? 'User'}</p>
             {user?.role && (
               <span className={cn(
                 'inline-block text-[9px] font-bold px-1.5 py-0.5 rounded-md border mt-0.5 uppercase tracking-wide leading-none',
-                roleBadgeStyles[user.role] ?? 'bg-slate-50 text-slate-600 border-slate-150'
+                roleBadgeStyles[user.role] ?? 'bg-[var(--color-surface-hover)] text-[var(--color-text-secondary)] border-[var(--color-border)]'
               )}>
                 {roleLabels[user.role] ?? user.role}
               </span>
@@ -189,12 +192,17 @@ export function Topbar({ title, onMenuClick, isCollapsed, onToggleCollapse }: To
         </div>
 
         {/* Divider */}
-        <div className="hidden sm:block h-5 w-px bg-slate-100 mx-1" />
+        <div className="hidden sm:block h-5 w-px bg-[var(--color-border)] mx-1" />
+
+        {/* Mobile Theme Toggle */}
+        <div className="sm:hidden flex items-center">
+          <ThemeToggle />
+        </div>
 
         {/* Logout Button */}
         <button
           onClick={logout}
-          className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-slate-500 hover:bg-red-50 hover:text-red-600 transition-colors"
+          className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-[var(--color-text-secondary)] hover:bg-[var(--color-danger-light)] hover:text-[var(--color-danger)] transition-colors"
         >
           <LogOut size={14} />
           <span className="hidden sm:inline">Logout</span>

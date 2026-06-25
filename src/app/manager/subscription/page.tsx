@@ -34,14 +34,14 @@ export default function ManagerSubscriptionPage() {
 
   return (
     <div className="space-y-6 max-w-2xl">
-      <h2 className="text-xl font-semibold text-gray-800">Subscription Status</h2>
+      <h2 className="text-xl font-semibold text-[var(--color-text-primary)]">Subscription Status</h2>
 
       {/* Status banner */}
       {(isExpired || isPaymentPending || isTrial) && (
         <div className={`rounded-xl p-5 border flex items-start gap-3 ${
-          isExpired ? 'bg-red-50 border-red-200' :
-          isPaymentPending ? 'bg-blue-50 border-blue-200' :
-          'bg-amber-50 border-amber-200'
+          isExpired ? 'bg-[var(--color-surface-elevated)] border-red-200' :
+          isPaymentPending ? 'bg-[var(--color-surface-elevated)] border-blue-200' :
+          'bg-[var(--color-surface-elevated)] border-amber-200'
         }`}>
           <AlertCircle size={18} className={`mt-0.5 shrink-0 ${isExpired ? 'text-red-500' : isPaymentPending ? 'text-blue-500' : 'text-amber-500'}`} />
           <div>
@@ -60,15 +60,15 @@ export default function ManagerSubscriptionPage() {
       )}
 
       {/* Current plan */}
-      <div className="bg-white rounded-xl p-5 border border-gray-100 shadow-sm">
-        <h3 className="font-medium text-gray-700 mb-4 flex items-center gap-2">
+      <div className="bg-[var(--color-surface)] rounded-xl p-5 border border-[var(--color-border)] shadow-sm">
+        <h3 className="font-medium text-[var(--color-text-secondary)] mb-4 flex items-center gap-2">
           <CreditCard size={16} className="text-blue-500" /> Current Plan
         </h3>
         {currentPlan ? (
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <p className="text-2xl font-bold text-gray-800">{currentPlan.name}</p>
-              <p className="text-sm text-gray-400 mt-0.5">₹{Number(currentPlan.price).toLocaleString()} / year</p>
+              <p className="text-2xl font-bold text-[var(--color-text-primary)]">{currentPlan.name}</p>
+              <p className="text-sm text-[var(--color-text-muted)] mt-0.5">₹{Number(currentPlan.price).toLocaleString()} / year</p>
               <div className="mt-3 flex flex-wrap gap-2">
                 {isTrial && <Badge variant="warning">Trial</Badge>}
                 {isExpired && <Badge variant="danger">Expired</Badge>}
@@ -76,12 +76,12 @@ export default function ManagerSubscriptionPage() {
                 {tenantStatus === 'ACTIVE' && <Badge variant="success">Active</Badge>}
               </div>
               {subscription && (
-                <p className="text-xs text-gray-400 mt-2">
+                <p className="text-xs text-[var(--color-text-muted)] mt-2">
                   {dayjs(subscription.startDate).format('DD MMM YYYY')} → {dayjs(subscription.endDate).format('DD MMM YYYY')}
                 </p>
               )}
             </div>
-            <div className="space-y-2 text-sm text-gray-600">
+            <div className="space-y-2 text-sm text-[var(--color-text-secondary)]">
               <div className="flex items-center gap-2"><CheckCircle size={14} className="text-green-500" /> Up to <strong>{currentPlan.managerLimit}</strong> managers</div>
               <div className="flex items-center gap-2"><CheckCircle size={14} className="text-green-500" /> Up to <strong>{currentPlan.technicianLimit}</strong> technicians</div>
               <div className="flex items-center gap-2"><CheckCircle size={14} className="text-green-500" /> Up to <strong>{currentPlan.ticketLimit}</strong> tickets / month</div>
@@ -89,28 +89,28 @@ export default function ManagerSubscriptionPage() {
             </div>
           </div>
         ) : (
-          <p className="text-gray-400 text-sm">No plan assigned. Please contact your administrator.</p>
+          <p className="text-[var(--color-text-muted)] text-sm">No plan assigned. Please contact your administrator.</p>
         )}
       </div>
 
       {/* Payment request status */}
       {isPaymentPending && latestPaymentRequest && (
-        <div className="bg-white rounded-xl p-5 border border-gray-100 shadow-sm">
-          <h3 className="font-medium text-gray-700 mb-3 flex items-center gap-2">
+        <div className="bg-[var(--color-surface)] rounded-xl p-5 border border-[var(--color-border)] shadow-sm">
+          <h3 className="font-medium text-[var(--color-text-secondary)] mb-3 flex items-center gap-2">
             <Clock size={16} className="text-blue-500" /> Payment Request
           </h3>
           <div className="flex items-center gap-3">
             <Badge variant="warning">{latestPaymentRequest.status.replace('_', ' ')}</Badge>
-            <p className="text-sm text-gray-500">Submitted {dayjs(latestPaymentRequest.submittedAt).format('DD MMM YYYY, h:mm A')}</p>
+            <p className="text-sm text-[var(--color-text-muted)]">Submitted {dayjs(latestPaymentRequest.submittedAt).format('DD MMM YYYY, h:mm A')}</p>
           </div>
-          <p className="text-sm text-gray-500 mt-3">
+          <p className="text-sm text-[var(--color-text-muted)] mt-3">
             Your payment proof is under review. You will be notified once it is approved.
             To re-submit or manage your subscription, please contact your administrator.
           </p>
         </div>
       )}
 
-      <p className="text-xs text-gray-400 text-center">
+      <p className="text-xs text-[var(--color-text-muted)] text-center">
         To manage your subscription, please contact your workspace administrator.
       </p>
     </div>

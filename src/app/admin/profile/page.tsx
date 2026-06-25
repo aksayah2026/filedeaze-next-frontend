@@ -38,13 +38,13 @@ export default function ProfilePage() {
 
   return (
     <div className="max-w-xl space-y-6">
-      <h2 className="text-xl font-semibold text-gray-800">My Profile</h2>
+      <h2 className="text-xl font-semibold text-[var(--color-text-primary)]">My Profile</h2>
 
-      <div className="bg-white rounded-xl p-6 border border-gray-100 shadow-sm">
+      <div className="bg-[var(--color-surface)] rounded-xl p-6 border border-[var(--color-border)] shadow-sm">
         <FileUpload label="Profile Photo" onFile={file => photoMutation.mutate(file)} loading={photoMutation.isPending} preview={data?.photo} />
       </div>
 
-      <div className="bg-white rounded-xl p-6 border border-gray-100 shadow-sm">
+      <div className="bg-[var(--color-surface)] rounded-xl p-6 border border-[var(--color-border)] shadow-sm">
         <form onSubmit={handleSubmit(d => updateMutation.mutate(d))} className="space-y-4">
           <Input label="Name" {...register('name')} />
           <Input label="Email" type="email" {...register('email')} />

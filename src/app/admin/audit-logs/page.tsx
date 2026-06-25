@@ -33,10 +33,10 @@ export default function AuditLogsPage() {
 
   return (
     <div>
-      <h2 className="text-xl font-semibold text-gray-800 mb-6">Audit Logs</h2>
-      <div className="flex flex-wrap gap-3 mb-4 items-end rounded-xl border border-slate-200 bg-white p-4 shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
+      <h2 className="text-xl font-semibold text-[var(--color-text-primary)] mb-6">Audit Logs</h2>
+      <div className="flex flex-wrap gap-3 mb-4 items-end rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4 shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
         <div className="flex flex-col gap-1.5">
-          <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">Entity</span>
+          <span className="text-[10px] font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">Entity</span>
           <Select
             options={[
               { value: '', label: 'All Entities' },
@@ -54,7 +54,7 @@ export default function AuditLogsPage() {
           />
         </div>
         <div className="flex flex-col gap-1.5">
-          <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">From</span>
+          <span className="text-[10px] font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">From</span>
           <Input 
             type="date" 
             value={draftFilters.from} 
@@ -73,7 +73,7 @@ export default function AuditLogsPage() {
           />
         </div>
         <div className="flex flex-col gap-1.5">
-          <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">To</span>
+          <span className="text-[10px] font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">To</span>
           <Input 
             type="date" 
             value={draftFilters.to} 

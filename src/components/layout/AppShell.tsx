@@ -32,11 +32,11 @@ export function AppShell({ sidebar, children }: AppShellProps) {
   }, [isFetching, prevFetching]);
 
   return (
-    <div className="flex h-screen overflow-hidden bg-slate-50">
+    <div className="flex h-screen overflow-hidden bg-[var(--color-bg)] transition-colors duration-250 ease-in-out">
       {/* Mobile backdrop */}
       {open && (
         <div
-          className="fixed inset-0 z-20 lg:hidden bg-slate-900/50 backdrop-blur-sm transition-opacity duration-300"
+          className="fixed inset-0 z-20 lg:hidden bg-black/50 backdrop-blur-sm transition-opacity duration-300"
           onClick={close}
         />
       )}
@@ -44,11 +44,11 @@ export function AppShell({ sidebar, children }: AppShellProps) {
       {/* Sidebar — drawer on mobile, static collapsible on desktop */}
       <div
         className={cn(
-          'fixed inset-y-0 left-0 z-30 transition-all duration-300 ease-in-out h-full border-r border-slate-200 lg:border-none',
+          'fixed inset-y-0 left-0 z-30 transition-all duration-300 ease-in-out h-full border-r border-[var(--color-border)] lg:border-none',
           'lg:static lg:inset-auto lg:z-auto lg:translate-x-0',
           open ? 'translate-x-0' : '-translate-x-full lg:translate-x-0',
           isCollapsed ? 'lg:w-[72px]' : 'lg:w-[240px]',
-          'lg:my-4 lg:ml-4 lg:h-[calc(100vh_-_2rem)] lg:rounded-[24px] lg:overflow-hidden lg:shadow-[0_4px_20px_rgba(0,0,0,0.06)] lg:self-center'
+          'lg:my-4 lg:ml-4 lg:h-[calc(100vh_-_2rem)] lg:rounded-[20px] lg:overflow-hidden lg:shadow-[var(--shadow-lg)] lg:self-center lg:border lg:border-[var(--color-border)]'
         )}
       >
         {sidebar(close, isCollapsed)}
@@ -70,7 +70,7 @@ export function AppShell({ sidebar, children }: AppShellProps) {
         />
         <main
           className={cn(
-            "flex-1 overflow-y-auto p-4 sm:p-6 bg-[#F8FAFC] transition-all duration-300",
+            "flex-1 overflow-y-auto p-4 sm:p-6 bg-[var(--color-bg)] transition-all duration-300",
             isFetching > 0 ? "opacity-75 saturate-[0.85] pointer-events-none" : "opacity-100 saturate-100",
             showFlash ? "animate-[pulse_0.4s_ease-in-out_1]" : "animate-fe-fade-in"
           )}

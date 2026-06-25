@@ -3,11 +3,14 @@
 import React, { useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { AntdRegistry } from '@ant-design/nextjs-registry';
-import { ConfigProvider } from 'antd';
+import { ConfigProvider, theme as antdTheme } from 'antd';
+import { useTheme } from '@/contexts/ThemeContext';
 
 export function ClientThemeProvider({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const [roleTheme, setRoleTheme] = useState<'super-admin' | 'admin' | 'manager' | 'default'>('default');
+  const { theme: appTheme } = useTheme();
+  const isDark = appTheme === 'dark';
 
   useEffect(() => {
     let theme: 'super-admin' | 'admin' | 'manager' | 'default' = 'default';
@@ -41,50 +44,96 @@ export function ClientThemeProvider({ children }: { children: React.ReactNode })
   return (
     <ConfigProvider
       theme={{
+        algorithm: isDark ? antdTheme.darkAlgorithm : antdTheme.defaultAlgorithm,
         token: {
-          colorPrimary: primaryColor,
+          colorPrimary: isDark ? '#4F8BFF' : primaryColor,
           fontFamily: 'Inter, sans-serif',
-          borderRadius: 6,
-          colorSuccess: '#22C55E',
-          colorWarning: '#F59E0B',
-          colorError: '#EF4444',
-          colorInfo: '#2563EB',
-          colorBgLayout: '#F8FAFC',
+          borderRadius: 10,
+          colorSuccess: isDark ? '#34D399' : '#22C55E',
+          colorWarning: isDark ? '#FBBF24' : '#F59E0B',
+          colorError: isDark ? '#F87171' : '#EF4444',
+          colorInfo: isDark ? '#60A5FA' : '#2563EB',
+          colorBgLayout: isDark ? '#0E1016' : '#F8FAFC',
+          colorTextBase: isDark ? '#F5F7FA' : '#0F172A',
+          colorBgContainer: isDark ? '#181B24' : '#FFFFFF',
+          colorBorder: isDark ? 'rgba(255,255,255,0.08)' : '#E2E8F0',
+          colorBgElevated: isDark ? '#1F2330' : '#FFFFFF',
+          colorFillSecondary: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.02)',
+          colorTextSecondary: isDark ? '#C6CBD5' : '#475569',
+          colorTextTertiary: isDark ? '#8F98A8' : '#94A3B8',
+          colorTextQuaternary: isDark ? '#8F98A8' : '#CBD5E1',
         },
         components: {
           Button: {
-            colorPrimary: primaryColor,
-            borderRadius: 6,
+            colorPrimary: isDark ? '#4F8BFF' : primaryColor,
+            borderRadius: 8,
             controlHeight: 36,
+            colorBorder: isDark ? 'rgba(255,255,255,0.10)' : '#E2E8F0',
           },
           Input: {
-            borderRadius: 6,
+            borderRadius: 10,
             controlHeight: 36,
-            colorBorder: '#E2E8F0',
+            colorBorder: isDark ? 'rgba(255,255,255,0.08)' : '#E2E8F0',
+            colorBgContainer: isDark ? '#242938' : '#FFFFFF',
+            colorTextPlaceholder: isDark ? '#8F98A8' : '#94A3B8',
+            activeShadow: isDark ? '0 0 0 2px rgba(79,139,255,0.20)' : '0 0 0 2px rgba(37,99,235,0.12)',
           },
           Select: {
-            borderRadius: 6,
+            borderRadius: 10,
             controlHeight: 36,
-            colorBorder: '#E2E8F0',
+            colorBorder: isDark ? 'rgba(255,255,255,0.08)' : '#E2E8F0',
+            colorBgContainer: isDark ? '#242938' : '#FFFFFF',
+            colorTextPlaceholder: isDark ? '#8F98A8' : '#94A3B8',
+            optionSelectedBg: isDark ? '#2A3042' : '#EFF6FF',
+          },
+          DatePicker: {
+            borderRadius: 10,
+            controlHeight: 36,
+            colorBorder: isDark ? 'rgba(255,255,255,0.08)' : '#E2E8F0',
+            colorBgContainer: isDark ? '#242938' : '#FFFFFF',
+            colorTextPlaceholder: isDark ? '#8F98A8' : '#94A3B8',
           },
           Table: {
-            headerBg: '#F8FAFC',
-            headerColor: '#0F172A',
-            headerBorderRadius: 6,
-            rowHoverBg: 'rgba(248, 250, 252, 0.6)',
+            headerBg: isDark ? '#1F2330' : '#F8FAFC',
+            headerColor: isDark ? '#C6CBD5' : '#0F172A',
+            headerBorderRadius: 0,
+            rowHoverBg: isDark ? '#2A3042' : 'rgba(248, 250, 252, 0.8)',
+            borderColor: isDark ? 'rgba(255,255,255,0.06)' : '#E2E8F0',
+            rowBg: isDark ? '#181B24' : '#FFFFFF',
+            headerSortActiveBg: isDark ? '#2A3042' : '#F1F5F9',
           },
           Modal: {
-            borderRadiusLG: 12,
+            borderRadiusLG: 14,
+            contentBg: isDark ? '#181B24' : '#FFFFFF',
+            headerBg: isDark ? '#181B24' : '#FFFFFF',
+            footerBg: isDark ? '#181B24' : '#FFFFFF',
+          },
+          Drawer: {
+            colorBgElevated: isDark ? '#181B24' : '#FFFFFF',
           },
           Card: {
             borderRadiusLG: 12,
-            colorBorderSecondary: '#E2E8F0',
+            colorBorderSecondary: isDark ? 'rgba(255,255,255,0.07)' : '#E2E8F0',
+            colorBgContainer: isDark ? '#181B24' : '#FFFFFF',
+          },
+          Dropdown: {
+            borderRadiusLG: 10,
+            colorBgElevated: isDark ? '#1F2330' : '#FFFFFF',
+            controlItemBgHover: isDark ? '#2A3042' : '#F8FAFC',
+            colorBorder: isDark ? 'rgba(255,255,255,0.08)' : '#E2E8F0',
+          },
+          Popover: {
+            borderRadiusLG: 10,
+            colorBgElevated: isDark ? '#1F2330' : '#FFFFFF',
+          },
+          Tooltip: {
+            colorBgSpotlight: isDark ? '#2A3042' : '#0F172A',
           },
         },
       }}
     >
       <AntdRegistry>
-        <div className={`theme-${roleTheme} min-h-full flex flex-col flex-1`}>
+        <div className={`theme-${roleTheme} ${isDark ? 'dark' : ''} min-h-full flex flex-col flex-1 bg-[var(--color-bg)] text-[var(--color-text-primary)] transition-colors duration-250 ease-in-out`}>
           {children}
         </div>
       </AntdRegistry>

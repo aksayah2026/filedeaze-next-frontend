@@ -28,7 +28,7 @@ export function PageSpinner() {
   return (
     <div className="flex h-64 flex-col items-center justify-center gap-3">
       <Spinner size="lg" />
-      <p className="text-xs text-slate-400 font-medium animate-pulse">Loading…</p>
+      <p className="text-xs text-[var(--color-text-muted)] font-medium animate-pulse">Loading…</p>
     </div>
   );
 }
@@ -44,7 +44,7 @@ export function SkeletonLine({ className }: { className?: string }) {
 
 export function SkeletonCard() {
   return (
-    <div className="rounded-xl border border-slate-100 bg-white p-5 space-y-3 shadow-[0_1px_2px_rgba(0,0,0,0.02)]">
+    <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 space-y-3 shadow-[0_1px_2px_rgba(0,0,0,0.02)]">
       <SkeletonLine className="w-24 h-3" />
       <SkeletonLine className="w-16 h-7" />
       <SkeletonLine className="w-32 h-3" />

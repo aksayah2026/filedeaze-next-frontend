@@ -39,23 +39,23 @@ export default function ManagerDetailPage() {
       {/* Back link */}
       <Link
         href="/admin/managers"
-        className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-500 hover:text-slate-700 transition-colors"
+        className="inline-flex items-center gap-1.5 text-xs font-medium text-[var(--color-text-muted)] hover:text-[var(--color-text-secondary)] transition-colors"
       >
         <ChevronLeft size={14} />
         Back to Managers
       </Link>
 
       <div className="flex items-center gap-3">
-        <h2 className="text-xl font-semibold text-gray-800">{data.name}</h2>
+        <h2 className="text-xl font-semibold text-[var(--color-text-primary)]">{data.name}</h2>
         <Badge variant={data.isActive ? 'success' : 'default'}>{data.isActive ? 'Active' : 'Inactive'}</Badge>
       </div>
-      <div className="bg-white rounded-xl p-6 border border-gray-100 shadow-sm">
+      <div className="bg-[var(--color-surface)] rounded-xl p-6 border border-[var(--color-border)] shadow-sm">
         <form onSubmit={handleSubmit(d => updateMutation.mutate(d))} className="space-y-4">
           <Input label="Name" {...register('name')} />
           <Input label="Phone" {...register('phone')} />
           <div className="flex items-center gap-2">
             <input type="checkbox" id="isActive" {...register('isActive')} className="h-4 w-4" />
-            <label htmlFor="isActive" className="text-sm text-gray-700">Active</label>
+            <label htmlFor="isActive" className="text-sm text-[var(--color-text-secondary)]">Active</label>
           </div>
           <div className="flex justify-end"><Button type="submit" loading={isSubmitting}>Save</Button></div>
         </form>

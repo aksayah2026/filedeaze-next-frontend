@@ -12,8 +12,8 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${geist.variable} h-full antialiased`}>
-      <body className="min-h-full text-slate-900" style={{ background: '#F8FAFC' }} suppressHydrationWarning>
+    <html lang="en" className={`${geist.variable} h-full antialiased`} suppressHydrationWarning>
+      <body className="min-h-full text-[var(--color-text-primary)] bg-[var(--color-bg)] transition-colors duration-250 ease-in-out" suppressHydrationWarning>
         <Providers>{children}</Providers>
       </body>
     </html>

@@ -61,7 +61,7 @@ export default function TenantLoginPage() {
     return (
       <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4">
         <div className="text-center">
-          <p className="text-slate-400 text-sm mb-4">Workspace &ldquo;{tenantCode}&rdquo; not found.</p>
+          <p className="text-[var(--color-text-muted)] text-sm mb-4">Workspace &ldquo;{tenantCode}&rdquo; not found.</p>
           <a href="/login" className="text-blue-400 hover:text-blue-300 text-sm transition-colors">← Back to login</a>
         </div>
       </div>
@@ -79,7 +79,7 @@ export default function TenantLoginPage() {
           {isLoading ? (
             <div className="h-20 w-20 rounded-2xl bg-slate-800 animate-pulse mb-4" />
           ) : tenant?.logoUrl ? (
-            <img src={tenant.logoUrl} alt={tenant.companyName} className="h-20 w-20 rounded-2xl object-contain bg-white p-2 shadow-lg mb-4" />
+            <img src={tenant.logoUrl} alt={tenant.companyName} className="h-20 w-20 rounded-2xl object-contain bg-[var(--color-surface)] p-2 shadow-lg mb-4" />
           ) : (
             <div className="h-20 w-20 rounded-2xl bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center shadow-lg mb-4">
               <span className="text-white text-2xl font-bold tracking-tight">{tenant ? getInitials(tenant.companyName) : '…'}</span>
@@ -94,7 +94,7 @@ export default function TenantLoginPage() {
           ) : (
             <>
               <h1 className="text-white text-xl font-bold text-center">{tenant?.companyName}</h1>
-              <p className="text-slate-500 text-xs mt-1">Admin &amp; Manager Portal</p>
+              <p className="text-[var(--color-text-muted)] text-xs mt-1">Admin &amp; Manager Portal</p>
               {tenant?.status === 'TRIAL' && tenant.trialDaysLeft != null && (
                 <div className="mt-3 flex items-center gap-1.5 bg-amber-500/10 border border-amber-500/20 rounded-lg px-3 py-1.5">
                   <Clock size={12} className="text-amber-400 shrink-0" />
@@ -125,7 +125,7 @@ export default function TenantLoginPage() {
         <div className="bg-slate-900 border border-slate-800 rounded-2xl p-8 shadow-2xl">
           <div className="mb-6">
             <h2 className="text-white text-lg font-semibold">Welcome back</h2>
-            <p className="text-slate-400 text-sm mt-1">Sign in to continue to your portal.</p>
+            <p className="text-[var(--color-text-muted)] text-sm mt-1">Sign in to continue to your portal.</p>
           </div>
 
           <form onSubmit={handleSubmit(onSubmit)} autoComplete="on" className="space-y-4">
@@ -154,7 +154,7 @@ export default function TenantLoginPage() {
                 <button
                   type="button"
                   onClick={() => setShowPassword(v => !v)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 transition-colors"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--color-text-muted)] hover:text-slate-300 transition-colors"
                 >
                   {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>
@@ -178,7 +178,7 @@ export default function TenantLoginPage() {
           </form>
         </div>
 
-        <p className="text-center text-slate-700 text-xs mt-6">Powered by FieldEaze</p>
+        <p className="text-center text-[var(--color-text-secondary)] text-xs mt-6">Powered by FieldEaze</p>
       </div>
     </div>
   );

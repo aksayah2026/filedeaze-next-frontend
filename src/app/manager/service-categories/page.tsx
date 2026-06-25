@@ -61,7 +61,7 @@ export default function ServiceCategoriesPage() {
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
-        <h2 className="text-xl font-semibold text-gray-800">Service Categories</h2>
+        <h2 className="text-xl font-semibold text-[var(--color-text-primary)]">Service Categories</h2>
         <Button onClick={() => { setShowCreate(true); reset({ name: '', isActive: true }); }}><Plus size={15} /> New Category</Button>
       </div>
       <DataTable data={data} columns={columns} isLoading={isLoading} />
@@ -69,7 +69,7 @@ export default function ServiceCategoriesPage() {
       <Modal open={showCreate || !!editing} onClose={() => { setShowCreate(false); setEditing(null); reset(); }} title={editing ? 'Edit Category' : 'New Category'} size="sm">
         <form onSubmit={handleSubmit(d => saveMutation.mutate(d))} className="space-y-4">
           <Input label="Name" {...register('name', { required: true })} />
-          {editing && <div className="flex items-center gap-2"><input type="checkbox" id="isActive" {...register('isActive')} className="h-4 w-4" /><label htmlFor="isActive" className="text-sm text-gray-700">Active</label></div>}
+          {editing && <div className="flex items-center gap-2"><input type="checkbox" id="isActive" {...register('isActive')} className="h-4 w-4" /><label htmlFor="isActive" className="text-sm text-[var(--color-text-secondary)]">Active</label></div>}
           <div className="flex justify-end gap-3"><Button variant="secondary" type="button" onClick={() => { setShowCreate(false); setEditing(null); reset(); }}>Cancel</Button><Button type="submit" loading={isSubmitting}>{editing ? 'Save' : 'Create'}</Button></div>
         </form>
       </Modal>

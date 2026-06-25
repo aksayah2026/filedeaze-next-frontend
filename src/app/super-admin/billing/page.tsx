@@ -66,7 +66,7 @@ export default function BillingPage() {
       id: 'ref',
       header: 'Ref',
       cell: ({ row }) => (
-        <code className="text-[11px] bg-slate-100 text-slate-600 px-2 py-0.5 rounded font-mono">
+        <code className="text-[11px] bg-[var(--color-surface-elevated)] text-[var(--color-text-secondary)] px-2 py-0.5 rounded font-mono">
           {row.original.id.slice(0, 8).toUpperCase()}
         </code>
       ),
@@ -75,7 +75,7 @@ export default function BillingPage() {
       accessorKey: 'tenant.companyName',
       header: 'Tenant',
       cell: ({ row }) => (
-        <span className="font-medium text-slate-800">{row.original.tenant?.companyName ?? '—'}</span>
+        <span className="font-medium text-[var(--color-text-primary)]">{row.original.tenant?.companyName ?? '—'}</span>
       ),
     },
     {
@@ -87,7 +87,7 @@ export default function BillingPage() {
       accessorKey: 'amount',
       header: 'Amount',
       cell: ({ row }) => (
-        <span className="font-semibold text-slate-900 tabular-nums">
+        <span className="font-semibold text-[var(--color-text-primary)] tabular-nums">
           ₹{Number(row.original.amount).toLocaleString()}
         </span>
       ),
@@ -105,14 +105,14 @@ export default function BillingPage() {
       accessorKey: 'paidAt',
       header: 'Paid At',
       cell: ({ row }) => row.original.paidAt
-        ? <span className="text-slate-600 text-xs">{dayjs(row.original.paidAt).format('DD MMM YYYY')}</span>
+        ? <span className="text-[var(--color-text-secondary)] text-xs">{dayjs(row.original.paidAt).format('DD MMM YYYY')}</span>
         : <span className="text-slate-300">—</span>,
     },
     {
       accessorKey: 'createdAt',
       header: 'Billed On',
       cell: ({ row }) => (
-        <span className="text-slate-500 text-xs">{dayjs(row.original.createdAt).format('DD MMM YYYY')}</span>
+        <span className="text-[var(--color-text-muted)] text-xs">{dayjs(row.original.createdAt).format('DD MMM YYYY')}</span>
       ),
     },
     {
@@ -135,38 +135,38 @@ export default function BillingPage() {
     <div className="space-y-5">
       {/* Page Header */}
       <div>
-        <h2 className="text-xl font-bold text-slate-900">Billing Dashboard</h2>
-        <p className="text-sm text-slate-500 mt-0.5">Track invoices, payments, and billing status</p>
+        <h2 className="text-xl font-bold text-[var(--color-text-primary)]">Billing Dashboard</h2>
+        <p className="text-sm text-[var(--color-text-muted)] mt-0.5">Track invoices, payments, and billing status</p>
       </div>
 
       {/* Summary Cards */}
       {data?.summary && (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-lg">
-          <div className="relative overflow-hidden rounded-xl bg-white border border-emerald-100 p-5 shadow-[0_1px_3px_rgba(0,0,0,0.06)] card-hover">
-            <div className="absolute left-0 top-0 bottom-0 w-1 rounded-l-xl bg-emerald-500" />
+          <div className="relative overflow-hidden rounded-xl bg-[var(--color-surface)] border border-[var(--color-border)] p-5 shadow-[var(--shadow-sm)] card-hover">
+            <div className="absolute left-0 top-3 bottom-3 w-0.5 rounded-full bg-[var(--color-success)]" />
             <div className="flex items-start justify-between">
-              <div>
-                <p className="text-[10px] font-semibold uppercase tracking-wide text-emerald-600 mb-1">Total Paid</p>
-                <p className="text-2xl font-bold text-slate-900 tabular-nums">
+              <div className="pl-2">
+                <p className="text-[10px] font-semibold uppercase tracking-widest text-[var(--color-success)] mb-1 opacity-80">Total Paid</p>
+                <p className="text-2xl font-bold text-[var(--color-text-primary)] tabular-nums">
                   ₹{data.summary.totalPaid.toLocaleString()}
                 </p>
               </div>
-              <div className="h-10 w-10 rounded-xl bg-emerald-50 flex items-center justify-center">
-                <TrendingUp size={18} className="text-emerald-600" />
+              <div className="h-10 w-10 rounded-xl bg-[var(--color-surface-elevated)] flex items-center justify-center">
+                <TrendingUp size={18} className="text-[var(--color-success)]" />
               </div>
             </div>
           </div>
-          <div className="relative overflow-hidden rounded-xl bg-white border border-amber-100 p-5 shadow-[0_1px_3px_rgba(0,0,0,0.06)] card-hover">
-            <div className="absolute left-0 top-0 bottom-0 w-1 rounded-l-xl bg-amber-400" />
+          <div className="relative overflow-hidden rounded-xl bg-[var(--color-surface)] border border-[var(--color-border)] p-5 shadow-[var(--shadow-sm)] card-hover">
+            <div className="absolute left-0 top-3 bottom-3 w-0.5 rounded-full bg-[var(--color-warning)]" />
             <div className="flex items-start justify-between">
-              <div>
-                <p className="text-[10px] font-semibold uppercase tracking-wide text-amber-600 mb-1">Total Pending</p>
-                <p className="text-2xl font-bold text-slate-900 tabular-nums">
+              <div className="pl-2">
+                <p className="text-[10px] font-semibold uppercase tracking-widest text-[var(--color-warning)] mb-1 opacity-80">Total Pending</p>
+                <p className="text-2xl font-bold text-[var(--color-text-primary)] tabular-nums">
                   ₹{data.summary.totalPending.toLocaleString()}
                 </p>
               </div>
-              <div className="h-10 w-10 rounded-xl bg-amber-50 flex items-center justify-center">
-                <Clock size={18} className="text-amber-600" />
+              <div className="h-10 w-10 rounded-xl bg-[var(--color-surface-elevated)] flex items-center justify-center">
+                <Clock size={18} className="text-[var(--color-warning)]" />
               </div>
             </div>
           </div>
@@ -174,13 +174,13 @@ export default function BillingPage() {
       )}
 
       {/* UPI Settings Card */}
-      <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
-        <div className="px-6 py-4 border-b border-slate-100 bg-slate-50/50 flex items-center gap-2">
+      <div className="bg-[var(--color-surface)] rounded-xl border border-[var(--color-border)] overflow-hidden shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
+        <div className="px-6 py-4 border-b border-[var(--color-border)] bg-[var(--color-surface-elevated)]/50 flex items-center gap-2">
           <QrCode size={15} className="text-blue-500" />
-          <h3 className="text-sm font-semibold text-slate-800">Platform UPI Settings</h3>
+          <h3 className="text-sm font-semibold text-[var(--color-text-primary)]">Platform UPI Settings</h3>
         </div>
         <div className="p-6">
-          <p className="text-xs text-slate-400 mb-4">
+          <p className="text-xs text-[var(--color-text-muted)] mb-4">
             Tenants will see this UPI ID and QR code when they need to pay their subscription bill.
           </p>
           <form onSubmit={handleSubmit(d => upiMutation.mutate(d))} className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -192,7 +192,7 @@ export default function BillingPage() {
                 <img
                   src={upiData.upiQrImageUrl}
                   alt="UPI QR"
-                  className="h-20 w-20 rounded-xl border border-slate-200 object-contain"
+                  className="h-20 w-20 rounded-xl border border-[var(--color-border)] object-contain"
                 />
               )}
               <Button type="submit" loading={isSubmitting} className="ml-auto">
@@ -204,7 +204,7 @@ export default function BillingPage() {
       </div>
 
       {/* Filter Bar */}
-      <div className="flex flex-wrap gap-3 items-end rounded-xl border border-slate-200 bg-white p-4 shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
+      <div className="flex flex-wrap gap-3 items-end rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4 shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
         <Select
           label="Tenant"
           options={tenantOptions}
@@ -224,7 +224,7 @@ export default function BillingPage() {
           className="w-36"
         />
         <div className="flex flex-col gap-1.5">
-          <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">From</span>
+          <span className="text-[10px] font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">From</span>
           <Input 
             type="date" 
             value={from} 
@@ -239,7 +239,7 @@ export default function BillingPage() {
           />
         </div>
         <div className="flex flex-col gap-1.5">
-          <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">To</span>
+          <span className="text-[10px] font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">To</span>
           <Input 
             type="date" 
             value={to} 
@@ -254,7 +254,7 @@ export default function BillingPage() {
           />
         </div>
         <div className="flex flex-col gap-1.5">
-          <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-500 invisible">_</span>
+          <span className="text-[10px] font-semibold uppercase tracking-wide text-[var(--color-text-muted)] invisible">_</span>
           <Button variant="secondary" onClick={() => setParams({ tenantId, status, from, to })}>
             <Search size={14} /> Apply
           </Button>

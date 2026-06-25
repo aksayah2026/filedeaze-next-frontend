@@ -17,8 +17,8 @@ export default function SuperAdminDashboardPage() {
     <div className="space-y-6">
       {/* Page Header */}
       <div>
-        <h2 className="text-xl font-bold text-slate-900">Dashboard</h2>
-        <p className="text-sm text-slate-500 mt-0.5">Platform-wide metrics and performance overview</p>
+        <h2 className="text-xl font-bold text-[var(--color-text-primary)] transition-colors duration-250">Dashboard</h2>
+        <p className="text-sm text-[var(--color-text-muted)] mt-0.5 transition-colors duration-250">Platform-wide metrics and performance overview</p>
       </div>
 
       {/* KPI Grid */}
@@ -32,16 +32,16 @@ export default function SuperAdminDashboardPage() {
             title="Total Tenants"
             value={data.totalTenants}
             icon={Building2}
-            iconBg="bg-slate-100"
+            iconBg="bg-[var(--color-surface-elevated)]"
             iconColor="text-slate-650"
-            accentColor="bg-slate-400"
+            accentColor="bg-[var(--color-surface-elevated)]"
             subtitle="All registered tenants"
           />
           <StatsCard
             title="Active Tenants"
             value={data.activeTenants}
             icon={CheckCircle}
-            iconBg="bg-emerald-50"
+            iconBg="bg-[var(--color-surface-elevated)]"
             iconColor="text-emerald-600"
             accentColor="bg-emerald-500"
             subtitle="Currently active subscriptions"
@@ -50,7 +50,7 @@ export default function SuperAdminDashboardPage() {
             title="Expired Tenants"
             value={data.expiredTenants}
             icon={AlertCircle}
-            iconBg="bg-amber-50"
+            iconBg="bg-[var(--color-surface-elevated)]"
             iconColor="text-amber-600"
             accentColor="bg-amber-500"
             subtitle="Subscriptions that lapsed"
@@ -59,7 +59,7 @@ export default function SuperAdminDashboardPage() {
             title="Suspended Tenants"
             value={data.suspendedTenants}
             icon={XCircle}
-            iconBg="bg-red-50"
+            iconBg="bg-[var(--color-surface-elevated)]"
             iconColor="text-red-655"
             accentColor="bg-red-500"
             subtitle="Manually suspended accounts"
@@ -68,7 +68,7 @@ export default function SuperAdminDashboardPage() {
             title="Total Revenue"
             value={`₹${data.totalRevenue.toLocaleString()}`}
             icon={DollarSign}
-            iconBg="bg-emerald-50"
+            iconBg="bg-[var(--color-surface-elevated)]"
             iconColor="text-emerald-600"
             accentColor="bg-emerald-500"
             subtitle="Lifetime collected revenue"
@@ -77,7 +77,7 @@ export default function SuperAdminDashboardPage() {
             title="Active Users"
             value={data.activeUsers}
             icon={Users}
-            iconBg="bg-blue-50"
+            iconBg="bg-[var(--color-surface-elevated)]"
             iconColor="text-blue-650"
             accentColor="bg-blue-500"
             subtitle="Users across all tenants"

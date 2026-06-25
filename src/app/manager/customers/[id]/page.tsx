@@ -36,7 +36,7 @@ export default function CustomerHistoryPage() {
 
   return (
     <div>
-      <h2 className="text-xl font-semibold text-gray-800 mb-6">Customer Ticket History</h2>
+      <h2 className="text-xl font-semibold text-[var(--color-text-primary)] mb-6">Customer Ticket History</h2>
       <DataTable data={history} columns={columns} />
     </div>
   );

@@ -39,7 +39,7 @@ export default function AttendancePage() {
 
   return (
     <div>
-      <h2 className="text-xl font-semibold text-gray-800 mb-6">Attendance</h2>
+      <h2 className="text-xl font-semibold text-[var(--color-text-primary)] mb-6">Attendance</h2>
       <div className="flex flex-wrap gap-3 mb-4 items-end">
         <Select options={techOptions} value={techId} onChange={e => setTechId(e.target.value)} className="w-48" />
         <Input type="date" value={from} onChange={e => setFrom(e.target.value)} />

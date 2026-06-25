@@ -139,19 +139,19 @@ export default function TicketsPage() {
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
-        <h2 className="text-xl font-semibold text-gray-800">Tickets</h2>
+        <h2 className="text-xl font-semibold text-[var(--color-text-primary)]">Tickets</h2>
         <Button onClick={() => setShowCreate(true)}>
           <Phone size={15} /> New Ticket (Call)
         </Button>
       </div>
 
-      <div className="flex flex-wrap gap-3 mb-4 items-end rounded-xl border border-slate-200 bg-white p-4 shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
+      <div className="flex flex-wrap gap-3 mb-4 items-end rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4 shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
         <div className="flex flex-col gap-1.5">
-          <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">Status</span>
+          <span className="text-[10px] font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">Status</span>
           <Select options={STATUS_OPTIONS} value={status} onChange={e => setStatus(e.target.value)} className="w-48" />
         </div>
         <div className="flex flex-col gap-1.5">
-          <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">From</span>
+          <span className="text-[10px] font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">From</span>
           <Input 
             type="date" 
             value={from} 
@@ -167,7 +167,7 @@ export default function TicketsPage() {
           />
         </div>
         <div className="flex flex-col gap-1.5">
-          <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">To</span>
+          <span className="text-[10px] font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">To</span>
           <Input 
             type="date" 
             value={to} 
@@ -189,7 +189,7 @@ export default function TicketsPage() {
 
       {/* Create ticket on behalf of customer */}
       <Modal open={showCreate} onClose={closeModal} title="New Ticket — Customer Call" size="md">
-        <div className="flex items-start gap-2 rounded-lg bg-blue-50 border border-blue-100 px-3 py-2 mb-4">
+        <div className="flex items-start gap-2 rounded-lg bg-[var(--color-surface-elevated)] border border-blue-100 px-3 py-2 mb-4">
           <Phone size={14} className="text-blue-500 mt-0.5 shrink-0" />
           <p className="text-xs text-blue-700">
             Use this form to raise a service ticket on behalf of a customer who called in.
@@ -214,7 +214,7 @@ export default function TicketsPage() {
                 <Plus size={12} /> New Customer
               </button>
             ) : (
-              <div className="mt-2 p-3 border border-blue-200 rounded-lg bg-blue-50 space-y-2">
+              <div className="mt-2 p-3 border border-blue-200 rounded-lg bg-[var(--color-surface-elevated)] space-y-2">
                 <Input
                   placeholder="Name *"
                   value={newCust.name}

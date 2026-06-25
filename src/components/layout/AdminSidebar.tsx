@@ -69,31 +69,27 @@ export function AdminSidebar({ onClose, isCollapsed = false }: AdminSidebarProps
         onClick={onClose}
         title={isCollapsed ? item.label : undefined}
         className={cn(
-          'relative flex items-center rounded-lg transition-all duration-150 mb-0.5 group',
-          isCollapsed
-            ? 'justify-center p-2 h-10 w-10 mx-auto'
-            : 'gap-3 px-3 py-2 text-[13px] font-medium',
-          active ? 'text-white' : 'text-slate-400 hover:text-white'
+          'relative flex items-center gap-3 px-3 py-2 rounded-xl text-[13px] font-medium transition-all duration-200 mb-0.5 group',
+          isCollapsed ? 'justify-center w-10 h-10 mx-auto' : 'w-full',
+          active
+            ? 'bg-[var(--color-sidebar-active)] text-[var(--color-primary)]'
+            : 'text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-sidebar-hover)]'
         )}
-        style={active ? { background: '#0D9488' } : undefined}
-        onMouseEnter={e => {
-          if (!active) (e.currentTarget as HTMLElement).style.background = 'rgba(20, 184, 166, 0.12)';
-        }}
-        onMouseLeave={e => {
-          if (!active) (e.currentTarget as HTMLElement).style.background = '';
-        }}
       >
+        {/* Active left indicator */}
+        {active && !isCollapsed && (
+          <span className="absolute left-0 top-1/4 bottom-1/4 w-0.5 rounded-full bg-[var(--color-primary)]" />
+        )}
         <span className={cn(
-          'flex h-7 w-7 items-center justify-center rounded-md shrink-0 transition-colors',
-          active ? 'bg-white/10' : 'bg-white/5 group-hover:bg-white/10'
+          'flex h-6 w-6 items-center justify-center rounded-lg shrink-0 transition-colors',
+          active
+            ? 'text-[var(--color-primary)]'
+            : 'text-[var(--color-text-muted)] group-hover:text-[var(--color-text-primary)]'
         )}>
-          <Icon size={15} className={active ? 'text-white' : 'text-slate-400'} />
+          <Icon size={15} />
         </span>
         {!isCollapsed && (
-          <span className="truncate animate-fe-slide-left">{item.label}</span>
-        )}
-        {active && !isCollapsed && (
-          <span className="ml-auto h-1.5 w-1.5 rounded-full bg-teal-400 shrink-0" />
+          <span className="truncate">{item.label}</span>
         )}
       </Link>
     );
@@ -101,10 +97,10 @@ export function AdminSidebar({ onClose, isCollapsed = false }: AdminSidebarProps
 
   const renderSectionHeader = (label: string, showDivider: boolean) => {
     if (isCollapsed) {
-      return showDivider ? <div className="h-px bg-slate-800/60 my-3 mx-2" /> : null;
+      return showDivider ? <div className="h-px bg-[var(--color-border-strong)] my-3 mx-2 opacity-30" /> : null;
     }
     return (
-      <p className="px-2 pt-3 pb-1 text-[9px] font-bold uppercase tracking-widest text-slate-500">
+      <p className="px-2 pt-3 pb-1 text-[9px] font-bold uppercase tracking-widest text-[var(--color-text-muted)]">
         {label}
       </p>
     );
@@ -113,10 +109,9 @@ export function AdminSidebar({ onClose, isCollapsed = false }: AdminSidebarProps
   return (
     <aside
       className={cn(
-        "flex h-full flex-col transition-all duration-300 ease-in-out select-none",
+        "flex h-full flex-col transition-all duration-300 ease-in-out select-none bg-[var(--color-sidebar)]",
         isCollapsed ? "w-20" : "w-64"
       )}
-      style={{ background: '#0F2D2A' }}
     >
       {/* Brand Header */}
       <div
@@ -124,21 +119,21 @@ export function AdminSidebar({ onClose, isCollapsed = false }: AdminSidebarProps
           "flex items-center gap-3 px-5 py-5 transition-all duration-300",
           isCollapsed ? "justify-center px-4" : "justify-start"
         )}
-        style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}
+        style={{ borderBottom: '1px solid var(--color-sidebar-border)' }}
       >
         <div
           className="h-9 w-9 rounded-xl flex items-center justify-center shrink-0 transition-transform duration-300"
           style={{
-            background: 'linear-gradient(135deg, #14B8A6 0%, #0D9488 100%)',
-            boxShadow: '0 4px 12px rgba(20,184,166,0.4)',
+            background: 'linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-hover) 100%)',
+            boxShadow: '0 4px 12px var(--color-primary-ring)',
           }}
         >
           <Zap size={17} className="text-white" />
         </div>
         {!isCollapsed && (
           <div className="animate-fe-slide-left">
-            <p className="text-sm font-bold text-white leading-tight">FieldEaze</p>
-            <p className="text-[10px] font-semibold mt-0.5" style={{ color: '#94A3B8' }}>
+            <p className="text-sm font-bold text-[var(--color-text-primary)] leading-tight">FieldEaze</p>
+            <p className="text-[10px] font-semibold mt-0.5 text-[var(--color-text-muted)]">
               {role === 'ADMIN' ? 'Admin Portal' : 'Manager Portal'}
             </p>
           </div>
@@ -172,8 +167,8 @@ export function AdminSidebar({ onClose, isCollapsed = false }: AdminSidebarProps
       </nav>
 
       {/* Footer */}
-      <div className="px-4 py-3" style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
-        <p className="text-[10px] font-medium text-center text-slate-500">
+      <div className="px-4 py-3" style={{ borderTop: '1px solid var(--color-sidebar-border)' }}>
+        <p className="text-[10px] font-medium text-center text-[var(--color-text-muted)]">
           {isCollapsed ? 'v1.0' : 'FieldEaze Platform v1.0'}
         </p>
       </div>

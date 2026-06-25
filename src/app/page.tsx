@@ -17,25 +17,25 @@ export default function RootPage() {
   }, [isAuthenticated, role, router]);
 
   return (
-    <div className="flex h-screen flex-col items-center justify-center gap-6 bg-gray-50">
+    <div className="flex h-screen flex-col items-center justify-center gap-6 bg-[var(--color-surface-elevated)]">
 
       {/* Brand mark */}
       <div className="flex flex-col items-center gap-3 animate-in fade-in slide-in-from-bottom-2 duration-300">
-        <div className="flex h-14 w-14 items-center justify-center rounded-xl border border-gray-200 bg-white shadow-sm">
+        <div className="flex h-14 w-14 items-center justify-center rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-sm">
           {/* Replace with your actual <Logo /> component or <Image> */}
-          <span className="text-xl font-semibold tracking-tight text-gray-900">F</span>
+          <span className="text-xl font-semibold tracking-tight text-[var(--color-text-primary)]">F</span>
         </div>
-        <p className="text-[15px] font-medium tracking-tight text-gray-900">FieldEaze</p>
+        <p className="text-[15px] font-medium tracking-tight text-[var(--color-text-primary)]">FieldEaze</p>
       </div>
 
       {/* Spinner */}
       <div
-        className="h-[30px] w-[30px] animate-spin rounded-full border-[2px] border-gray-200 border-t-gray-900"
+        className="h-[30px] w-[30px] animate-spin rounded-full border-[2px] border-[var(--color-border)] border-t-gray-900"
         aria-label="Loading"
       />
 
       {/* Label */}
-      <p className="text-[13px] text-gray-400 tracking-wide animate-in fade-in duration-500 delay-150">
+      <p className="text-[13px] text-[var(--color-text-muted)] tracking-wide animate-in fade-in duration-500 delay-150">
         Loading your workspace…
       </p>
 
