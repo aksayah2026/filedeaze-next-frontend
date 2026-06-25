@@ -14,7 +14,7 @@ import { Select } from '@/components/ui/Select';
 import { Input } from '@/components/ui/Input';
 import { Textarea } from '@/components/ui/Textarea';
 import { PageSpinner } from '@/components/ui/Spinner';
-import { Star, CheckCircle, XCircle, RefreshCw, UserCheck, ChevronLeft } from 'lucide-react';
+import { Star, CheckCircle, XCircle, RefreshCw, UserCheck, ChevronLeft, CalendarClock } from 'lucide-react';
 import dayjs from 'dayjs';
 import Link from 'next/link';
 
@@ -24,7 +24,7 @@ export default function TicketDetailPage() {
   const [showAssign, setShowAssign] = useState(false);
   const [showClose, setShowClose] = useState(false);
   const [showCancel, setShowCancel] = useState(false);
-  const [isReassign, setIsReassign] = useState(false);
+  const [assignMode, setAssignMode] = useState<'assign' | 'reassign' | 'reschedule'>('assign');
 
   const { data: ticket, isLoading } = useQuery<Ticket>({ queryKey: ['ticket', id], queryFn: async () => (await api.get(`/web/manager/tickets/${id}`)).data.data });
   const { data: techs = [] } = useQuery<Technician[]>({ queryKey: ['technicians'], queryFn: async () => (await api.get('/web/manager/technicians')).data.data });
@@ -34,8 +34,12 @@ export default function TicketDetailPage() {
   const { register: rx, handleSubmit: hx, reset: resetX, formState: { isSubmitting: sx } } = useForm<{ reason: string }>();
 
   const assignMutation = useMutation({
-    mutationFn: (d: { technicianId: string; scheduledAt: string }) => api.patch(`/web/manager/tickets/${id}/${isReassign ? 'reassign' : 'assign'}`, d),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['ticket', id] }); toast.success(isReassign ? 'Reassigned' : 'Assigned'); setShowAssign(false); resetA(); },
+    mutationFn: (d: { technicianId: string; scheduledAt: string }) => api.patch(`/web/manager/tickets/${id}/${assignMode === 'reschedule' ? 'reassign' : assignMode}`, d),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['ticket', id] });
+      toast.success(assignMode === 'reassign' ? 'Reassigned' : assignMode === 'reschedule' ? 'Rescheduled' : 'Assigned');
+      setShowAssign(false); resetA();
+    },
     onError: () => toast.error('Failed'),
   });
 
@@ -55,6 +59,7 @@ export default function TicketDetailPage() {
 
   const canAssign = ticket.status === 'NEW_TICKET';
   const canReassign = ticket.status === 'ASSIGNED' || ticket.status === 'ACCEPTED';
+  const canReschedule = ticket.status === 'PENDING';
   const canClose = ticket.status === 'INVOICE_GENERATED';
   const canCancel = !['COMPLETED', 'TICKET_CLOSED', 'CANCELLED'].includes(ticket.status);
 
@@ -80,8 +85,9 @@ export default function TicketDetailPage() {
         <div className="flex flex-col items-end gap-2">
           <TicketStatusBadge status={ticket.status} />
           <div className="flex gap-2">
-            {canAssign && <Button size="sm" onClick={() => { setIsReassign(false); setShowAssign(true); }}><UserCheck size={13} /> Assign</Button>}
-            {canReassign && <Button size="sm" variant="secondary" onClick={() => { setIsReassign(true); setShowAssign(true); }}><RefreshCw size={13} /> Reassign</Button>}
+            {canAssign && <Button size="sm" onClick={() => { setAssignMode('assign'); setShowAssign(true); }}><UserCheck size={13} /> Assign</Button>}
+            {canReassign && <Button size="sm" variant="secondary" onClick={() => { setAssignMode('reassign'); setShowAssign(true); }}><RefreshCw size={13} /> Reassign</Button>}
+            {canReschedule && <Button size="sm" variant="secondary" onClick={() => { setAssignMode('reschedule'); setShowAssign(true); }}><CalendarClock size={13} /> Reschedule</Button>}
             {canClose && <Button size="sm" variant="secondary" onClick={() => setShowClose(true)}><CheckCircle size={13} /> Close</Button>}
             {canCancel && <Button size="sm" variant="danger" onClick={() => setShowCancel(true)}><XCircle size={13} /> Cancel</Button>}
           </div>
@@ -176,11 +182,11 @@ export default function TicketDetailPage() {
         </div>
       )}
 
-      <Modal open={showAssign} onClose={() => { setShowAssign(false); resetA(); }} title={isReassign ? 'Reassign Ticket' : 'Assign Ticket'} size="sm">
+      <Modal open={showAssign} onClose={() => { setShowAssign(false); resetA(); }} title={assignMode === 'reassign' ? 'Reassign Ticket' : assignMode === 'reschedule' ? 'Reschedule Ticket' : 'Assign Ticket'} size="sm">
         <form onSubmit={ha(d => assignMutation.mutate(d))} className="space-y-4">
           <Select label="Technician" options={techOptions} placeholder="Select technician" {...ra('technicianId', { required: true })} />
           <Input label="Scheduled At" type="datetime-local" {...ra('scheduledAt')} />
-          <div className="flex justify-end gap-3"><Button variant="secondary" type="button" onClick={() => { setShowAssign(false); resetA(); }}>Cancel</Button><Button type="submit" loading={sa}>{isReassign ? 'Reassign' : 'Assign'}</Button></div>
+          <div className="flex justify-end gap-3"><Button variant="secondary" type="button" onClick={() => { setShowAssign(false); resetA(); }}>Cancel</Button><Button type="submit" loading={sa}>{assignMode === 'reassign' ? 'Reassign' : assignMode === 'reschedule' ? 'Reschedule' : 'Assign'}</Button></div>
         </form>
       </Modal>
 
