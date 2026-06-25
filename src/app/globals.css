@@ -271,3 +271,44 @@ body {
   transform: translateY(-2px);
   box-shadow: var(--shadow-lg);
 }
+
+/* ── Curved Notch Sidebar Styles ─────────────────────────── */
+
+.sidebar-notch-item {
+  position: relative;
+  border-radius: 24px 0 0 24px;
+  margin-left: 12px;
+  width: calc(100% - 12px);
+  transition: all 0.2s ease-in-out;
+  background-color: transparent;
+}
+
+.sidebar-notch-item.active {
+  background-color: #F8FAFC !important;
+}
+
+/* Top notch curve */
+.sidebar-notch-item.active::before {
+  content: '';
+  position: absolute;
+  top: -20px;
+  right: 0;
+  width: 20px;
+  height: 20px;
+  background: radial-gradient(circle at 100% 100%, transparent 19px, #F8FAFC 20px);
+  pointer-events: none;
+  z-index: 10;
+}
+
+/* Bottom notch curve */
+.sidebar-notch-item.active::after {
+  content: '';
+  position: absolute;
+  bottom: -20px;
+  right: 0;
+  width: 20px;
+  height: 20px;
+  background: radial-gradient(circle at 100% 0, transparent 19px, #F8FAFC 20px);
+  pointer-events: none;
+  z-index: 10;
+}

@@ -47,7 +47,8 @@ export function AppShell({ sidebar, children }: AppShellProps) {
           'fixed inset-y-0 left-0 z-30 transition-all duration-300 ease-in-out h-full border-r border-slate-200 lg:border-none',
           'lg:static lg:inset-auto lg:z-auto lg:translate-x-0',
           open ? 'translate-x-0' : '-translate-x-full lg:translate-x-0',
-          isCollapsed ? 'lg:w-20' : 'lg:w-64'
+          isCollapsed ? 'lg:w-[72px]' : 'lg:w-[240px]',
+          'lg:my-4 lg:ml-4 lg:h-[calc(100vh_-_2rem)] lg:rounded-[24px] lg:overflow-hidden lg:shadow-[0_4px_20px_rgba(0,0,0,0.06)] lg:self-center'
         )}
       >
         {sidebar(close, isCollapsed)}
@@ -56,18 +57,18 @@ export function AppShell({ sidebar, children }: AppShellProps) {
       {/* Main area */}
       <div className="flex flex-1 flex-col overflow-hidden min-w-0 relative">
         {/* Glowing thin loading progress line at the top border of the panel */}
-        <div 
+        <div
           className={cn(
             "absolute top-[64px] left-0 right-0 h-0.5 bg-gradient-to-r from-blue-500 via-indigo-500 to-blue-600 z-20 transition-all duration-300 origin-left scale-x-0",
             isFetching > 0 && "scale-x-100 animate-[pulse_1.5s_infinite]"
           )}
         />
-        <Topbar 
-          onMenuClick={() => setOpen(v => !v)} 
+        <Topbar
+          onMenuClick={() => setOpen(v => !v)}
           isCollapsed={isCollapsed}
           onToggleCollapse={() => setIsCollapsed(v => !v)}
         />
-        <main 
+        <main
           className={cn(
             "flex-1 overflow-y-auto p-4 sm:p-6 bg-[#F8FAFC] transition-all duration-300",
             isFetching > 0 ? "opacity-75 saturate-[0.85] pointer-events-none" : "opacity-100 saturate-100",

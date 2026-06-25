@@ -9,16 +9,16 @@ import {
 import { cn } from '@/lib/utils';
 
 const nav = [
-  { href: '/super-admin/dashboard',        label: 'Dashboard',         icon: LayoutDashboard, section: 'Overview' },
-  { href: '/super-admin/tenants',          label: 'Tenants',           icon: Building2,       section: 'Management' },
-  { href: '/super-admin/plans',            label: 'Plans',             icon: CreditCard,      section: 'Management' },
-  { href: '/super-admin/subscriptions',    label: 'Subscriptions',     icon: Receipt,         section: 'Management' },
-  { href: '/super-admin/payment-requests', label: 'Payment Requests',  icon: ClipboardCheck,  section: 'Management' },
-  { href: '/super-admin/billing',          label: 'Billing',           icon: FileText,        section: 'Finance' },
-  { href: '/super-admin/payment-history',  label: 'Payment History',   icon: History,         section: 'Finance' },
-  { href: '/super-admin/revenue-reports',  label: 'Revenue Reports',   icon: BarChart2,       section: 'Finance' },
-  { href: '/super-admin/activity-logs',    label: 'Activity Logs',     icon: Activity,        section: 'System' },
-  { href: '/super-admin/platform-settings',label: 'Platform Settings', icon: Settings,        section: 'System' },
+  { href: '/super-admin/dashboard', label: 'Dashboard', icon: LayoutDashboard, section: 'Overview' },
+  { href: '/super-admin/tenants', label: 'Tenants', icon: Building2, section: 'Management' },
+  { href: '/super-admin/plans', label: 'Plans', icon: CreditCard, section: 'Management' },
+  { href: '/super-admin/subscriptions', label: 'Subscriptions', icon: Receipt, section: 'Management' },
+  { href: '/super-admin/payment-requests', label: 'Payment Requests', icon: ClipboardCheck, section: 'Management' },
+  { href: '/super-admin/billing', label: 'Billing', icon: FileText, section: 'Finance' },
+  { href: '/super-admin/payment-history', label: 'Payment History', icon: History, section: 'Finance' },
+  { href: '/super-admin/revenue-reports', label: 'Revenue Reports', icon: BarChart2, section: 'Finance' },
+  { href: '/super-admin/activity-logs', label: 'Activity Logs', icon: Activity, section: 'System' },
+  { href: '/super-admin/platform-settings', label: 'Platform Settings', icon: Settings, section: 'System' },
 ];
 
 const sections = ['Overview', 'Management', 'Finance', 'System'];
@@ -70,7 +70,7 @@ export function SuperAdminSidebar({ onClose, isCollapsed = false }: SuperAdminSi
       <nav className="flex-1 overflow-y-auto sidebar-scroll py-3 px-3 space-y-0.5">
         {sections.map((section, secIdx) => {
           const items = nav.filter(n => n.section === section);
-          
+
           return (
             <div key={section} className="mb-3">
               {isCollapsed ? (
@@ -90,8 +90,8 @@ export function SuperAdminSidebar({ onClose, isCollapsed = false }: SuperAdminSi
                     title={isCollapsed ? label : undefined}
                     className={cn(
                       'relative flex items-center rounded-lg transition-all duration-150 mb-0.5 group',
-                      isCollapsed 
-                        ? 'justify-center p-2 h-10 w-10 mx-auto' 
+                      isCollapsed
+                        ? 'justify-center p-2 h-10 w-10 mx-auto'
                         : 'gap-3 px-3 py-2 text-[13px] font-medium',
                       active ? 'text-white' : 'text-slate-400 hover:text-white'
                     )}
@@ -132,3 +132,4 @@ export function SuperAdminSidebar({ onClose, isCollapsed = false }: SuperAdminSi
     </aside>
   );
 }
+

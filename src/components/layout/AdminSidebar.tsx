@@ -11,37 +11,37 @@ import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 
 const adminOnlyNav = [
-  { href: '/admin/dashboard',            label: 'Dashboard',         icon: LayoutDashboard },
-  { href: '/admin/managers',             label: 'Managers',          icon: Users },
-  { href: '/admin/company-settings',     label: 'Company Settings',  icon: Building2 },
-  { href: '/admin/tenant-settings',      label: 'Tenant Settings',   icon: Settings },
-  { href: '/admin/profile',              label: 'My Profile',        icon: UserCheck },
+  { href: '/admin/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { href: '/admin/managers', label: 'Managers', icon: Users },
+  { href: '/admin/company-settings', label: 'Company Settings', icon: Building2 },
+  { href: '/admin/tenant-settings', label: 'Tenant Settings', icon: Settings },
+  { href: '/admin/profile', label: 'My Profile', icon: UserCheck },
 ];
 
 const reportsNav = [
-  { href: '/admin/reports/revenue',      label: 'Revenue',           icon: BarChart2 },
-  { href: '/admin/reports/tickets',      label: 'Tickets',           icon: ClipboardList },
-  { href: '/admin/reports/technicians',  label: 'Technicians',       icon: Users },
+  { href: '/admin/reports/revenue', label: 'Revenue', icon: BarChart2 },
+  { href: '/admin/reports/tickets', label: 'Tickets', icon: ClipboardList },
+  { href: '/admin/reports/technicians', label: 'Technicians', icon: Users },
 ];
 
 const adminMiscNav = [
-  { href: '/admin/audit-logs',           label: 'Audit Logs',        icon: FileText },
-  { href: '/admin/platform-settings',    label: 'Platform Settings', icon: Settings },
-  { href: '/admin/subscription',         label: 'Subscription',      icon: CreditCard },
+  { href: '/admin/audit-logs', label: 'Audit Logs', icon: FileText },
+  { href: '/admin/platform-settings', label: 'Platform Settings', icon: Settings },
+  { href: '/admin/subscription', label: 'Subscription', icon: CreditCard },
 ];
 
 const operationsNav = [
-  { href: '/manager/tickets',               label: 'Tickets',          icon: Ticket },
-  { href: '/manager/technicians',           label: 'Technicians',      icon: Wrench },
-  { href: '/manager/skills',               label: 'Skills',            icon: Star },
-  { href: '/manager/service-categories',   label: 'Categories',       icon: Tag },
+  { href: '/manager/tickets', label: 'Tickets', icon: Ticket },
+  { href: '/manager/technicians', label: 'Technicians', icon: Wrench },
+  { href: '/manager/skills', label: 'Skills', icon: Star },
+  { href: '/manager/service-categories', label: 'Categories', icon: Tag },
   { href: '/manager/service-sub-categories', label: 'Sub-Categories', icon: Tag },
-  { href: '/manager/customers',            label: 'Customers',        icon: Users },
-  { href: '/manager/attendance',           label: 'Attendance',       icon: UserCheck },
-  { href: '/manager/feedback',             label: 'Feedback',         icon: Star },
-  { href: '/manager/payments',             label: 'Payments',         icon: CreditCard },
-  { href: '/manager/invoices',             label: 'Invoices',         icon: Receipt },
-  { href: '/manager/offers',               label: 'Offers',           icon: Gift },
+  { href: '/manager/customers', label: 'Customers', icon: Users },
+  { href: '/manager/attendance', label: 'Attendance', icon: UserCheck },
+  { href: '/manager/feedback', label: 'Feedback', icon: Star },
+  { href: '/manager/payments', label: 'Payments', icon: CreditCard },
+  { href: '/manager/invoices', label: 'Invoices', icon: Receipt },
+  { href: '/manager/offers', label: 'Offers', icon: Gift },
 ];
 
 const managerDashNav = [
