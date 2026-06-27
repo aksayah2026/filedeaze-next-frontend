@@ -8,6 +8,7 @@ import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { RefreshButton } from '@/components/ui/RefreshButton';
 import { ThemeToggle } from '@/components/common/ThemeToggle';
+import { getPortalPrefix } from '@/lib/auth-helper';
 
 interface TopbarProps {
   title?: string;
@@ -86,7 +87,8 @@ export function Topbar({ title, onMenuClick, isCollapsed, onToggleCollapse }: To
 
   const logout = async () => {
     try {
-      const rt = localStorage.getItem('refreshToken');
+      const prefix = getPortalPrefix(pathname);
+      const rt = localStorage.getItem(`${prefix}_refreshToken`);
       await api.post('/auth/logout', { refreshToken: rt });
     } catch { }
     clearAuth();

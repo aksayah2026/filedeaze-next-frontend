@@ -1,4 +1,5 @@
 import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
+import { getPortalPrefix, getCookie, setCookie, eraseCookie } from './auth-helper';
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000/api/v1';
 
@@ -18,16 +19,29 @@ export const api = axios.create({
 });
 
 api.interceptors.request.use((config: InternalAxiosRequestConfig) => {
-  if (accessToken) config.headers.Authorization = `Bearer ${accessToken}`;
+  if (typeof window !== 'undefined') {
+    const prefix = getPortalPrefix();
+    const token = sessionStorage.getItem(`${prefix}_accessToken`) || getCookie(`${prefix}_accessToken`);
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+  } else if (accessToken) {
+    config.headers.Authorization = `Bearer ${accessToken}`;
+  }
   return config;
 });
 
 function hardLogout() {
-  setAccessToken(null);
-  sessionStorage.removeItem('accessToken');
-  localStorage.removeItem('refreshToken');
-  localStorage.removeItem('user');
-  window.location.href = '/login';
+  if (typeof window !== 'undefined') {
+    const prefix = getPortalPrefix();
+    setAccessToken(null);
+    sessionStorage.removeItem(`${prefix}_accessToken`);
+    localStorage.removeItem(`${prefix}_refreshToken`);
+    localStorage.removeItem(`${prefix}_user`);
+    eraseCookie(`${prefix}_accessToken`);
+    eraseCookie(`${prefix}_refreshToken`);
+    window.location.href = '/login';
+  }
 }
 
 api.interceptors.response.use(
@@ -36,7 +50,9 @@ api.interceptors.response.use(
     const original = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
 
     if (error.response?.status === 401 && !original?._retry) {
-      const rt = localStorage.getItem('refreshToken');
+      if (typeof window === 'undefined') return Promise.reject(error);
+      const prefix = getPortalPrefix();
+      const rt = localStorage.getItem(`${prefix}_refreshToken`);
       if (!rt) { hardLogout(); return Promise.reject(error); }
 
       // Queue concurrent requests while a refresh is in flight
@@ -58,8 +74,10 @@ api.interceptors.response.use(
         const { data } = await axios.post(`${BASE_URL}/auth/refresh`, { refreshToken: rt });
         const { accessToken: newAt, refreshToken: newRt } = data.data.tokens;
         setAccessToken(newAt);
-        sessionStorage.setItem('accessToken', newAt);
-        localStorage.setItem('refreshToken', newRt);
+        sessionStorage.setItem(`${prefix}_accessToken`, newAt);
+        localStorage.setItem(`${prefix}_refreshToken`, newRt);
+        setCookie(`${prefix}_accessToken`, newAt, 1);
+        setCookie(`${prefix}_refreshToken`, newRt, 7);
 
         // Flush queue with new token
         refreshQueue.forEach(cb => cb(newAt));
@@ -78,8 +96,9 @@ api.interceptors.response.use(
       }
     }
 
-    if (error.response?.status === 402) {
-      const stored = localStorage.getItem('user');
+    if (error.response?.status === 402 && typeof window !== 'undefined') {
+      const prefix = getPortalPrefix();
+      const stored = localStorage.getItem(`${prefix}_user`);
       let role: string | null = null;
       try { role = stored ? JSON.parse(stored).role : null; } catch { /* ignore */ }
       const subscriptionPath = role === 'MANAGER' ? '/manager/subscription' : '/admin/subscription';
