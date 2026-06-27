@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { flushSync } from 'react-dom';
 import { Clock, Eye, EyeOff, Loader2, ShieldCheck, Zap } from 'lucide-react';
 import api from '@/lib/axios';
@@ -16,7 +16,12 @@ import { TenantBranding } from '@/types';
 function isSuperAdminHost(hostname: string): boolean {
   // Bare localhost / 127.0.0.1 (dev with no subdomain) → super admin
   if (hostname === 'localhost' || hostname === '127.0.0.1') return true;
-  return hostname === 'admin.localhost' || hostname === 'admin.fieldeaze.com' || hostname.startsWith('admin.');
+  return (
+    hostname === 'admin.localhost' ||
+    hostname === 'admin.fieldeaze.com' ||
+    hostname === 'fieldeaze.ngstellar.com' ||
+    hostname.startsWith('admin.')
+  );
 }
 
 function getInitials(name: string): string {
@@ -51,8 +56,9 @@ function BrandingSkeleton() {
 // ── Main page ──────────────────────────────────────────────────────────────
 
 export default function LoginPage() {
-  const { setAuth } = useAuth();
+  const { setAuth, role, isAuthenticated } = useAuth();
   const router = useRouter();
+  const pathname = usePathname();
 
   const [showPw, setShowPw] = useState(false);
   const [loginError, setLoginError] = useState('');
@@ -64,10 +70,29 @@ export default function LoginPage() {
     resolver: zodResolver(schema),
   });
 
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (isAuthenticated && role) {
+      if (role === 'SUPER_ADMIN') {
+        router.replace('/super-admin/dashboard');
+      } else if (role === 'ADMIN') {
+        router.replace('/admin/dashboard');
+      } else if (role === 'MANAGER') {
+        router.replace('/manager/dashboard');
+      }
+    }
+  }, [isAuthenticated, role, router]);
+
   // Detect hostname and (for tenant portals) load branding
   useEffect(() => {
     const hostname = window.location.hostname;
-    const superAdmin = isSuperAdminHost(hostname);
+    const isVercelMain = hostname.includes('vercel.app') && !hostname.startsWith('tenant-');
+    const superAdmin =
+      isSuperAdminHost(hostname) ||
+      isVercelMain ||
+      pathname?.startsWith('/super-admin') ||
+      (isAuthenticated && role === 'SUPER_ADMIN');
+
     setIsSuper(superAdmin);
 
     if (superAdmin) {
@@ -81,7 +106,7 @@ export default function LoginPage() {
         setBrandingState('ok');
       })
       .catch(() => setBrandingState('error'));
-  }, []);
+  }, [pathname, isAuthenticated, role]);
 
   const onSubmit = async ({ email, password }: Form) => {
     setLoginError('');
@@ -92,7 +117,17 @@ export default function LoginPage() {
         flushSync(() => setAuth(user, tokens.accessToken, tokens.refreshToken));
         router.push('/super-admin/dashboard');
       } else {
-        const res = await api.post('/auth/web/login', { email, password });
+        let tenantCode = branding?.tenantCode;
+        if (!tenantCode) {
+          const parts = window.location.hostname.split('.');
+          if (parts.length >= 2 && parts[0] !== 'admin' && parts[0] !== 'www' && parts[0] !== 'localhost' && parts[0] !== '127') {
+            tenantCode = parts[0];
+          }
+        }
+        if (!tenantCode) {
+          throw new Error('Tenant context could not be resolved.');
+        }
+        const res = await api.post(`/auth/tenant/${tenantCode}/login`, { email, password });
         const { user, tokens, redirectPath } = res.data.data;
         flushSync(() => setAuth(user, tokens.accessToken, tokens.refreshToken));
         if (user.role === 'ADMIN' || user.role === 'MANAGER') {

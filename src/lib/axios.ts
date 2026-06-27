@@ -11,7 +11,10 @@ export const getAccessToken = () => accessToken;
 
 export const api = axios.create({
   baseURL: BASE_URL,
-  headers: { 'Content-Type': 'application/json' },
+  headers: {
+    'Content-Type': 'application/json',
+    "ngrok-skip-browser-warning": "true"
+  },
 });
 
 api.interceptors.request.use((config: InternalAxiosRequestConfig) => {

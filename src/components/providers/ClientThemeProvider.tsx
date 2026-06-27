@@ -99,7 +99,6 @@ export function ClientThemeProvider({ children }: { children: React.ReactNode })
             headerBorderRadius: 0,
             rowHoverBg: isDark ? '#2A3042' : 'rgba(248, 250, 252, 0.8)',
             borderColor: isDark ? 'rgba(255,255,255,0.06)' : '#E2E8F0',
-            rowBg: isDark ? '#181B24' : '#FFFFFF',
             headerSortActiveBg: isDark ? '#2A3042' : '#F1F5F9',
           },
           Modal: {

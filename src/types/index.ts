@@ -110,6 +110,7 @@ export interface CreateTenantDto {
 
 export interface TenantBranding {
   companyName: string;
+  tenantCode?: string;
   logoUrl?: string;
   primaryColor?: string;
   secondaryColor?: string;
