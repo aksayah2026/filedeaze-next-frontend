@@ -56,7 +56,7 @@ function BrandingSkeleton() {
 // ── Main page ──────────────────────────────────────────────────────────────
 
 export default function LoginPage() {
-  const { setAuth, role, isAuthenticated } = useAuth();
+  const { setAuth, clearAuth, user, role, isAuthenticated } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
 
@@ -70,18 +70,18 @@ export default function LoginPage() {
     resolver: zodResolver(schema),
   });
 
-  // Redirect if already authenticated
+  const [showAlreadyIn, setShowAlreadyIn] = useState(false);
+  const dashboardPath =
+    role === 'SUPER_ADMIN' ? '/super-admin/dashboard' :
+    role === 'ADMIN' ? '/admin/dashboard' :
+    role === 'MANAGER' ? '/manager/dashboard' : null;
+
+  // Show "already signed in" panel instead of silently redirecting
   useEffect(() => {
-    if (isAuthenticated && role) {
-      if (role === 'SUPER_ADMIN') {
-        router.replace('/super-admin/dashboard');
-      } else if (role === 'ADMIN') {
-        router.replace('/admin/dashboard');
-      } else if (role === 'MANAGER') {
-        router.replace('/manager/dashboard');
-      }
+    if (isAuthenticated && role && dashboardPath) {
+      setShowAlreadyIn(true);
     }
-  }, [isAuthenticated, role, router]);
+  }, [isAuthenticated, role, dashboardPath]);
 
   // Detect hostname and (for tenant portals) load branding
   useEffect(() => {
@@ -227,8 +227,38 @@ export default function LoginPage() {
           </div>
         )}
 
+        {/* ── Already signed in panel ── */}
+        {showAlreadyIn && dashboardPath ? (
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-8 shadow-2xl space-y-5">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-full bg-gradient-to-br from-violet-500 to-violet-700 flex items-center justify-center shrink-0 text-white text-sm font-bold">
+                {user?.name ? user.name.split(' ').map((w: string) => w[0]).slice(0, 2).join('').toUpperCase() : '?'}
+              </div>
+              <div>
+                <p className="text-white text-sm font-semibold leading-tight">{user?.name ?? 'Unknown'}</p>
+                <p className="text-slate-400 text-xs">{user?.email}</p>
+              </div>
+            </div>
+            <p className="text-slate-400 text-sm">You are already signed in. Where would you like to go?</p>
+            <div className="flex flex-col gap-2">
+              <button
+                onClick={() => router.push(dashboardPath)}
+                className="w-full py-2.5 rounded-xl bg-violet-600 hover:bg-violet-500 text-white text-sm font-medium transition-colors"
+              >
+                Continue to Dashboard
+              </button>
+              <button
+                onClick={() => { clearAuth(); setShowAlreadyIn(false); }}
+                className="w-full py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-sm font-medium transition-colors"
+              >
+                Sign in as different account
+              </button>
+            </div>
+          </div>
+        ) : null}
+
         {/* ── Login card ── */}
-        {brandingState !== 'error' && (
+        {!showAlreadyIn && brandingState !== 'error' && (
           <div className="bg-slate-900 border border-slate-800 rounded-2xl p-8 shadow-2xl">
             <div className="mb-6">
               <h2 className="text-white text-lg font-semibold">
