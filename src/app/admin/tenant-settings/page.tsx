@@ -8,6 +8,7 @@ import api from '@/lib/axios';
 import { TenantSettings } from '@/types';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
+import { FileUpload } from '@/components/ui/FileUpload';
 import { PageSpinner } from '@/components/ui/Spinner';
 
 export default function TenantSettingsPage() {
@@ -18,24 +19,38 @@ export default function TenantSettingsPage() {
     queryFn: async () => (await api.get('/web/admin/tenant-settings')).data.data,
   });
 
-  const { register, handleSubmit, reset, watch, formState: { isSubmitting } } = useForm<Omit<TenantSettings, 'id'>>();
+  const { register, handleSubmit, reset, watch, formState: { isSubmitting } } = useForm<Omit<TenantSettings, 'id' | 'upiQrImageUrl'>>();
 
-  useEffect(() => { if (data) reset(data); }, [data, reset]);
+  useEffect(() => {
+    if (data) reset({
+      gstEnabled: data.gstEnabled,
+      gstPercent: data.gstPercent,
+      invoicePrefix: data.invoicePrefix,
+      invoiceNumberFormat: data.invoiceNumberFormat,
+      upiId: data.upiId,
+      upiAccountName: data.upiAccountName,
+    });
+  }, [data, reset]);
 
   const gstEnabled = watch('gstEnabled');
 
   const updateMutation = useMutation({
-    mutationFn: (d: Omit<TenantSettings, 'id'>) => api.patch('/web/admin/tenant-settings', {
+    mutationFn: (d: Omit<TenantSettings, 'id' | 'upiQrImageUrl'>) => api.patch('/web/admin/tenant-settings', {
       gstEnabled: d.gstEnabled,
       gstPercent: d.gstPercent,
       invoicePrefix: d.invoicePrefix,
       invoiceNumberFormat: d.invoiceNumberFormat,
       upiId: d.upiId,
       upiAccountName: d.upiAccountName,
-      upiQrImageUrl: d.upiQrImageUrl,
     }),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['tenant-settings'] }); toast.success('Settings saved'); },
     onError: () => toast.error('Failed'),
+  });
+
+  const upiQrMutation = useMutation({
+    mutationFn: (file: File) => { const fd = new FormData(); fd.append('file', file); return api.post('/web/admin/tenant-settings/upi-qr', fd, { headers: { 'Content-Type': 'multipart/form-data' } }); },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['tenant-settings'] }); toast.success('QR image updated'); },
+    onError: () => toast.error('Upload failed'),
   });
 
   if (isLoading) return <PageSpinner />;
@@ -66,7 +81,11 @@ export default function TenantSettingsPage() {
           <div className="grid grid-cols-2 gap-4">
             <Input label="UPI ID" placeholder="name@upi" {...register('upiId')} />
             <Input label="UPI Account Name" {...register('upiAccountName')} />
-            <Input label="UPI QR Image URL" {...register('upiQrImageUrl')} className="col-span-2" />
+            <div className="col-span-2">
+              <p className="text-xs font-medium text-[var(--color-text-muted)] mb-1">UPI QR Image</p>
+              <FileUpload onFile={file => upiQrMutation.mutate(file)} loading={upiQrMutation.isPending} preview={data?.upiQrImageUrl} />
+              {data?.upiQrImageUrl && <p className="text-xs text-[var(--color-text-muted)] mt-1 truncate">{data.upiQrImageUrl}</p>}
+            </div>
           </div>
         </div>
 

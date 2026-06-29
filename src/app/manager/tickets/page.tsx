@@ -47,16 +47,20 @@ export default function TicketsPage() {
   const [from, setFrom] = useState('');
   const [to, setTo] = useState('');
   const [params, setParams] = useState<Record<string, string>>({});
+  const [page, setPage] = useState(1);
   const [showCreate, setShowCreate] = useState(false);
   const [showNewCustomer, setShowNewCustomer] = useState(false);
   const [newCust, setNewCust] = useState<NewCustomerForm>({ name: '', phone: '', email: '' });
 
-  const { data = [], isLoading } = useQuery<Ticket[]>({
-    queryKey: ['tickets', params],
+  const { data: response, isLoading } = useQuery<{ data: Ticket[]; meta: { total: number; page: number; limit: number; totalPages: number } }>({
+    queryKey: ['tickets', params, page],
     queryFn: async () => (await api.get('/web/manager/tickets', {
-      params: Object.fromEntries(Object.entries(params).filter(([, v]) => v)),
-    })).data.data,
+      params: { ...Object.fromEntries(Object.entries(params).filter(([, v]) => v)), page: String(page) },
+    })).data,
   });
+
+  const data = response?.data ?? [];
+  const meta = response?.meta;
 
   // Data for the create form dropdowns
   const { data: customers = [] } = useQuery<Customer[]>({
@@ -152,40 +156,51 @@ export default function TicketsPage() {
         </div>
         <div className="flex flex-col gap-1.5">
           <span className="text-[10px] font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">From</span>
-          <Input 
-            type="date" 
-            value={from} 
+          <Input
+            type="date"
+            value={from}
             onChange={e => {
               const val = e.target.value;
               setFrom(val);
               if (to && val > to) {
                 setTo(val);
               }
-            }} 
-            max={to || undefined} 
+            }}
+            max={to || undefined}
             className="w-40"
           />
         </div>
         <div className="flex flex-col gap-1.5">
           <span className="text-[10px] font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">To</span>
-          <Input 
-            type="date" 
-            value={to} 
+          <Input
+            type="date"
+            value={to}
             onChange={e => {
               const val = e.target.value;
               setTo(val);
               if (from && val < from) {
                 setFrom(val);
               }
-            }} 
-            min={from || undefined} 
+            }}
+            min={from || undefined}
             className="w-40"
           />
         </div>
-        <Button variant="secondary" onClick={() => setParams({ status, from, to })}>Filter</Button>
+        <Button variant="secondary" onClick={() => { setPage(1); setParams({ status, from, to }); }}>Filter</Button>
       </div>
 
       <DataTable data={data} columns={columns} isLoading={isLoading} />
+
+      {meta && meta.totalPages > 1 && (
+        <div className="flex items-center justify-between mt-4 text-sm text-[var(--color-text-muted)]">
+          <span>{meta.total} tickets</span>
+          <div className="flex items-center gap-2">
+            <Button variant="secondary" size="sm" onClick={() => setPage(p => p - 1)} disabled={page === 1}>Prev</Button>
+            <span>Page {page} of {meta.totalPages}</span>
+            <Button variant="secondary" size="sm" onClick={() => setPage(p => p + 1)} disabled={page === meta.totalPages}>Next</Button>
+          </div>
+        </div>
+      )}
 
       {/* Create ticket on behalf of customer */}
       <Modal open={showCreate} onClose={closeModal} title="New Ticket — Customer Call" size="md">

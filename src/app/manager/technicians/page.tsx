@@ -57,7 +57,7 @@ export default function TechniciansPage() {
     { accessorKey: 'name', header: 'Name' },
     { accessorKey: 'email', header: 'Email' },
     { accessorKey: 'phone', header: 'Phone' },
-    { accessorKey: 'isActive', header: 'Status', cell: ({ row }) => <Badge variant={row.original.isActive ? 'success' : 'default'}>{row.original.isActive ? 'Active' : 'Inactive'}</Badge> },
+    { accessorKey: 'isActive', header: 'Status', cell: ({ row }) => <Badge variant={row.original.isActive ? 'success' : 'danger'}>{row.original.isActive ? 'Active' : 'Inactive'}</Badge> },
     { accessorKey: 'rating', header: 'Rating', cell: ({ row }) => row.original.rating ? <div className="flex items-center gap-1"><Star size={12} className="fill-yellow-400 text-yellow-400" />{row.original.rating.toFixed(1)}</div> : '—' },
     { accessorKey: 'createdAt', header: 'Joined', cell: ({ row }) => dayjs(row.original.createdAt).format('DD MMM YYYY') },
     {

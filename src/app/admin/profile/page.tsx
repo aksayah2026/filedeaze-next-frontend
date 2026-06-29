@@ -41,7 +41,7 @@ export default function ProfilePage() {
       <h2 className="text-xl font-semibold text-[var(--color-text-primary)]">My Profile</h2>
 
       <div className="bg-[var(--color-surface)] rounded-xl p-6 border border-[var(--color-border)] shadow-sm">
-        <FileUpload label="Profile Photo" onFile={file => photoMutation.mutate(file)} loading={photoMutation.isPending} preview={data?.photo} />
+        <FileUpload label="Profile Photo" onFile={file => photoMutation.mutate(file)} loading={photoMutation.isPending} preview={(data as any)?.profileImageUrl} />
       </div>
 
       <div className="bg-[var(--color-surface)] rounded-xl p-6 border border-[var(--color-border)] shadow-sm">

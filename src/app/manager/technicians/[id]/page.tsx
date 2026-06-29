@@ -70,7 +70,7 @@ export default function TechnicianDetailPage() {
 
       <div className="flex items-center gap-3">
         <h2 className="text-xl font-semibold text-[var(--color-text-primary)]">{tech.name}</h2>
-        <Badge variant={tech.isActive ? 'success' : 'default'}>{tech.isActive ? 'Active' : 'Inactive'}</Badge>
+        <Badge variant={tech.isActive ? 'success' : 'danger'}>{tech.isActive ? 'Active' : 'Inactive'}</Badge>
         {tech.rating && <div className="flex items-center gap-1 text-sm"><Star size={13} className="fill-yellow-400 text-yellow-400" />{tech.rating.toFixed(1)}</div>}
       </div>
 
@@ -79,6 +79,11 @@ export default function TechnicianDetailPage() {
         <form onSubmit={hi(d => updateMutation.mutate(d))} className="grid grid-cols-2 gap-4">
           <Input label="Name" {...ri('name')} />
           <Input label="Phone" {...ri('phone')} />
+          <div className="flex flex-col gap-1">
+            <label className="text-xs font-medium text-[var(--color-text-muted)]">Email</label>
+            <p className="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-elevated)] px-3 py-2 text-sm text-[var(--color-text-muted)] select-all">{tech.email ?? '—'}</p>
+          </div>
+          <div></div>
           <div className="flex items-center gap-2 col-span-2">
             <input type="checkbox" id="isActive" {...ri('isActive')} className="h-4 w-4" />
             <label htmlFor="isActive" className="text-sm text-[var(--color-text-secondary)]">Active</label>

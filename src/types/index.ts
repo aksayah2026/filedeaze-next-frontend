@@ -428,6 +428,10 @@ export interface CompanySettings {
   phone: string;
   address: string;
   logoUrl?: string;
+  contactPerson?: string;
+  city?: string;
+  state?: string;
+  pincode?: string;
 }
 
 export interface TenantSettings {

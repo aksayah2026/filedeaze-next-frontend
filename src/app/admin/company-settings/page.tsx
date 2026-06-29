@@ -19,17 +19,29 @@ export default function CompanySettingsPage() {
     queryFn: async () => (await api.get('/web/admin/company-settings')).data.data,
   });
 
-  const { register, handleSubmit, reset, formState: { isSubmitting } } = useForm<Omit<CompanySettings, 'id' | 'logoUrl'>>();
+  const { register, handleSubmit, reset, formState: { isSubmitting } } = useForm<Omit<CompanySettings, 'id' | 'logoUrl' | 'email'>>();
 
   useEffect(() => {
-    if (data) reset({ companyName: data.companyName, phone: data.phone, address: data.address });
+    if (data) reset({
+      companyName: data.companyName,
+      contactPerson: data.contactPerson,
+      phone: data.phone,
+      address: data.address,
+      city: data.city,
+      state: data.state,
+      pincode: data.pincode,
+    });
   }, [data, reset]);
 
   const updateMutation = useMutation({
-    mutationFn: (d: Omit<CompanySettings, 'id' | 'logoUrl'>) => api.patch('/web/admin/company-settings', {
+    mutationFn: (d: Omit<CompanySettings, 'id' | 'logoUrl' | 'email'>) => api.patch('/web/admin/company-settings', {
       companyName: d.companyName,
+      contactPerson: d.contactPerson,
       phone: d.phone,
       address: d.address,
+      city: d.city,
+      state: d.state,
+      pincode: d.pincode,
     }),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['company-settings'] }); toast.success('Settings saved'); },
     onError: () => toast.error('Failed'),
@@ -60,8 +72,12 @@ export default function CompanySettingsPage() {
             <label className="text-xs font-medium text-[var(--color-text-muted)]">Email</label>
             <p className="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-elevated)] px-3 py-2 text-sm text-[var(--color-text-muted)] select-all">{data?.email ?? '—'}</p>
           </div>
+          <Input label="Contact Person" {...register('contactPerson')} />
           <Input label="Phone" {...register('phone')} />
           <Input label="Address" {...register('address')} />
+          <Input label="City" {...register('city')} />
+          <Input label="State" {...register('state')} />
+          <Input label="Pincode" {...register('pincode')} />
           <div className="col-span-2 flex justify-end">
             <Button type="submit" loading={isSubmitting}>Save Changes</Button>
           </div>
