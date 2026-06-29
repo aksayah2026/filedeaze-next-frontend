@@ -51,6 +51,11 @@ api.interceptors.response.use(
 
     if (error.response?.status === 401 && !original?._retry) {
       if (typeof window === 'undefined') return Promise.reject(error);
+      // Login endpoints return 401 for wrong credentials — don't treat as session expiry
+      const url = original?.url ?? '';
+      if (url.includes('/login') || url.includes('/register') || url.includes('/auth/refresh')) {
+        return Promise.reject(error);
+      }
       const prefix = getPortalPrefix();
       const rt = localStorage.getItem(`${prefix}_refreshToken`);
       if (!rt) { hardLogout(); return Promise.reject(error); }
