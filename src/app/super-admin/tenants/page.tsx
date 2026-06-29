@@ -50,7 +50,15 @@ export default function TenantsPage() {
     })).data.data,
   });
 
-  const { register, handleSubmit, reset, formState: { errors, isSubmitting } } = useForm<Form>({ resolver: zodResolver(schema) });
+  const { register, handleSubmit, reset, setValue, watch, formState: { errors, isSubmitting } } = useForm<Form>({ resolver: zodResolver(schema) });
+  const [manualCode, setManualCode] = useState(false);
+  const watchedCompany = watch('companyName');
+
+  useEffect(() => {
+    if (manualCode || !watchedCompany) return;
+    const suggested = watchedCompany.toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 20);
+    setValue('tenantCode', suggested, { shouldValidate: false });
+  }, [watchedCompany, manualCode, setValue]);
 
   const [createdTenant, setCreatedTenant] = useState<{ url: string; companyName: string; adminEmail: string } | null>(null);
 
@@ -63,6 +71,7 @@ export default function TenantsPage() {
       setCreatedTenant({ url, companyName: vars.companyName, adminEmail: vars.adminEmail });
       setShowCreate(false);
       reset();
+      setManualCode(false);
     },
     onError: (e: unknown) => toast.error((e as { response?: { data?: { message?: string } } })?.response?.data?.message ?? 'Error'),
   });
@@ -238,7 +247,18 @@ export default function TenantsPage() {
         <form onSubmit={handleSubmit(d => createMutation.mutate(d))} className="space-y-5">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Input label="Company Name" {...register('companyName')} error={errors.companyName?.message} />
-            <Input label="Tenant Code" {...register('tenantCode')} error={errors.tenantCode?.message} />
+            <div className="flex flex-col gap-1">
+              <Input
+                label="Tenant Code"
+                {...register('tenantCode')}
+                error={errors.tenantCode?.message}
+                onInput={() => setManualCode(true)}
+                placeholder="e.g. acmecorp"
+              />
+              {!manualCode && watchedCompany && (
+                <p className="text-[10px] text-[var(--color-text-muted)]">Auto-generated from company name — edit to customise</p>
+              )}
+            </div>
             <Input label="Email" type="email" {...register('email')} error={errors.email?.message} />
             <Input label="Phone" {...register('phone')} error={errors.phone?.message} />
             <Input label="Address" {...register('address')} error={errors.address?.message} className="sm:col-span-2" />
@@ -264,7 +284,7 @@ export default function TenantsPage() {
           </div>
 
           <div className="flex justify-end gap-3 pt-1">
-            <Button variant="outline" type="button" onClick={() => { setShowCreate(false); reset(); }}>Cancel</Button>
+            <Button variant="outline" type="button" onClick={() => { setShowCreate(false); reset(); setManualCode(false); }}>Cancel</Button>
             <Button type="submit" loading={isSubmitting}>Create Tenant</Button>
           </div>
         </form>
