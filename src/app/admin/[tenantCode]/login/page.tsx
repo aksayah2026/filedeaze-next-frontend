@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -28,15 +28,6 @@ export default function TenantLoginPage() {
   const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
   const [loginError, setLoginError] = useState('');
-
-  // Redirect super admin to their portal if already authenticated
-  useEffect(() => {
-    const saUser = localStorage.getItem('sa_user');
-    const saToken = sessionStorage.getItem('sa_accessToken');
-    if (saUser && saToken) {
-      router.replace('/super-admin/dashboard');
-    }
-  }, [router]);
 
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<Form>({
     resolver: zodResolver(schema),
