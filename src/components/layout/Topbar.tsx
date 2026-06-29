@@ -86,14 +86,22 @@ export function Topbar({ title, onMenuClick, isCollapsed, onToggleCollapse }: To
   const pathname = usePathname();
 
   const logout = async () => {
+    const role = user?.role;
+    const tenantCode = user?.tenantCode;
     try {
       const prefix = getPortalPrefix(pathname);
       const rt = localStorage.getItem(`${prefix}_refreshToken`);
       await api.post('/auth/logout', { refreshToken: rt });
     } catch { }
     clearAuth();
-    router.push('/login');
     toast.success('Logged out successfully');
+    if (role === 'SUPER_ADMIN') {
+      window.location.href = '/super-admin/login';
+    } else if (tenantCode) {
+      window.location.href = `/admin/${tenantCode}/login`;
+    } else {
+      window.location.href = '/login';
+    }
   };
 
   const gradient = getAvatarGradient(user?.name);
