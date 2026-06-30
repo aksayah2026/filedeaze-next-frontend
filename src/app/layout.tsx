@@ -8,6 +8,9 @@ const geist = Geist({ variable: '--font-geist', subsets: ['latin'] });
 export const metadata: Metadata = {
   title: 'FieldEaze',
   description: 'Field Service Management',
+  icons: {
+    icon: '/fieldeaze_logo.png',
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

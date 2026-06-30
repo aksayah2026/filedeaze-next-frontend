@@ -166,9 +166,11 @@ export default function LoginPage() {
         ) : isSuper ? (
           // Super admin branding
           <div className="flex flex-col items-center mb-8">
-            <div className="h-16 w-16 rounded-2xl bg-gradient-to-br from-violet-500 to-violet-700 flex items-center justify-center shadow-lg shadow-violet-500/30 mb-4">
-              <Zap size={30} className="text-white" />
-            </div>
+            <img
+              src="/fieldeaze_logo.png"
+              alt="FieldEaze Logo"
+              className="h-16 w-16 object-contain mb-4"
+            />
             <p className="text-white text-2xl font-bold tracking-tight">FieldEaze Platform</p>
             <p className="text-[var(--color-text-muted)] text-sm mt-1">Platform Administration</p>
           </div>

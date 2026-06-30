@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
   LayoutDashboard, Building2, CreditCard, Receipt, FileText,
-  Activity, Zap, History, BarChart2, ClipboardCheck, Settings,
+  Activity, History, BarChart2, ClipboardCheck, Settings,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -46,15 +46,11 @@ export function SuperAdminSidebar({ onClose, isCollapsed = false }: SuperAdminSi
         )}
         style={{ borderBottom: '1px solid var(--color-border)' }}
       >
-        <div
-          className="h-9 w-9 rounded-xl flex items-center justify-center shrink-0 transition-transform duration-300"
-          style={{
-            background: 'linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-hover) 100%)',
-            boxShadow: '0 4px 12px var(--color-primary-ring)',
-          }}
-        >
-          <Zap size={17} className="text-white" />
-        </div>
+        <img
+          src="/fieldeaze_logo.png"
+          alt="FieldEaze Logo"
+          className="h-9 w-9 shrink-0 transition-transform duration-300 object-contain"
+        />
         {!isCollapsed && (
           <div className="animate-fe-slide-left">
             <p className="text-sm font-bold text-[var(--color-text-primary)] leading-tight">FieldEaze</p>
