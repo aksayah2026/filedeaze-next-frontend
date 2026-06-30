@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, usePathname } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
@@ -20,6 +20,8 @@ import Link from 'next/link';
 
 export default function TechnicianDetailPage() {
   const { id } = useParams<{ id: string }>();
+  const pathname = usePathname();
+  const techniciansBase = pathname.startsWith('/admin/') ? '/admin/technicians' : '/manager/technicians';
   const qc = useQueryClient();
   const [showResetPw, setShowResetPw] = useState(false);
   const [showAddSkill, setShowAddSkill] = useState(false);
@@ -61,7 +63,7 @@ export default function TechnicianDetailPage() {
     <div className="space-y-5 max-w-3xl">
       {/* Back link */}
       <Link
-        href="/manager/technicians"
+        href={techniciansBase}
         className="inline-flex items-center gap-1.5 text-xs font-medium text-[var(--color-text-muted)] hover:text-[var(--color-text-secondary)] transition-colors"
       >
         <ChevronLeft size={14} />

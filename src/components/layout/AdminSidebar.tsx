@@ -31,17 +31,17 @@ const adminMiscNav = [
 ];
 
 const operationsNav = [
-  { href: '/manager/tickets', label: 'Tickets', icon: Ticket },
-  { href: '/manager/technicians', label: 'Technicians', icon: Wrench },
-  { href: '/manager/skills', label: 'Skills', icon: Star },
-  { href: '/manager/service-categories', label: 'Categories', icon: Tag },
-  { href: '/manager/service-sub-categories', label: 'Sub-Categories', icon: Tag },
-  { href: '/manager/customers', label: 'Customers', icon: Users },
-  { href: '/manager/attendance', label: 'Attendance', icon: UserCheck },
-  { href: '/manager/feedback', label: 'Feedback', icon: Star },
-  { href: '/manager/payments', label: 'Payments', icon: CreditCard },
-  { href: '/manager/invoices', label: 'Invoices', icon: Receipt },
-  { href: '/manager/offers', label: 'Offers', icon: Gift },
+  { href: '/admin/tickets', label: 'Tickets', icon: Ticket },
+  { href: '/admin/technicians', label: 'Technicians', icon: Wrench },
+  { href: '/admin/skills', label: 'Skills', icon: Star },
+  { href: '/admin/service-categories', label: 'Categories', icon: Tag },
+  { href: '/admin/service-sub-categories', label: 'Sub-Categories', icon: Tag },
+  { href: '/admin/customers', label: 'Customers', icon: Users },
+  { href: '/admin/attendance', label: 'Attendance', icon: UserCheck },
+  { href: '/admin/feedback', label: 'Feedback', icon: Star },
+  { href: '/admin/payments', label: 'Payments', icon: CreditCard },
+  { href: '/admin/invoices', label: 'Invoices', icon: Receipt },
+  { href: '/admin/offers', label: 'Offers', icon: Gift },
 ];
 
 const managerDashNav = [

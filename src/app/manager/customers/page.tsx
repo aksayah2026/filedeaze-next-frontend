@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { usePathname } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import { Eye } from 'lucide-react';
@@ -13,6 +14,8 @@ import { Input } from '@/components/ui/Input';
 import dayjs from 'dayjs';
 
 export default function CustomersPage() {
+  const pathname = usePathname();
+  const prefix = pathname.startsWith('/admin/') ? 'admin' : 'manager';
   const [search, setSearch] = useState('');
   const [query, setQuery] = useState('');
 
@@ -29,7 +32,7 @@ export default function CustomersPage() {
     { accessorKey: 'createdAt', header: 'Since', cell: ({ row }) => dayjs(row.original.createdAt).format('DD MMM YYYY') },
     {
       id: 'actions', header: '',
-      cell: ({ row }) => <Link href={`/manager/customers/${row.original.id}`}><Button variant="ghost" size="sm"><Eye size={14} /></Button></Link>,
+      cell: ({ row }) => <Link href={`/${prefix}/customers/${row.original.id}`}><Button variant="ghost" size="sm"><Eye size={14} /></Button></Link>,
     },
   ];
 

@@ -59,11 +59,16 @@ export interface Plan {
   managerLimit: number;
   technicianLimit: number;
   ticketLimit: number;
+  customerLimit: number;
   storageLimitGb: number;
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
 }
+
+export type SubscriptionStatus = 'ACTIVE' | 'EXPIRED' | 'CANCELLED';
+export type ComputedSubStatus = 'ACTIVE' | 'EXPIRING_SOON' | 'EXPIRED' | 'TRIAL' | 'SUSPENDED' | 'CANCELLED';
+export type BillingCycle = 'MONTHLY' | 'QUARTERLY' | 'HALF_YEARLY' | 'YEARLY';
 
 export interface Subscription {
   id: string;
@@ -72,8 +77,45 @@ export interface Subscription {
   plan?: Plan;
   startDate: string;
   endDate: string;
-  isActive: boolean;
+  status: SubscriptionStatus;
+  billingCycle: BillingCycle;
+  notes?: string | null;
+  paymentMethod?: string | null;
+  autoRenew: boolean;
   createdAt: string;
+  updatedAt: string;
+}
+
+export interface SubscriptionWithMeta extends Subscription {
+  tenant: { id: string; companyName: string; tenantCode: string; status: string; logoUrl?: string | null };
+  plan: Plan;
+  amount: number;
+  daysLeft: number;
+  computedStatus: ComputedSubStatus;
+}
+
+export interface SubscriptionDetail extends SubscriptionWithMeta {
+  tenant: Tenant;
+  billings: Billing[];
+  subscriptionHistory: Array<Subscription & { plan: Plan }>;
+}
+
+export interface SubscriptionDashboard {
+  activeSubscriptions: number;
+  trialSubscriptions: number;
+  expiringSoon: number;
+  expiredSubscriptions: number;
+  monthlyRevenue: number;
+  annualRevenue: number;
+  pendingRenewals: number;
+}
+
+export interface SubscriptionListResponse {
+  subscriptions: SubscriptionWithMeta[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
 }
 
 export interface Tenant {
@@ -123,12 +165,25 @@ export interface Billing {
   id: string;
   tenantId: string;
   subscriptionId: string;
-  tenant?: Tenant;
-  subscription?: { plan?: Plan; startDate?: string; endDate?: string };
+  tenant?: { id: string; companyName: string; tenantCode: string; email?: string; phone?: string; address?: string };
+  subscription?: { id: string; plan?: Plan; startDate?: string; endDate?: string; status?: string };
   amount: number;
   status: 'PAID' | 'PENDING' | 'FAILED';
   paidAt?: string;
+  invoiceUrl?: string;
   createdAt: string;
+}
+
+export interface PaymentStats {
+  totalRevenue: number;
+  totalPending: number;
+  totalFailed: number;
+  paidCount: number;
+  pendingCount: number;
+  failedCount: number;
+  activeSubscriptions: number;
+  expiredSubscriptions: number;
+  renewalsThisMonth: number;
 }
 
 export interface TenantInfo {
@@ -154,6 +209,10 @@ export interface MySubscription {
 
 export interface BillingReport {
   billings: Billing[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
   summary: { totalPaid: number; totalPending: number };
 }
 

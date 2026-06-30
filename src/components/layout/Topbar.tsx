@@ -110,7 +110,9 @@ export function Topbar({ title, onMenuClick, isCollapsed, onToggleCollapse }: To
   const segments = pathname.split('/').filter(Boolean);
   const crumbs = segments.map((seg, index) => {
     const isLast = index === segments.length - 1;
-    const label = breadcrumbLabels[seg] || seg.replace(/-/g, ' ');
+    // Admin users on /manager/... paths should see "Admin" as the portal label
+    const displaySeg = (seg === 'manager' && user?.role === 'ADMIN') ? 'admin' : seg;
+    const label = breadcrumbLabels[displaySeg] || displaySeg.replace(/-/g, ' ');
 
     return (
       <span key={seg} className="flex items-center">

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { usePathname } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import { useForm } from 'react-hook-form';
@@ -31,6 +32,8 @@ type Form = z.infer<typeof schema>;
 
 export default function TechniciansPage() {
   const qc = useQueryClient();
+  const pathname = usePathname();
+  const prefix = pathname.startsWith('/admin/') ? 'admin' : 'manager';
   const [showCreate, setShowCreate] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
@@ -64,7 +67,7 @@ export default function TechniciansPage() {
       id: 'actions', header: '',
       cell: ({ row }) => (
         <div className="flex items-center gap-2">
-          <Link href={`/manager/technicians/${row.original.id}`}><Button variant="ghost" size="sm"><Eye size={14} /></Button></Link>
+          <Link href={`/${prefix}/technicians/${row.original.id}`}><Button variant="ghost" size="sm"><Eye size={14} /></Button></Link>
           <Button variant="ghost" size="sm" onClick={() => setDeleteId(row.original.id)} className="text-red-500"><Trash2 size={14} /></Button>
         </div>
       ),

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, usePathname } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
@@ -20,6 +20,8 @@ import Link from 'next/link';
 
 export default function TicketDetailPage() {
   const { id } = useParams<{ id: string }>();
+  const pathname = usePathname();
+  const ticketsBase = pathname.startsWith('/admin/') ? '/admin/tickets' : '/manager/tickets';
   const qc = useQueryClient();
   const [showAssign, setShowAssign] = useState(false);
   const [showClose, setShowClose] = useState(false);
@@ -82,7 +84,7 @@ export default function TicketDetailPage() {
     <div className="space-y-5 max-w-3xl">
       {/* Back link */}
       <Link
-        href="/manager/tickets"
+        href={ticketsBase}
         className="inline-flex items-center gap-1.5 text-xs font-medium text-[var(--color-text-muted)] hover:text-[var(--color-text-secondary)] transition-colors"
       >
         <ChevronLeft size={14} />
