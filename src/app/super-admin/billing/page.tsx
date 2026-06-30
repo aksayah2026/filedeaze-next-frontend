@@ -236,6 +236,7 @@ export default function BillingPage() {
               }
             }} 
             max={to || undefined} 
+            className="w-44"
           />
         </div>
         <div className="flex flex-col gap-1.5">
@@ -251,6 +252,7 @@ export default function BillingPage() {
               }
             }} 
             min={from || undefined} 
+            className="w-44"
           />
         </div>
         <div className="flex flex-col gap-1.5">

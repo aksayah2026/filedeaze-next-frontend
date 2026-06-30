@@ -116,10 +116,10 @@ export function AdminSidebar({ onClose, isCollapsed = false }: AdminSidebarProps
       {/* Brand Header */}
       <div
         className={cn(
-          "flex items-center gap-3 px-5 py-5 transition-all duration-300",
+          "flex items-center gap-3 px-5 h-16 shrink-0 transition-all duration-300 bg-[var(--color-header-bg)] shadow-sm",
           isCollapsed ? "justify-center px-4" : "justify-start"
         )}
-        style={{ borderBottom: '1px solid var(--color-sidebar-border)' }}
+        style={{ borderBottom: '1px solid var(--color-border)' }}
       >
         <div
           className="h-9 w-9 rounded-xl flex items-center justify-center shrink-0 transition-transform duration-300"

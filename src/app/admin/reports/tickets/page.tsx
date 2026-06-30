@@ -56,6 +56,7 @@ export default function TicketsReportPage() {
             }
           }} 
           max={to || undefined} 
+          className="w-44"
         />
         <Input 
           label="To" 
@@ -69,6 +70,7 @@ export default function TicketsReportPage() {
             }
           }} 
           min={from || undefined} 
+          className="w-44"
         />
         <Button variant="secondary" onClick={() => setParams({ from, to })}>
           <Search size={14} /> Apply

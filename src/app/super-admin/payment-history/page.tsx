@@ -171,6 +171,7 @@ export default function PaymentHistoryPage() {
               }
             }} 
             max={to || undefined} 
+            className="w-44"
           />
         </div>
         <div className="flex flex-col gap-1">
@@ -186,6 +187,7 @@ export default function PaymentHistoryPage() {
               }
             }} 
             min={from || undefined} 
+            className="w-44"
           />
         </div>
         <Button variant="secondary" onClick={() => setParams({ tenantId, status, from, to })}>
