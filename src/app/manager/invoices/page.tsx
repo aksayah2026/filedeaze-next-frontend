@@ -45,8 +45,8 @@ export default function InvoicesPage() {
       <h2 className="text-xl font-semibold text-[var(--color-text-primary)] mb-6">Invoices</h2>
       <div className="flex flex-wrap gap-3 mb-4 items-end">
         <Input placeholder="Search..." value={search} onChange={e => setSearch(e.target.value)} className="w-48" />
-        <Input type="date" value={from} onChange={e => setFrom(e.target.value)} />
-        <Input type="date" value={to} onChange={e => setTo(e.target.value)} />
+        <Input type="date" value={from} onChange={e => setFrom(e.target.value)} className="w-44" />
+        <Input type="date" value={to} onChange={e => setTo(e.target.value)} className="w-44" />
         <Button variant="secondary" onClick={() => setParams({ search, from, to })}>Filter</Button>
       </div>
       <DataTable data={data} columns={columns} isLoading={isLoading} />

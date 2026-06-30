@@ -44,11 +44,10 @@ export function AppShell({ sidebar, children }: AppShellProps) {
       {/* Sidebar — drawer on mobile, static collapsible on desktop */}
       <div
         className={cn(
-          'fixed inset-y-0 left-0 z-30 transition-all duration-300 ease-in-out h-full border-r border-[var(--color-border)] lg:border-none',
+          'fixed inset-y-0 left-0 z-30 transition-all duration-300 ease-in-out h-full border-r border-[var(--color-border)]',
           'lg:static lg:inset-auto lg:z-auto lg:translate-x-0',
           open ? 'translate-x-0' : '-translate-x-full lg:translate-x-0',
-          isCollapsed ? 'lg:w-[72px]' : 'lg:w-[240px]',
-          'lg:my-4 lg:ml-4 lg:h-[calc(100vh_-_2rem)] lg:rounded-[20px] lg:overflow-hidden lg:shadow-[var(--shadow-lg)] lg:self-center lg:border lg:border-[var(--color-border)]'
+          isCollapsed ? 'lg:w-[72px]' : 'lg:w-[240px]'
         )}
       >
         {sidebar(close, isCollapsed)}

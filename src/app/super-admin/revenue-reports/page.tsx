@@ -179,6 +179,7 @@ export default function RevenueReportsPage() {
               }
             }} 
             max={to || undefined} 
+            className="w-44"
           />
         </div>
         <div className="flex flex-col gap-1.5">
@@ -194,6 +195,7 @@ export default function RevenueReportsPage() {
               }
             }} 
             min={from || undefined} 
+            className="w-44"
           />
         </div>
         <div className="flex flex-col gap-1.5">

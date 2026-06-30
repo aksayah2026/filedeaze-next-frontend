@@ -148,11 +148,11 @@ export default function PaymentsPage() {
         />
         <div className="flex flex-col gap-1">
           <label className="text-xs font-medium text-[var(--color-text-muted)]">From</label>
-          <Input type="date" value={from} onChange={e => setFrom(e.target.value)} />
+          <Input type="date" value={from} onChange={e => setFrom(e.target.value)} className="w-44" />
         </div>
         <div className="flex flex-col gap-1">
           <label className="text-xs font-medium text-[var(--color-text-muted)]">To</label>
-          <Input type="date" value={to} onChange={e => setTo(e.target.value)} />
+          <Input type="date" value={to} onChange={e => setTo(e.target.value)} className="w-44" />
         </div>
         <Button variant="secondary" onClick={() => setParams({ status, from, to })}>
           Apply
