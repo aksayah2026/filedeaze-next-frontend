@@ -283,9 +283,12 @@ export interface Ticket {
   id: string;
   ticketNumber: string;
   status: TicketStatus;
+  description?: string;
+  serviceAddress?: string;
+  pendingReason?: string;
+  pendingNotes?: string;
   customer: Customer;
   technician?: Technician;
-  serviceCategory?: ServiceCategory;
   subCategory?: ServiceSubCategory;
   scheduledAt?: string;
   notes?: string;
@@ -418,6 +421,7 @@ export interface ManagerDashboard {
   completedTickets: number;
   totalTechnicians: number;
   pendingPayments: number;
+  planUsage: PlanUsage | null;
 }
 
 // ─── Settings ─────────────────────────────────────────────────────────────────

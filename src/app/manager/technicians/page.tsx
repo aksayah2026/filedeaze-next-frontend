@@ -21,10 +21,10 @@ import { Star } from 'lucide-react';
 import dayjs from 'dayjs';
 
 const schema = z.object({
-  name: z.string().min(1),
-  email: z.string().min(1).refine(v => v.includes('@') && v.includes('.'), 'Invalid email'),
-  phone: z.string().min(1),
-  password: z.string().min(6),
+  name: z.string().min(1, 'Name is required (e.g. Siva Kumar)'),
+  email: z.string().min(1, 'Email is required').refine(v => v.includes('@') && v.includes('.'), 'Enter a valid email (e.g. siva@gmail.com)'),
+  phone: z.string().min(10, 'Enter a valid phone number (e.g. 9876543210)').max(15, 'Phone number too long'),
+  password: z.string().min(6, 'Password must be at least 6 characters (e.g. Siva@123)'),
 });
 
 type Form = z.infer<typeof schema>;

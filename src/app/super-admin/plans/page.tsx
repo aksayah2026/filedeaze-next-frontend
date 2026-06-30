@@ -5,23 +5,24 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
-import { Plus, Pencil, Users, Ticket, HardDrive, DollarSign } from 'lucide-react';
+import { Plus, Pencil, Trash2, Users, Ticket, HardDrive } from 'lucide-react';
 import api from '@/lib/axios';
 import { Plan } from '@/types';
 import { DataTable } from '@/components/ui/DataTable';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
-import { Select } from '@/components/ui/Select';
 import { Badge } from '@/components/ui/Badge';
 import { Modal } from '@/components/ui/Modal';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { cn } from '@/lib/utils';
 
 type Form = {
-  name: 'STARTER' | 'PROFESSIONAL' | 'ENTERPRISE';
+  name: string;
   price: number;
   managerLimit: number;
   technicianLimit: number;
   ticketLimit: number;
+  customerLimit: number;
   storageLimitGb: number;
 };
 
@@ -35,6 +36,7 @@ export default function PlansPage() {
   const qc = useQueryClient();
   const [editing, setEditing] = useState<Plan | null>(null);
   const [showCreate, setShowCreate] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<Plan | null>(null);
 
   const { data: plans = [], isLoading } = useQuery<Plan[]>({
     queryKey: ['plans'],
@@ -51,8 +53,15 @@ export default function PlansPage() {
       managerLimit: plan.managerLimit,
       technicianLimit: plan.technicianLimit,
       ticketLimit: plan.ticketLimit,
+      customerLimit: (plan as any).customerLimit ?? 99999,
       storageLimitGb: plan.storageLimitGb,
     });
+  };
+
+  const invalidatePlanCaches = () => {
+    qc.invalidateQueries({ queryKey: ['plans'] });
+    qc.invalidateQueries({ queryKey: ['tenants'] });
+    qc.invalidateQueries({ queryKey: ['dashboard'] });
   };
 
   const saveMutation = useMutation({
@@ -64,7 +73,7 @@ export default function PlansPage() {
       return api.post('/web/super-admin/plans', data);
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['plans'] });
+      invalidatePlanCaches();
       toast.success(editing ? 'Plan updated' : 'Plan created');
       setEditing(null); setShowCreate(false); reset();
     },
@@ -73,8 +82,14 @@ export default function PlansPage() {
 
   const toggleMutation = useMutation({
     mutationFn: (plan: Plan) => api.patch(`/web/super-admin/plans/${plan.id}`, { isActive: !plan.isActive }),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['plans'] }); toast.success('Plan status updated'); },
+    onSuccess: () => { invalidatePlanCaches(); toast.success('Plan status updated'); },
     onError: () => toast.error('Failed'),
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => api.delete(`/web/super-admin/plans/${id}`),
+    onSuccess: () => { invalidatePlanCaches(); toast.success('Plan deleted'); setDeleteTarget(null); },
+    onError: (err: any) => { toast.error(err?.response?.data?.message ?? 'Failed to delete plan'); setDeleteTarget(null); },
   });
 
   const columns: ColumnDef<Plan, unknown>[] = [
@@ -131,6 +146,19 @@ export default function PlansPage() {
       ),
     },
     {
+      accessorKey: 'customerLimit',
+      header: 'Customers',
+      cell: ({ row }) => {
+        const v = (row.original as any).customerLimit ?? 99999;
+        return (
+          <div className="flex items-center gap-1.5 text-[var(--color-text-secondary)]">
+            <Users size={12} className="text-[var(--color-text-muted)]" />
+            {v >= 99999 ? 'Unlimited' : v}
+          </div>
+        );
+      },
+    },
+    {
       accessorKey: 'storageLimitGb',
       header: 'Storage',
       cell: ({ row }) => (
@@ -154,12 +182,7 @@ export default function PlansPage() {
       header: '',
       cell: ({ row }) => (
         <div className="flex items-center gap-1">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => openEdit(row.original)}
-            title="Edit plan"
-          >
+          <Button variant="ghost" size="sm" onClick={() => openEdit(row.original)} title="Edit plan">
             <Pencil size={13} />
           </Button>
           <Button
@@ -168,11 +191,20 @@ export default function PlansPage() {
             onClick={() => toggleMutation.mutate(row.original)}
             loading={toggleMutation.isPending}
             className={row.original.isActive
-              ? 'text-red-500 hover:bg-[var(--color-surface-elevated)] hover:text-red-600'
-              : 'text-emerald-600 hover:bg-[var(--color-surface-elevated)] hover:text-emerald-700'
+              ? 'text-amber-600 hover:text-amber-700'
+              : 'text-emerald-600 hover:text-emerald-700'
             }
           >
             {row.original.isActive ? 'Deactivate' : 'Activate'}
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setDeleteTarget(row.original)}
+            className="text-red-500 hover:text-red-600"
+            title="Delete plan"
+          >
+            <Trash2 size={13} />
           </Button>
         </div>
       ),
@@ -187,14 +219,10 @@ export default function PlansPage() {
           <p className="text-sm font-bold text-[var(--color-text-primary)]">{editing?.name}</p>
         </div>
       ) : (
-        <Select
+        <Input
           label="Plan Name"
-          options={[
-            { value: 'STARTER', label: 'Starter' },
-            { value: 'PROFESSIONAL', label: 'Professional' },
-            { value: 'ENTERPRISE', label: 'Enterprise' },
-          ]}
-          {...register('name')}
+          placeholder="e.g. STARTER, GOLD, ENTERPRISE"
+          {...register('name', { required: 'Plan name is required', maxLength: { value: 50, message: 'Max 50 characters' } })}
           error={errors.name?.message}
         />
       )}
@@ -219,10 +247,17 @@ export default function PlansPage() {
           error={errors.technicianLimit?.message}
         />
         <Input
-          label="Ticket Limit"
+          label="Ticket Limit / month"
           type="number"
           {...register('ticketLimit', { valueAsNumber: true })}
           error={errors.ticketLimit?.message}
+        />
+        <Input
+          label="Customer Limit"
+          type="number"
+          placeholder="99999 = unlimited"
+          {...register('customerLimit', { valueAsNumber: true })}
+          error={errors.customerLimit?.message}
         />
         <Input
           label="Storage (GB)"
@@ -271,6 +306,16 @@ export default function PlansPage() {
           </div>
         </form>
       </Modal>
+
+      <ConfirmDialog
+        open={!!deleteTarget}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={() => deleteTarget && deleteMutation.mutate(deleteTarget.id)}
+        loading={deleteMutation.isPending}
+        title="Delete Plan"
+        message={`Delete "${deleteTarget?.name}"? This cannot be undone. Plans with active subscriptions or trial tenants cannot be deleted — deactivate them instead.`}
+        confirmLabel="Delete Plan"
+      />
     </div>
   );
 }

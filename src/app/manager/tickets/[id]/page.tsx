@@ -14,7 +14,7 @@ import { Select } from '@/components/ui/Select';
 import { Input } from '@/components/ui/Input';
 import { Textarea } from '@/components/ui/Textarea';
 import { PageSpinner } from '@/components/ui/Spinner';
-import { Star, CheckCircle, XCircle, RefreshCw, UserCheck, ChevronLeft, CalendarClock } from 'lucide-react';
+import { Star, CheckCircle, XCircle, RefreshCw, UserCheck, ChevronLeft, CalendarClock, ThumbsUp, ThumbsDown, AlertTriangle } from 'lucide-react';
 import dayjs from 'dayjs';
 import Link from 'next/link';
 
@@ -55,11 +55,24 @@ export default function TicketDetailPage() {
     onError: () => toast.error('Failed'),
   });
 
+  const approvePendingMutation = useMutation({
+    mutationFn: () => api.patch(`/web/manager/tickets/${id}/approve-pending`),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['ticket', id] }); toast.success('Pending approved — technician notified'); },
+    onError: (err: any) => toast.error(err?.response?.data?.message ?? 'Failed'),
+  });
+
+  const rejectPendingMutation = useMutation({
+    mutationFn: () => api.patch(`/web/manager/tickets/${id}/reject-pending`),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['ticket', id] }); toast.success('Pending rejected — ticket resumed'); },
+    onError: (err: any) => toast.error(err?.response?.data?.message ?? 'Failed'),
+  });
+
   if (isLoading || !ticket) return <PageSpinner />;
 
   const canAssign = ticket.status === 'NEW_TICKET';
   const canReassign = ticket.status === 'ASSIGNED' || ticket.status === 'ACCEPTED';
   const canReschedule = ticket.status === 'PENDING';
+  const canActOnPending = ticket.status === 'PENDING';
   const canClose = ticket.status === 'INVOICE_GENERATED';
   const canCancel = !['COMPLETED', 'TICKET_CLOSED', 'CANCELLED'].includes(ticket.status);
 
@@ -88,20 +101,40 @@ export default function TicketDetailPage() {
             {canAssign && <Button size="sm" onClick={() => { setAssignMode('assign'); setShowAssign(true); }}><UserCheck size={13} /> Assign</Button>}
             {canReassign && <Button size="sm" variant="secondary" onClick={() => { setAssignMode('reassign'); setShowAssign(true); }}><RefreshCw size={13} /> Reassign</Button>}
             {canReschedule && <Button size="sm" variant="secondary" onClick={() => { setAssignMode('reschedule'); setShowAssign(true); }}><CalendarClock size={13} /> Reschedule</Button>}
+            {canActOnPending && (
+              <>
+                <Button size="sm" variant="secondary" className="text-emerald-600 border-emerald-200 hover:bg-emerald-50" loading={approvePendingMutation.isPending} onClick={() => approvePendingMutation.mutate()}><ThumbsUp size={13} /> Approve</Button>
+                <Button size="sm" variant="secondary" className="text-red-600 border-red-200 hover:bg-red-50" loading={rejectPendingMutation.isPending} onClick={() => rejectPendingMutation.mutate()}><ThumbsDown size={13} /> Reject</Button>
+              </>
+            )}
             {canClose && <Button size="sm" variant="secondary" onClick={() => setShowClose(true)}><CheckCircle size={13} /> Close</Button>}
             {canCancel && <Button size="sm" variant="danger" onClick={() => setShowCancel(true)}><XCircle size={13} /> Cancel</Button>}
           </div>
         </div>
       </div>
 
+      {canActOnPending && ticket.pendingReason && (
+        <div className="flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3">
+          <AlertTriangle size={16} className="text-amber-500 mt-0.5 shrink-0" />
+          <div className="text-sm">
+            <p className="font-semibold text-amber-800">Technician marked this ticket as Pending</p>
+            <p className="text-amber-700 mt-0.5"><span className="font-medium">Reason:</span> {ticket.pendingReason}</p>
+            {ticket.pendingNotes && <p className="text-amber-700"><span className="font-medium">Notes:</span> {ticket.pendingNotes}</p>}
+            <p className="text-amber-600 text-xs mt-1">Use <strong>Approve</strong> to acknowledge the delay, or <strong>Reject</strong> to send the technician back to work immediately.</p>
+          </div>
+        </div>
+      )}
+
       <div className="grid grid-cols-2 gap-4">
         <div className="bg-[var(--color-surface)] rounded-xl p-4 border border-[var(--color-border)] shadow-sm text-sm space-y-2">
           <h3 className="font-medium text-[var(--color-text-secondary)]">Details</h3>
           <div className="text-[var(--color-text-secondary)] space-y-1">
-            <p><span className="text-[var(--color-text-muted)]">Category:</span> {ticket.serviceCategory?.name ?? '—'}</p>
+            <p><span className="text-[var(--color-text-muted)]">Category:</span> {ticket.subCategory?.category?.name ?? '—'}</p>
             <p><span className="text-[var(--color-text-muted)]">Sub Category:</span> {ticket.subCategory?.name ?? '—'}</p>
             <p><span className="text-[var(--color-text-muted)]">Technician:</span> {ticket.technician?.name ?? 'Unassigned'}</p>
             <p><span className="text-[var(--color-text-muted)]">Scheduled:</span> {ticket.scheduledAt ? dayjs(ticket.scheduledAt).format('DD MMM YYYY, HH:mm') : '—'}</p>
+            {ticket.serviceAddress && <p><span className="text-[var(--color-text-muted)]">Address:</span> {ticket.serviceAddress}</p>}
+            {ticket.description && <p><span className="text-[var(--color-text-muted)]">Description:</span> {ticket.description}</p>}
             <p><span className="text-[var(--color-text-muted)]">Created:</span> {dayjs(ticket.createdAt).format('DD MMM YYYY, HH:mm')}</p>
           </div>
         </div>

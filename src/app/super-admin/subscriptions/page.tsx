@@ -12,15 +12,15 @@ import { Select } from '@/components/ui/Select';
 import { Input } from '@/components/ui/Input';
 
 const createSchema = z.object({
-  tenantId: z.string().min(1),
-  planId: z.string().min(1),
-  startDate: z.string().min(1),
-  endDate: z.string().min(1),
+  tenantId: z.string().min(1, 'Please select a tenant'),
+  planId: z.string().min(1, 'Please select a plan'),
+  startDate: z.string().min(1, 'Start date is required'),
+  endDate: z.string().min(1, 'End date is required'),
 });
 
 const renewSchema = z.object({
-  subscriptionId: z.string().min(1),
-  endDate: z.string().min(1),
+  subscriptionId: z.string().min(1, 'Please select a subscription'),
+  endDate: z.string().min(1, 'End date is required'),
 });
 
 type CreateForm = z.infer<typeof createSchema>;

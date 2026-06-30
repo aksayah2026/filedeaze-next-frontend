@@ -133,10 +133,17 @@ export default function AdminDashboardPage() {
                   limit={data.planUsage.usage.technicians.limit}
                 />
                 <ProgressBar
-                  label="Tickets"
+                  label="Tickets (this month)"
                   used={data.planUsage.usage.tickets.current}
                   limit={data.planUsage.usage.tickets.limit}
                 />
+                {data.planUsage.usage.customers && (
+                  <ProgressBar
+                    label="Customers"
+                    used={data.planUsage.usage.customers.current}
+                    limit={data.planUsage.usage.customers.limit}
+                  />
+                )}
                 <ProgressBar
                   label="Storage"
                   used={data.planUsage.usage.storage.current}

@@ -5,7 +5,8 @@ import { Ticket, Users, DollarSign, ClipboardCheck, ClipboardList, Clock, AlertC
 import api from '@/lib/axios';
 import { ManagerDashboard } from '@/types';
 import { StatsCard } from '@/components/ui/StatsCard';
-import { SkeletonCard } from '@/components/ui/Spinner';
+import { ProgressBar } from '@/components/ui/ProgressBar';
+import { SkeletonCard, SkeletonLine } from '@/components/ui/Spinner';
 
 export default function ManagerDashboardPage() {
   const { data, isLoading } = useQuery<ManagerDashboard>({
@@ -23,12 +24,21 @@ export default function ManagerDashboardPage() {
 
       {/* KPI Grid */}
       {isLoading ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-          {Array.from({ length: 8 }).map((_, i) => (
-            <SkeletonCard key={i} />
-          ))}
+        <div className="space-y-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            {Array.from({ length: 8 }).map((_, i) => (
+              <SkeletonCard key={i} />
+            ))}
+          </div>
+          <div className="bg-[var(--color-surface)] rounded-xl p-6 border border-[var(--color-border)] shadow-sm max-w-xl space-y-5">
+            <SkeletonLine className="w-48 h-5 mb-4" />
+            <SkeletonLine className="w-full h-6" />
+            <SkeletonLine className="w-full h-6" />
+            <SkeletonLine className="w-full h-6" />
+          </div>
         </div>
       ) : !data ? null : (
+        <div className="space-y-6">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           <StatsCard
             title="Total Tickets"
@@ -102,6 +112,35 @@ export default function ManagerDashboardPage() {
             accentColor="bg-rose-500"
             subtitle="Unpaid invoices total"
           />
+        </div>
+
+          {/* Plan Usage Section */}
+          <div className="relative overflow-hidden bg-[var(--color-surface)] rounded-xl p-6 border border-[var(--color-border)] shadow-[0_2px_8px_rgba(0,0,0,0.04)] dark:shadow-none max-w-xl transition-colors duration-250">
+            <div className="absolute left-0 top-0 right-0 h-1 bg-[var(--color-primary)] rounded-t-xl" />
+            <h3 className="flex items-center justify-between gap-2 mb-6">
+              <span className="text-sm font-bold uppercase tracking-wider text-[var(--color-text-secondary)]">Plan Resource Usage</span>
+              {data.planUsage && (
+                <span className="inline-flex items-center rounded-full bg-[var(--color-primary-light)] px-2.5 py-0.5 text-xs font-semibold text-[var(--color-primary)] border border-[var(--color-primary-ring)]">
+                  {data.planUsage.plan}
+                </span>
+              )}
+            </h3>
+            {data.planUsage ? (
+              <div className="space-y-5">
+                <ProgressBar label="Managers"           used={data.planUsage.usage.managers.current}    limit={data.planUsage.usage.managers.limit} />
+                <ProgressBar label="Technicians"        used={data.planUsage.usage.technicians.current} limit={data.planUsage.usage.technicians.limit} />
+                <ProgressBar label="Tickets (this month)" used={data.planUsage.usage.tickets.current}  limit={data.planUsage.usage.tickets.limit} />
+                {data.planUsage.usage.customers && (
+                  <ProgressBar label="Customers" used={data.planUsage.usage.customers.current} limit={data.planUsage.usage.customers.limit} />
+                )}
+                <ProgressBar label="Storage" used={data.planUsage.usage.storage.current} limit={data.planUsage.usage.storage.limit} unit=" GB" />
+              </div>
+            ) : (
+              <div className="text-center py-6 text-[var(--color-text-muted)]">
+                <p className="text-sm">No active subscription plan allocated.</p>
+              </div>
+            )}
+          </div>
         </div>
       )}
     </div>

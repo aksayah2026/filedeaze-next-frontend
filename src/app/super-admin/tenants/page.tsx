@@ -21,15 +21,15 @@ import { TenantStatusBadge } from '@/components/ui/Badge';
 import dayjs from 'dayjs';
 
 const schema = z.object({
-  companyName: z.string().min(1),
-  tenantCode: z.string().min(1),
-  email: z.string().min(1).refine(v => v.includes('@') && v.includes('.'), 'Invalid email'),
-  phone: z.string().min(1),
-  address: z.string().min(1),
-  adminName: z.string().min(1),
-  adminEmail: z.string().min(1).refine(v => v.includes('@') && v.includes('.'), 'Invalid email'),
-  adminPassword: z.string().min(6),
-  plan: z.enum(['STARTER', 'PROFESSIONAL', 'ENTERPRISE']).optional(),
+  companyName: z.string().min(1, 'Company name is required (e.g. Siva Services Pvt Ltd)'),
+  tenantCode: z.string().min(1, 'Tenant code is required (e.g. sivaservices)'),
+  email: z.string().min(1, 'Email is required').refine(v => v.includes('@') && v.includes('.'), 'Enter a valid email (e.g. siva@gmail.com)'),
+  phone: z.string().min(10, 'Enter a valid phone number (e.g. 9876543210)').max(15, 'Phone number too long'),
+  address: z.string().min(1, 'Address is required (e.g. 12, Anna Nagar, Chennai)'),
+  adminName: z.string().min(1, 'Admin name is required (e.g. Siva Kumar)'),
+  adminEmail: z.string().min(1, 'Admin email is required').refine(v => v.includes('@') && v.includes('.'), 'Enter a valid email (e.g. siva@gmail.com)'),
+  adminPassword: z.string().min(6, 'Password must be at least 6 characters (e.g. Siva@123)'),
+  plan: z.string().optional(),
 });
 
 type Form = z.infer<typeof schema>;
@@ -48,6 +48,11 @@ export default function TenantsPage() {
     queryFn: async () => (await api.get('/web/super-admin/tenants', {
       params: Object.fromEntries(Object.entries(params).filter(([, v]) => v)),
     })).data.data,
+  });
+
+  const { data: plans = [] } = useQuery<{ id: string; name: string; isActive: boolean }[]>({
+    queryKey: ['plans'],
+    queryFn: async () => (await api.get('/web/super-admin/plans')).data.data,
   });
 
   const { register, handleSubmit, reset, setValue, watch, formState: { errors, isSubmitting } } = useForm<Form>({ resolver: zodResolver(schema) });
@@ -221,9 +226,7 @@ export default function TenantsPage() {
           label="Plan"
           options={[
             { value: '', label: 'All Plans' },
-            { value: 'STARTER', label: 'Starter' },
-            { value: 'PROFESSIONAL', label: 'Professional' },
-            { value: 'ENTERPRISE', label: 'Enterprise' },
+            ...plans.map(p => ({ value: p.name, label: p.name })),
           ]}
           value={planFilter}
           onChange={e => setPlanFilter(e.target.value)}
@@ -272,11 +275,7 @@ export default function TenantsPage() {
               <Input label="Admin Password" type="password" {...register('adminPassword')} error={errors.adminPassword?.message} />
               <Select
                 label="Plan"
-                options={[
-                  { value: 'STARTER', label: 'Starter' },
-                  { value: 'PROFESSIONAL', label: 'Professional' },
-                  { value: 'ENTERPRISE', label: 'Enterprise' },
-                ]}
+                options={plans.filter(p => p.isActive).map(p => ({ value: p.name, label: p.name }))}
                 placeholder="Select Plan"
                 {...register('plan')}
               />

@@ -39,6 +39,7 @@ type NewCustomerForm = {
   name: string;
   phone: string;
   email: string;
+  address: string;
 };
 
 export default function TicketsPage() {
@@ -50,7 +51,7 @@ export default function TicketsPage() {
   const [page, setPage] = useState(1);
   const [showCreate, setShowCreate] = useState(false);
   const [showNewCustomer, setShowNewCustomer] = useState(false);
-  const [newCust, setNewCust] = useState<NewCustomerForm>({ name: '', phone: '', email: '' });
+  const [newCust, setNewCust] = useState<NewCustomerForm>({ name: '', phone: '', email: '', address: '' });
 
   const { data: response, isLoading } = useQuery<{ data: Ticket[]; meta: { total: number; page: number; limit: number; totalPages: number } }>({
     queryKey: ['tickets', params, page],
@@ -115,20 +116,22 @@ export default function TicketsPage() {
         name: d.name.trim(),
         phone: d.phone.trim(),
         ...(d.email.trim() && { email: d.email.trim() }),
+        ...(d.address.trim() && { address: d.address.trim() }),
       }),
     onSuccess: (res) => {
       const created = res.data.data as Customer;
       qc.invalidateQueries({ queryKey: ['customers-list'] });
       setValue('customerId', created.id);
+      if (created.address) setValue('serviceAddress', created.address);
       setShowNewCustomer(false);
-      setNewCust({ name: '', phone: '', email: '' });
+      setNewCust({ name: '', phone: '', email: '', address: '' });
       toast.success(`Customer "${created.name}" added`);
     },
     onError: (err: { response?: { data?: { message?: string } } }) =>
       toast.error(err?.response?.data?.message ?? 'Failed to create customer'),
   });
 
-  const closeModal = () => { setShowCreate(false); setShowNewCustomer(false); setNewCust({ name: '', phone: '', email: '' }); reset(); };
+  const closeModal = () => { setShowCreate(false); setShowNewCustomer(false); setNewCust({ name: '', phone: '', email: '', address: '' }); reset(); };
 
   const columns: ColumnDef<Ticket, unknown>[] = [
     { accessorKey: 'ticketNumber', header: 'Ticket #' },
@@ -241,9 +244,14 @@ export default function TicketsPage() {
                   onChange={e => setNewCust(p => ({ ...p, phone: e.target.value }))}
                 />
                 <Input
-                  placeholder="Email (optional)"
+                  placeholder="Email * (e.g. ravi@gmail.com)"
                   value={newCust.email}
                   onChange={e => setNewCust(p => ({ ...p, email: e.target.value }))}
+                />
+                <Input
+                  placeholder="Address (e.g. 12 Gandhi Street, Chennai) *"
+                  value={newCust.address}
+                  onChange={e => setNewCust(p => ({ ...p, address: e.target.value }))}
                 />
                 <div className="flex gap-2">
                   <Button
@@ -255,6 +263,14 @@ export default function TicketsPage() {
                         toast.error('Name and phone are required');
                         return;
                       }
+                      if (!newCust.email.trim()) {
+                        toast.error('Email is required to send the service request confirmation');
+                        return;
+                      }
+                      if (!newCust.address.trim()) {
+                        toast.error('Address is required so the technician knows where to go');
+                        return;
+                      }
                       createCustomerMutation.mutate(newCust);
                     }}
                   >
@@ -264,7 +280,7 @@ export default function TicketsPage() {
                     type="button"
                     variant="secondary"
                     size="sm"
-                    onClick={() => { setShowNewCustomer(false); setNewCust({ name: '', phone: '', email: '' }); }}
+                    onClick={() => { setShowNewCustomer(false); setNewCust({ name: '', phone: '', email: '', address: '' }); }}
                   >
                     Cancel
                   </Button>
