@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useParams, usePathname } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
@@ -10,13 +10,57 @@ import { Ticket, Technician, TicketImage } from '@/types';
 import { TicketStatusBadge, PaymentStatusBadge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Modal } from '@/components/ui/Modal';
-import { Select } from '@/components/ui/Select';
 import { Input } from '@/components/ui/Input';
 import { Textarea } from '@/components/ui/Textarea';
 import { PageSpinner } from '@/components/ui/Spinner';
 import { Star, CheckCircle, XCircle, RefreshCw, UserCheck, ChevronLeft, CalendarClock, ThumbsUp, ThumbsDown, AlertTriangle } from 'lucide-react';
 import dayjs from 'dayjs';
 import Link from 'next/link';
+
+const BUSY_STATUSES = ['ASSIGNED', 'ACCEPTED', 'TRAVELLING', 'REACHED_LOCATION', 'IN_PROGRESS', 'PENDING'];
+
+function TechnicianPicker({ techs, busyIds, value, onChange }: {
+  techs: Technician[];
+  busyIds: Set<string>;
+  value: string;
+  onChange: (id: string) => void;
+}) {
+  const available = techs.filter(t => t.isActive && !busyIds.has(t.id));
+  const busy = techs.filter(t => t.isActive && busyIds.has(t.id));
+
+  if (techs.length === 0) return <p className="text-sm text-[var(--color-text-muted)] py-2">No active technicians found.</p>;
+
+  return (
+    <div className="space-y-1.5 max-h-56 overflow-y-auto pr-0.5">
+      {available.length > 0 && (
+        <p className="text-[10px] font-semibold uppercase tracking-wider text-[var(--color-text-muted)] px-1 pt-1">
+          Available ({available.length})
+        </p>
+      )}
+      {available.map(tech => (
+        <button key={tech.id} type="button" onClick={() => onChange(tech.id)}
+          className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg border text-sm transition-all ${value === tech.id ? 'border-blue-500 bg-blue-50 text-blue-900' : 'border-[var(--color-border)] hover:border-gray-300 hover:bg-gray-50 text-[var(--color-text-secondary)]'}`}>
+          <span className="h-2 w-2 rounded-full bg-emerald-500 shrink-0" />
+          <span className="flex-1 text-left font-medium">{tech.name}</span>
+          <span className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700">Available</span>
+        </button>
+      ))}
+      {busy.length > 0 && (
+        <p className="text-[10px] font-semibold uppercase tracking-wider text-[var(--color-text-muted)] px-1 pt-2">
+          On Job ({busy.length})
+        </p>
+      )}
+      {busy.map(tech => (
+        <button key={tech.id} type="button" onClick={() => onChange(tech.id)}
+          className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg border text-sm transition-all ${value === tech.id ? 'border-blue-500 bg-blue-50 text-blue-900' : 'border-[var(--color-border)] hover:border-gray-300 hover:bg-gray-50 text-[var(--color-text-secondary)]'}`}>
+          <span className="h-2 w-2 rounded-full bg-amber-400 shrink-0" />
+          <span className="flex-1 text-left font-medium">{tech.name}</span>
+          <span className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-amber-100 text-amber-700">On Job</span>
+        </button>
+      ))}
+    </div>
+  );
+}
 
 export default function TicketDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -31,7 +75,21 @@ export default function TicketDetailPage() {
   const { data: ticket, isLoading } = useQuery<Ticket>({ queryKey: ['ticket', id], queryFn: async () => (await api.get(`/web/manager/tickets/${id}`)).data.data });
   const { data: techs = [] } = useQuery<Technician[]>({ queryKey: ['technicians'], queryFn: async () => (await api.get('/web/manager/technicians')).data.data });
 
-  const { register: ra, handleSubmit: ha, reset: resetA, formState: { isSubmitting: sa } } = useForm<{ technicianId: string; scheduledAt: string }>();
+  const { data: allTickets = [] } = useQuery<Ticket[]>({
+    queryKey: ['tickets-availability'],
+    queryFn: async () => (await api.get('/web/manager/tickets')).data.data,
+    enabled: showAssign,
+    staleTime: 60_000,
+  });
+
+  const busyTechIds = useMemo(() => new Set(
+    allTickets
+      .filter(t => BUSY_STATUSES.includes(t.status) && t.technician?.id)
+      .map(t => t.technician!.id)
+  ), [allTickets]);
+
+  const { register: ra, handleSubmit: ha, reset: resetA, setValue: setAssignValue, watch: watchAssign, formState: { isSubmitting: sa } } = useForm<{ technicianId: string; scheduledAt: string }>();
+  const selectedTechId = watchAssign('technicianId') ?? '';
   const { register: rc, handleSubmit: hc, reset: resetC, formState: { isSubmitting: sc } } = useForm<{ notes: string }>();
   const { register: rx, handleSubmit: hx, reset: resetX, formState: { isSubmitting: sx } } = useForm<{ reason: string }>();
 
@@ -42,19 +100,19 @@ export default function TicketDetailPage() {
       toast.success(assignMode === 'reassign' ? 'Reassigned' : assignMode === 'reschedule' ? 'Rescheduled' : 'Assigned');
       setShowAssign(false); resetA();
     },
-    onError: () => toast.error('Failed'),
+    onError: (err: any) => toast.error(err?.response?.data?.message ?? 'Something went wrong'),
   });
 
   const closeMutation = useMutation({
     mutationFn: (d: { notes: string }) => api.patch(`/web/manager/tickets/${id}/close`, d),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['ticket', id] }); toast.success('Ticket closed'); setShowClose(false); resetC(); },
-    onError: () => toast.error('Failed'),
+    onError: (err: any) => toast.error(err?.response?.data?.message ?? 'Something went wrong'),
   });
 
   const cancelMutation = useMutation({
     mutationFn: (d: { reason: string }) => api.patch(`/web/manager/tickets/${id}/cancel`, d),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['ticket', id] }); toast.success('Ticket cancelled'); setShowCancel(false); resetX(); },
-    onError: () => toast.error('Failed'),
+    onError: (err: any) => toast.error(err?.response?.data?.message ?? 'Something went wrong'),
   });
 
   const approvePendingMutation = useMutation({
@@ -77,8 +135,6 @@ export default function TicketDetailPage() {
   const canActOnPending = ticket.status === 'PENDING';
   const canClose = ticket.status === 'INVOICE_GENERATED';
   const canCancel = !['COMPLETED', 'TICKET_CLOSED', 'CANCELLED'].includes(ticket.status);
-
-  const techOptions = techs.filter(t => t.isActive).map(t => ({ value: t.id, label: t.name }));
 
   return (
     <div className="space-y-5 max-w-3xl">
@@ -219,7 +275,17 @@ export default function TicketDetailPage() {
 
       <Modal open={showAssign} onClose={() => { setShowAssign(false); resetA(); }} title={assignMode === 'reassign' ? 'Reassign Ticket' : assignMode === 'reschedule' ? 'Reschedule Ticket' : 'Assign Ticket'} size="sm">
         <form onSubmit={ha(d => assignMutation.mutate(d))} className="space-y-4">
-          <Select label="Technician" options={techOptions} placeholder="Select technician" {...ra('technicianId', { required: true })} />
+          <div>
+            <label className="text-sm font-medium text-[var(--color-text-secondary)] block mb-2">Technician</label>
+            <TechnicianPicker
+              techs={techs.filter(t => t.isActive)}
+              busyIds={busyTechIds}
+              value={selectedTechId}
+              onChange={id => setAssignValue('technicianId', id, { shouldValidate: true })}
+            />
+            <input type="hidden" {...ra('technicianId', { required: true })} />
+            {!selectedTechId && <p className="text-red-400 text-xs mt-1.5">Please select a technician</p>}
+          </div>
           <Input label="Scheduled At" type="datetime-local" {...ra('scheduledAt')} />
           <div className="flex justify-end gap-3"><Button variant="secondary" type="button" onClick={() => { setShowAssign(false); resetA(); }}>Cancel</Button><Button type="submit" loading={sa}>{assignMode === 'reassign' ? 'Reassign' : assignMode === 'reschedule' ? 'Reschedule' : 'Assign'}</Button></div>
         </form>

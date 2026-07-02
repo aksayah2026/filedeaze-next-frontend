@@ -44,6 +44,15 @@ export default function TenantDetailPage() {
     },
   });
 
+  const { data: tenantSubs = [] } = useQuery<any[]>({
+    queryKey: ['tenant-subscriptions', id],
+    queryFn: async () => {
+      const res = await api.get('/web/super-admin/subscriptions', { params: { tenantId: id, limit: 50 } });
+      return res.data.data?.subscriptions ?? [];
+    },
+    enabled: !!id,
+  });
+
   const { register, handleSubmit, reset, formState: { isSubmitting } } = useForm<Partial<Tenant>>();
 
   useEffect(() => {
@@ -157,6 +166,13 @@ export default function TenantDetailPage() {
               <span>{tenant.email}</span>
               {tenant.phone && <span>{tenant.phone}</span>}
             </div>
+            {(tenant.adminName || tenant.adminEmail) && (
+              <div className="flex items-center gap-4 mt-1 text-xs flex-wrap">
+                <span className="text-[var(--color-text-muted)]">Admin:</span>
+                {tenant.adminName && <span className="font-medium text-[var(--color-text-secondary)]">{tenant.adminName}</span>}
+                {tenant.adminEmail && <span className="text-[var(--color-text-muted)]">{tenant.adminEmail}</span>}
+              </div>
+            )}
           </div>
         </div>
 
@@ -328,36 +344,72 @@ export default function TenantDetailPage() {
         </div>
       )}
 
-      {/* Subscription Info */}
+      {/* Subscription History Table */}
       <div className="bg-[var(--color-surface)] rounded-xl border border-[var(--color-border)] overflow-hidden shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
         <div className="px-6 py-4 border-b border-[var(--color-border)] bg-[var(--color-surface-elevated)]/50 flex items-center gap-2">
           <div className="h-1 w-4 rounded-full bg-emerald-500" />
-          <h3 className="text-sm font-semibold text-[var(--color-text-primary)]">Subscription Info</h3>
+          <h3 className="text-sm font-semibold text-[var(--color-text-primary)]">Subscriptions</h3>
+          {tenantSubs.length > 0 && (
+            <span className="ml-auto text-xs text-[var(--color-text-muted)]">{tenantSubs.length} record{tenantSubs.length !== 1 ? 's' : ''}</span>
+          )}
         </div>
-        <div className="p-6">
-          {tenant.subscription ? (
-            <div className="grid grid-cols-2 gap-4">
-              {[
-                { label: 'Plan', value: tenant.subscription.plan?.name },
-                { label: 'Active', value: tenant.subscription.isActive ? 'Yes' : 'No' },
-                { label: 'Start Date', value: dayjs(tenant.subscription.startDate).format('DD MMM YYYY') },
-                { label: 'End Date', value: dayjs(tenant.subscription.endDate).format('DD MMM YYYY') },
-              ].map(({ label, value }) => (
-                <div key={label} className="bg-[var(--color-surface-elevated)] rounded-lg px-4 py-3">
-                  <p className="text-[10px] font-semibold uppercase tracking-wide text-[var(--color-text-muted)] mb-1">{label}</p>
-                  <p className="text-sm font-semibold text-[var(--color-text-primary)]">{value ?? '—'}</p>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="bg-[var(--color-surface-elevated)] border border-amber-100 rounded-lg px-4 py-3">
-              <p className="text-sm text-amber-700">
-                No active subscription — on trial until{' '}
-                <span className="font-semibold">
-                  {tenant.trialEndsAt ? dayjs(tenant.trialEndsAt).format('DD MMM YYYY') : '—'}
-                </span>
+        <div className="overflow-x-auto">
+          {tenantSubs.length === 0 ? (
+            <div className="px-6 py-8 text-center">
+              <p className="text-sm text-[var(--color-text-muted)]">
+                {tenant.subscription ? 'Loading...' : 'No subscriptions yet.'}
               </p>
             </div>
+          ) : (
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-[var(--color-border)] bg-[var(--color-surface-elevated)]">
+                  {['Plan Name', 'Billing Cycle', 'Start Date', 'End Date', 'Status'].map(h => (
+                    <th key={h} className="px-5 py-3 text-left text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wide whitespace-nowrap">{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-[var(--color-border)]">
+                {tenantSubs.map((s: any) => {
+                  const statusStyle: Record<string, string> = {
+                    ACTIVE:    'bg-emerald-100 text-emerald-700',
+                    EXPIRED:   'bg-gray-100 text-gray-500',
+                    CANCELLED: 'bg-red-100 text-red-600',
+                    QUEUED:    'bg-amber-100 text-amber-700',
+                    TRIAL:     'bg-blue-100 text-blue-700',
+                  };
+                  const cycleMap: Record<string, string> = {
+                    MONTHLY: 'Monthly', QUARTERLY: 'Quarterly',
+                    HALF_YEARLY: 'Half-Yearly', YEARLY: 'Yearly',
+                  };
+                  const daysLeft = s.endDate ? Math.max(0, dayjs(s.endDate).diff(dayjs(), 'day')) : 0;
+                  const isActive = s.status === 'ACTIVE';
+                  return (
+                    <tr key={s.id} className={`transition-colors ${isActive ? 'bg-emerald-50/40' : 'hover:bg-[var(--color-surface-elevated)]'}`}>
+                      <td className="px-5 py-3 font-medium text-[var(--color-text-primary)]">
+                        {s.plan?.name ?? '—'}
+                      </td>
+                      <td className="px-5 py-3 text-[var(--color-text-secondary)] whitespace-nowrap">
+                        {cycleMap[s.billingCycle] ?? s.billingCycle ?? '—'}
+                      </td>
+                      <td className="px-5 py-3 text-[var(--color-text-secondary)] whitespace-nowrap">
+                        {dayjs(s.startDate).format('DD MMM YYYY')}
+                      </td>
+                      <td className="px-5 py-3 whitespace-nowrap">
+                        <span className={isActive && daysLeft <= 30 ? 'text-amber-600 font-medium' : 'text-[var(--color-text-secondary)]'}>
+                          {dayjs(s.endDate).format('DD MMM YYYY')}
+                        </span>
+                      </td>
+                      <td className="px-5 py-3">
+                        <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide ${statusStyle[s.status] ?? 'bg-gray-100 text-gray-600'}`}>
+                          {s.status}
+                        </span>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
           )}
         </div>
       </div>

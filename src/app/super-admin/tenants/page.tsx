@@ -2,37 +2,72 @@
 
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { ColumnDef } from '@tanstack/react-table';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { toast } from 'sonner';
-import { Plus, Eye, Trash2, Search, Copy, CheckCheck, Link2, Building2 } from 'lucide-react';
+import { Plus, Eye, Trash2, Search, Copy, CheckCheck, Link2 } from 'lucide-react';
 import Link from 'next/link';
 import api from '@/lib/axios';
-import { Tenant } from '@/types';
-import { DataTable } from '@/components/ui/DataTable';
+import { Tenant, TenantStatus } from '@/types';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
 import { Modal } from '@/components/ui/Modal';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
-import { TenantStatusBadge } from '@/components/ui/Badge';
 import dayjs from 'dayjs';
 
 const schema = z.object({
-  companyName: z.string().min(1, 'Company name is required (e.g. Siva Services Pvt Ltd)'),
-  tenantCode: z.string().min(1, 'Tenant code is required (e.g. sivaservices)'),
-  email: z.string().min(1, 'Email is required').refine(v => v.includes('@') && v.includes('.'), 'Enter a valid email (e.g. siva@gmail.com)'),
-  phone: z.string().min(10, 'Enter a valid phone number (e.g. 9876543210)').max(15, 'Phone number too long'),
-  address: z.string().min(1, 'Address is required (e.g. 12, Anna Nagar, Chennai)'),
-  adminName: z.string().min(1, 'Admin name is required (e.g. Siva Kumar)'),
-  adminEmail: z.string().min(1, 'Admin email is required').refine(v => v.includes('@') && v.includes('.'), 'Enter a valid email (e.g. siva@gmail.com)'),
-  adminPassword: z.string().min(6, 'Password must be at least 6 characters (e.g. Siva@123)'),
+  companyName: z.string().min(1, 'Company name is required'),
+  tenantCode: z.string().min(1, 'Tenant code is required'),
+  email: z.string().min(1, 'Email is required').refine(v => v.includes('@') && v.includes('.'), 'Enter a valid email'),
+  phone: z.string().min(10, 'Enter a valid phone number').max(15),
+  address: z.string().min(1, 'Address is required'),
+  adminName: z.string().min(1, 'Admin name is required'),
+  adminEmail: z.string().min(1, 'Admin email is required').refine(v => v.includes('@') && v.includes('.'), 'Enter a valid email'),
+  adminPassword: z.string().min(6, 'Password must be at least 6 characters'),
   plan: z.string().optional(),
 });
 
 type Form = z.infer<typeof schema>;
+
+function PlanBadge({ tenant }: { tenant: Tenant }) {
+  const sub = (tenant as any).subscription;
+  const plan = sub?.plan ?? tenant.plan ?? tenant.selectedPlan;
+  if (!plan?.name) {
+    return <span className="text-xs font-semibold text-red-500 bg-red-50 border border-red-100 px-2.5 py-0.5 rounded-full">No Active Plan</span>;
+  }
+  const colors: Record<string, string> = {
+    STARTER:      'bg-sky-50 text-sky-700 border-sky-100',
+    PROFESSIONAL: 'bg-indigo-50 text-indigo-700 border-indigo-100',
+    ENTERPRISE:   'bg-purple-50 text-purple-700 border-purple-100',
+  };
+  const cls = colors[plan.name.toUpperCase()] ?? 'bg-emerald-50 text-emerald-700 border-emerald-100';
+  return (
+    <span className={`text-xs font-semibold border px-2.5 py-0.5 rounded-full ${cls}`}>
+      {plan.name}
+    </span>
+  );
+}
+
+function ActiveToggle({ tenant, onToggle, loading }: { tenant: Tenant; onToggle: (id: string, next: TenantStatus) => void; loading: boolean }) {
+  const isActive = tenant.status === 'ACTIVE';
+  return (
+    <button
+      className="flex items-center gap-2 group"
+      onClick={() => onToggle(tenant.id, isActive ? 'SUSPENDED' : 'ACTIVE')}
+      disabled={loading}
+      title={isActive ? 'Click to suspend' : 'Click to activate'}
+    >
+      <div className={`relative h-5 w-10 rounded-full transition-colors ${isActive ? 'bg-blue-500' : 'bg-gray-300'} ${loading ? 'opacity-50' : ''}`}>
+        <span className={`absolute top-0.5 left-0.5 h-4 w-4 rounded-full bg-white shadow transition-transform ${isActive ? 'translate-x-5' : ''}`} />
+      </div>
+      <span className={`text-xs font-medium ${isActive ? 'text-blue-600' : 'text-gray-400'}`}>
+        {isActive ? 'Active' : 'Inactive'}
+      </span>
+    </button>
+  );
+}
 
 export default function TenantsPage() {
   const qc = useQueryClient();
@@ -42,6 +77,7 @@ export default function TenantsPage() {
   const [params, setParams] = useState({ search: '', status: '', plan: '' });
   const [showCreate, setShowCreate] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [togglingId, setTogglingId] = useState<string | null>(null);
 
   const { data: tenants = [], isLoading } = useQuery<Tenant[]>({
     queryKey: ['tenants', params],
@@ -61,8 +97,7 @@ export default function TenantsPage() {
 
   useEffect(() => {
     if (manualCode || !watchedCompany) return;
-    const suggested = watchedCompany.toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 20);
-    setValue('tenantCode', suggested, { shouldValidate: false });
+    setValue('tenantCode', watchedCompany.toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 20), { shouldValidate: false });
   }, [watchedCompany, manualCode, setValue]);
 
   const [createdTenant, setCreatedTenant] = useState<{ url: string; companyName: string; adminEmail: string } | null>(null);
@@ -72,13 +107,22 @@ export default function TenantsPage() {
     onSuccess: (_, vars) => {
       qc.invalidateQueries({ queryKey: ['tenants'] });
       const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? window.location.origin;
-      const url = `${baseUrl}/admin/${vars.tenantCode}/login`;
-      setCreatedTenant({ url, companyName: vars.companyName, adminEmail: vars.adminEmail });
+      setCreatedTenant({ url: `${baseUrl}/admin/${vars.tenantCode}/login`, companyName: vars.companyName, adminEmail: vars.adminEmail });
       setShowCreate(false);
       reset();
       setManualCode(false);
     },
     onError: (e: unknown) => toast.error((e as { response?: { data?: { message?: string } } })?.response?.data?.message ?? 'Error'),
+  });
+
+  const statusMutation = useMutation({
+    mutationFn: ({ id, status }: { id: string; status: TenantStatus }) =>
+      api.patch(`/web/super-admin/tenants/${id}/status`, { status }),
+    onSuccess: (_, { id: _id }) => {
+      qc.invalidateQueries({ queryKey: ['tenants'] });
+      setTogglingId(null);
+    },
+    onError: () => { toast.error('Failed to update status'); setTogglingId(null); },
   });
 
   const deleteMutation = useMutation({
@@ -87,105 +131,14 @@ export default function TenantsPage() {
     onError: () => toast.error('Delete failed'),
   });
 
-  const columns: ColumnDef<Tenant, unknown>[] = [
-    {
-      accessorKey: 'companyName',
-      header: 'Company',
-      cell: ({ row }) => (
-        <div className="flex items-center gap-2.5">
-          <div className="h-7 w-7 rounded-lg bg-[var(--color-primary-light)] flex items-center justify-center shrink-0">
-            <Building2 size={13} className="text-[var(--color-primary)]" />
-          </div>
-          <span className="font-medium text-[var(--color-text-primary)]">{row.original.companyName}</span>
-        </div>
-      ),
-    },
-    {
-      accessorKey: 'tenantCode',
-      header: 'Code',
-      cell: ({ row }) => (
-        <code className="text-xs bg-[var(--color-surface-elevated)] text-[var(--color-text-muted)] px-2 py-0.5 rounded-md font-mono border border-[var(--color-border)]">
-          {row.original.tenantCode}
-        </code>
-      ),
-    },
-    { accessorKey: 'email', header: 'Email' },
-    { accessorKey: 'phone', header: 'Phone' },
-    {
-      accessorKey: 'status',
-      header: 'Status',
-      cell: ({ row }) => <TenantStatusBadge status={row.original.status} />,
-    },
-    {
-      accessorKey: 'plan.name',
-      header: 'Plan',
-      cell: ({ row }) => {
-        const name = row.original.plan?.name;
-        if (!name) return <span className="text-[var(--color-text-muted)]">—</span>;
-        const colors: Record<string, string> = {
-          STARTER: 'bg-[var(--color-surface-elevated)] text-[var(--color-text-muted)] border border-[var(--color-border)]',
-          PROFESSIONAL: 'bg-[var(--color-primary-light)] text-[var(--color-primary)]',
-          ENTERPRISE: 'bg-[rgba(122,90,248,0.12)] text-[#7A5AF8]',
-        };
-        return (
-          <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${colors[name] ?? 'bg-[var(--color-surface-elevated)] text-[var(--color-text-muted)]'}`}>
-            {name}
-          </span>
-        );
-      },
-    },
-    {
-      accessorKey: 'createdAt',
-      header: 'Created',
-      cell: ({ row }) => (
-        <span className="text-[var(--color-text-muted)] text-xs">
-          {dayjs(row.original.createdAt).format('DD MMM YYYY')}
-        </span>
-      ),
-    },
-    {
-      id: 'loginUrl',
-      header: 'Login URL',
-      cell: ({ row }) => (
-        <button
-          onClick={() => {
-            navigator.clipboard.writeText(`${process.env.NEXT_PUBLIC_APP_URL ?? window.location.origin}/admin/${row.original.tenantCode}/login`);
-            toast.success('Copied!');
-          }}
-          className="flex items-center gap-1 text-xs text-blue-500 hover:text-blue-700 font-mono transition-colors"
-          title="Copy login URL"
-        >
-          /admin/{row.original.tenantCode}/login <Copy size={11} />
-        </button>
-      ),
-    },
-    {
-      id: 'actions',
-      header: '',
-      cell: ({ row }) => (
-        <div className="flex items-center gap-1">
-          <Link href={`/super-admin/tenants/${row.original.id}`}>
-            <Button variant="ghost" size="sm" title="View tenant">
-              <Eye size={14} />
-            </Button>
-          </Link>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setDeleteId(row.original.id)}
-            className="text-red-500 hover:bg-[var(--color-surface-elevated)] hover:text-red-600"
-            title="Delete tenant"
-          >
-            <Trash2 size={14} />
-          </Button>
-        </div>
-      ),
-    },
-  ];
+  function handleToggle(id: string, next: TenantStatus) {
+    setTogglingId(id);
+    statusMutation.mutate({ id, status: next });
+  }
 
   return (
     <div className="space-y-5">
-      {/* Page Header */}
+      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-xl font-bold text-[var(--color-text-primary)]">Tenants</h2>
@@ -206,44 +159,136 @@ export default function TenantsPage() {
               placeholder="Company or code…"
               value={search}
               onChange={e => setSearch(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && setParams({ search, status: statusFilter, plan: planFilter })}
               className="w-52 rounded-[10px] border border-[var(--color-border-input)] bg-[var(--color-input-bg)] pl-8 pr-3 py-2 text-sm text-[var(--color-text-primary)] placeholder:text-[var(--color-text-muted)] focus:border-[var(--color-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-ring)] transition-all"
             />
           </div>
         </div>
-        <Select
-          label="Status"
-          options={[
-            { value: '', label: 'All Status' },
-            { value: 'ACTIVE', label: 'Active' },
-            { value: 'SUSPENDED', label: 'Suspended' },
-            { value: 'EXPIRED', label: 'Expired' },
-          ]}
-          value={statusFilter}
-          onChange={e => setStatusFilter(e.target.value)}
-          className="w-36"
-        />
-        <Select
-          label="Plan"
-          options={[
-            { value: '', label: 'All Plans' },
-            ...plans.map(p => ({ value: p.name, label: p.name })),
-          ]}
-          value={planFilter}
-          onChange={e => setPlanFilter(e.target.value)}
-          className="w-40"
-        />
+        <Select label="Status" options={[{ value: '', label: 'All Status' }, { value: 'ACTIVE', label: 'Active' }, { value: 'SUSPENDED', label: 'Suspended' }, { value: 'EXPIRED', label: 'Expired' }, { value: 'TRIAL', label: 'Trial' }]} value={statusFilter} onChange={e => setStatusFilter(e.target.value)} className="w-36" />
+        <Select label="Plan" options={[{ value: '', label: 'All Plans' }, ...plans.map(p => ({ value: p.name, label: p.name }))]} value={planFilter} onChange={e => setPlanFilter(e.target.value)} className="w-40" />
         <div className="flex flex-col gap-1.5">
           <span className="text-[10px] font-semibold uppercase tracking-wide text-[var(--color-text-muted)] invisible">_</span>
-          <Button
-            variant="secondary"
-            onClick={() => setParams({ search, status: statusFilter, plan: planFilter })}
-          >
-            <Search size={14} /> Apply Filters
+          <Button variant="secondary" onClick={() => setParams({ search, status: statusFilter, plan: planFilter })}>
+            <Search size={14} /> Apply
           </Button>
         </div>
       </div>
 
-      <DataTable data={tenants} columns={columns} isLoading={isLoading} />
+      {/* Table */}
+      <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-sm overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-[var(--color-border)] bg-[var(--color-surface-elevated)]">
+                {['Company', 'Code', 'Email', 'Phone', 'Status', 'Plan', 'Created', 'Login URL', 'Active', 'Actions'].map(h => (
+                  <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wide whitespace-nowrap">{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-[var(--color-border)]">
+              {isLoading ? (
+                Array.from({ length: 5 }).map((_, i) => (
+                  <tr key={i}>{Array.from({ length: 10 }).map((__, j) => (
+                    <td key={j} className="px-4 py-3"><div className="h-4 bg-[var(--color-surface-elevated)] rounded animate-pulse" /></td>
+                  ))}</tr>
+                ))
+              ) : tenants.length === 0 ? (
+                <tr><td colSpan={10} className="px-4 py-14 text-center text-sm text-[var(--color-text-muted)]">No tenants found.</td></tr>
+              ) : tenants.map(t => {
+                const sub = (t as any).subscription;
+                const loginUrl = `${process.env.NEXT_PUBLIC_APP_URL ?? (typeof window !== 'undefined' ? window.location.origin : '')}/admin/${t.tenantCode}/login`;
+                return (
+                  <tr key={t.id} className="hover:bg-[var(--color-surface-elevated)] transition-colors">
+
+                    {/* Company */}
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-2.5">
+                        <div className="h-8 w-8 rounded-lg bg-indigo-100 flex items-center justify-center text-xs font-bold text-indigo-700 shrink-0">
+                          {t.companyName.charAt(0).toUpperCase()}
+                        </div>
+                        <p className="font-semibold text-[var(--color-text-primary)] leading-tight whitespace-nowrap">{t.companyName}</p>
+                      </div>
+                    </td>
+
+                    {/* Code */}
+                    <td className="px-4 py-3">
+                      <code className="text-xs bg-[var(--color-surface-elevated)] text-[var(--color-text-muted)] px-2 py-0.5 rounded-md border border-[var(--color-border)] font-mono">
+                        {t.tenantCode}
+                      </code>
+                    </td>
+
+                    {/* Email */}
+                    <td className="px-4 py-3 text-xs text-[var(--color-text-secondary)] whitespace-nowrap">{t.email}</td>
+
+                    {/* Phone */}
+                    <td className="px-4 py-3 text-xs text-[var(--color-text-secondary)] whitespace-nowrap">{t.phone}</td>
+
+                    {/* Status */}
+                    <td className="px-4 py-3">
+                      <span className={`inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full ${
+                        t.status === 'ACTIVE'    ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' :
+                        t.status === 'TRIAL'     ? 'bg-blue-50 text-blue-700 border border-blue-200' :
+                        t.status === 'SUSPENDED' ? 'bg-red-50 text-red-600 border border-red-200' :
+                        'bg-gray-50 text-gray-500 border border-gray-200'
+                      }`}>
+                        <span className={`h-1.5 w-1.5 rounded-full ${t.status === 'ACTIVE' ? 'bg-emerald-500' : t.status === 'TRIAL' ? 'bg-blue-500' : t.status === 'SUSPENDED' ? 'bg-red-500' : 'bg-gray-400'}`} />
+                        {t.status}
+                      </span>
+                    </td>
+
+                    {/* Plan */}
+                    <td className="px-4 py-3"><PlanBadge tenant={t} /></td>
+
+                    {/* Created */}
+                    <td className="px-4 py-3 text-xs text-[var(--color-text-muted)] whitespace-nowrap">
+                      {dayjs(t.createdAt).format('DD MMM YYYY')}
+                    </td>
+
+                    {/* Login URL */}
+                    <td className="px-4 py-3">
+                      <button
+                        onClick={() => { navigator.clipboard.writeText(loginUrl); toast.success('Copied!'); }}
+                        className="flex items-center gap-1 text-xs text-blue-500 hover:text-blue-700 font-mono transition-colors whitespace-nowrap"
+                        title="Copy login URL"
+                      >
+                        /admin/{t.tenantCode}/login <Copy size={11} />
+                      </button>
+                    </td>
+
+                    {/* Active toggle */}
+                    <td className="px-4 py-3">
+                      <ActiveToggle tenant={t} onToggle={handleToggle} loading={togglingId === t.id} />
+                    </td>
+
+                    {/* Actions */}
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-1">
+                        <Link href={`/super-admin/tenants/${t.id}`}>
+                          <button className="h-8 w-8 rounded-lg border border-[var(--color-border)] flex items-center justify-center text-[var(--color-text-muted)] hover:border-[var(--color-primary)] hover:text-[var(--color-primary)] transition-colors" title="View detail">
+                            <Eye size={14} />
+                          </button>
+                        </Link>
+                        <button
+                          className="h-8 w-8 rounded-lg border border-[var(--color-border)] flex items-center justify-center text-[var(--color-text-muted)] hover:border-red-300 hover:text-red-500 transition-colors"
+                          onClick={() => setDeleteId(t.id)}
+                          title="Delete tenant"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+        {!isLoading && tenants.length > 0 && (
+          <div className="px-5 py-3 border-t border-[var(--color-border)] text-xs text-[var(--color-text-muted)]">
+            {tenants.length} tenant{tenants.length !== 1 ? 's' : ''}
+          </div>
+        )}
+      </div>
 
       {/* Create Tenant Modal */}
       <Modal open={showCreate} onClose={() => { setShowCreate(false); reset(); }} title="Create New Tenant" size="lg">
@@ -251,16 +296,8 @@ export default function TenantsPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Input label="Company Name" {...register('companyName')} error={errors.companyName?.message} />
             <div className="flex flex-col gap-1">
-              <Input
-                label="Tenant Code"
-                {...register('tenantCode')}
-                error={errors.tenantCode?.message}
-                onInput={() => setManualCode(true)}
-                placeholder="e.g. acmecorp"
-              />
-              {!manualCode && watchedCompany && (
-                <p className="text-[10px] text-[var(--color-text-muted)]">Auto-generated from company name — edit to customise</p>
-              )}
+              <Input label="Tenant Code" {...register('tenantCode')} error={errors.tenantCode?.message} onInput={() => setManualCode(true)} placeholder="e.g. acmecorp" />
+              {!manualCode && watchedCompany && <p className="text-[10px] text-[var(--color-text-muted)]">Auto-generated — edit to customise</p>}
             </div>
             <Input label="Email" type="email" {...register('email')} error={errors.email?.message} />
             <Input label="Phone" {...register('phone')} error={errors.phone?.message} />
@@ -273,12 +310,7 @@ export default function TenantsPage() {
               <Input label="Admin Name" {...register('adminName')} error={errors.adminName?.message} />
               <Input label="Admin Email" type="email" {...register('adminEmail')} error={errors.adminEmail?.message} />
               <Input label="Admin Password" type="password" {...register('adminPassword')} error={errors.adminPassword?.message} />
-              <Select
-                label="Plan"
-                options={plans.filter(p => p.isActive).map(p => ({ value: p.name, label: p.name }))}
-                placeholder="Select Plan"
-                {...register('plan')}
-              />
+              <Select label="Plan" options={plans.filter(p => p.isActive).map(p => ({ value: p.name, label: p.name }))} placeholder="Select Plan" {...register('plan')} />
             </div>
           </div>
 
@@ -302,57 +334,30 @@ export default function TenantsPage() {
                 <p className="text-xs text-emerald-600 mt-0.5">Share the login URL and credentials with the admin.</p>
               </div>
             </div>
-
             <div className="space-y-3">
               <div>
                 <p className="text-[10px] font-semibold text-[var(--color-text-muted)] uppercase tracking-wide mb-1">Workspace</p>
                 <p className="text-sm font-semibold text-[var(--color-text-primary)]">{createdTenant.companyName}</p>
               </div>
-
               <div>
                 <p className="text-[10px] font-semibold text-[var(--color-text-muted)] uppercase tracking-wide mb-1.5">Login URL</p>
                 <div className="flex items-center gap-2 bg-[var(--color-surface-elevated)] border border-[var(--color-border)] rounded-lg px-3 py-2.5">
                   <Link2 size={12} className="text-[var(--color-text-muted)] shrink-0" />
                   <code className="text-xs text-blue-600 flex-1 truncate">{createdTenant.url}</code>
-                  <button
-                    onClick={() => { navigator.clipboard.writeText(createdTenant.url); toast.success('URL copied!'); }}
-                    className="text-[var(--color-text-muted)] hover:text-[var(--color-text-secondary)] transition-colors"
-                  >
-                    <Copy size={12} />
-                  </button>
+                  <button onClick={() => { navigator.clipboard.writeText(createdTenant.url); toast.success('URL copied!'); }} className="text-[var(--color-text-muted)] hover:text-[var(--color-text-secondary)]"><Copy size={12} /></button>
                 </div>
               </div>
-
               <div>
                 <p className="text-[10px] font-semibold text-[var(--color-text-muted)] uppercase tracking-wide mb-1.5">Admin Email</p>
                 <div className="flex items-center gap-2 bg-[var(--color-surface-elevated)] border border-[var(--color-border)] rounded-lg px-3 py-2.5">
                   <code className="text-xs text-[var(--color-text-secondary)] flex-1">{createdTenant.adminEmail}</code>
-                  <button
-                    onClick={() => { navigator.clipboard.writeText(createdTenant.adminEmail); toast.success('Email copied!'); }}
-                    className="text-[var(--color-text-muted)] hover:text-[var(--color-text-secondary)] transition-colors"
-                  >
-                    <Copy size={12} />
-                  </button>
+                  <button onClick={() => { navigator.clipboard.writeText(createdTenant.adminEmail); toast.success('Email copied!'); }} className="text-[var(--color-text-muted)] hover:text-[var(--color-text-secondary)]"><Copy size={12} /></button>
                 </div>
               </div>
             </div>
-
             <div className="flex gap-2 pt-1">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  const text = `Workspace: ${createdTenant.companyName}\nLogin URL: ${createdTenant.url}\nAdmin Email: ${createdTenant.adminEmail}`;
-                  navigator.clipboard.writeText(text);
-                  toast.success('All details copied!');
-                }}
-                className="flex-1"
-              >
-                <Copy size={13} /> Copy All
-              </Button>
-              <Button size="sm" onClick={() => setCreatedTenant(null)} className="flex-1">
-                <CheckCheck size={13} /> Done
-              </Button>
+              <Button variant="outline" size="sm" onClick={() => { navigator.clipboard.writeText(`Workspace: ${createdTenant.companyName}\nLogin URL: ${createdTenant.url}\nAdmin Email: ${createdTenant.adminEmail}`); toast.success('All details copied!'); }} className="flex-1"><Copy size={13} /> Copy All</Button>
+              <Button size="sm" onClick={() => setCreatedTenant(null)} className="flex-1"><CheckCheck size={13} /> Done</Button>
             </div>
           </div>
         </Modal>

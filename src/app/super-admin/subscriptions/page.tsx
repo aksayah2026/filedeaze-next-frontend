@@ -14,11 +14,9 @@ import { Badge } from '@/components/ui/Badge';
 import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
 import { Modal } from '@/components/ui/Modal';
-import { SkeletonCard } from '@/components/ui/Spinner';
 import {
   Search, Plus, RefreshCw, Eye, ArrowUpDown, Ban, CheckCircle,
-  XCircle, AlertTriangle, Clock, DollarSign, BarChart2,
-  ChevronLeft, ChevronRight, Users,
+  XCircle, AlertTriangle, Clock, ChevronLeft, ChevronRight,
 } from 'lucide-react';
 import dayjs from 'dayjs';
 
@@ -44,7 +42,7 @@ function calcEndFromNow(cycle: BillingCycle): Date {
 
 // ── Status helpers ─────────────────────────────────────────────────────────────
 
-type ComputedStatus = 'ACTIVE' | 'EXPIRING_SOON' | 'EXPIRED' | 'TRIAL' | 'SUSPENDED' | 'CANCELLED';
+type ComputedStatus = 'ACTIVE' | 'EXPIRING_SOON' | 'EXPIRED' | 'TRIAL' | 'SUSPENDED' | 'CANCELLED' | 'QUEUED';
 
 const STATUS_CFG: Record<ComputedStatus, { label: string; cls: string }> = {
   ACTIVE:        { label: 'Active',         cls: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
@@ -53,6 +51,7 @@ const STATUS_CFG: Record<ComputedStatus, { label: string; cls: string }> = {
   TRIAL:         { label: 'Trial',          cls: 'bg-blue-50   text-blue-700   border-blue-200'   },
   SUSPENDED:     { label: 'Suspended',      cls: 'bg-gray-100  text-gray-600   border-gray-200'   },
   CANCELLED:     { label: 'Cancelled',      cls: 'bg-red-50    text-red-400    border-red-100'    },
+  QUEUED:        { label: 'Queued',         cls: 'bg-purple-50 text-purple-700 border-purple-200' },
 };
 
 function SubStatusBadge({ status }: { status: ComputedStatus }) {
@@ -64,30 +63,9 @@ function SubStatusBadge({ status }: { status: ComputedStatus }) {
   );
 }
 
-function deriveStatus(status: string, endDate: string): ComputedStatus {
-  if (status !== 'ACTIVE') return status as ComputedStatus;
-  const d = Math.ceil((new Date(endDate).getTime() - Date.now()) / 86_400_000);
-  if (d < 0) return 'EXPIRED';
-  if (d <= 7) return 'EXPIRING_SOON';
-  return 'ACTIVE';
-}
+
 
 // ── Stat Card ──────────────────────────────────────────────────────────────────
-
-function StatCard({ icon: Icon, label, value, sub, cls }: {
-  icon: React.ElementType; label: string; value: string | number; sub?: string; cls: string;
-}) {
-  return (
-    <div className={`rounded-xl border p-3.5 flex items-start gap-3 ${cls}`}>
-      <div className="p-1.5 rounded-lg bg-white/60 shrink-0"><Icon size={15} /></div>
-      <div className="min-w-0">
-        <p className="text-xs font-medium opacity-70 truncate">{label}</p>
-        <p className="text-lg font-bold tabular-nums mt-0.5 leading-tight">{value}</p>
-        {sub && <p className="text-xs opacity-55 mt-0.5">{sub}</p>}
-      </div>
-    </div>
-  );
-}
 
 // ── Plan Preview ───────────────────────────────────────────────────────────────
 
@@ -145,19 +123,22 @@ function Btn({ children, title, onClick, loading, danger }: {
 
 // ── Create Modal ───────────────────────────────────────────────────────────────
 
-function CreateModal({ onClose, plans, tenants }: { onClose: () => void; plans: Plan[]; tenants: Tenant[] }) {
+function CreateModal({ onClose, plans, tenants, defaultTenantId }: { onClose: () => void; plans: Plan[]; tenants: Tenant[]; defaultTenantId?: string }) {
   const qc = useQueryClient();
   const { register, handleSubmit, watch, reset, formState: { errors, isSubmitting } } = useForm({
-    defaultValues: { tenantId: '', planId: '', billingCycle: 'YEARLY', paymentStatus: 'PAID', paymentMethod: 'UPI', notes: '' },
+    defaultValues: { tenantId: defaultTenantId ?? '', planId: '', billingCycle: 'YEARLY', paymentStatus: 'PAID', paymentMethod: 'UPI', notes: '', isTrial: false },
   });
 
   const watchedTenantId = watch('tenantId');
   const watchedPlanId   = watch('planId');
   const watchedCycle    = watch('billingCycle') as BillingCycle | '';
+  const watchedTrial    = watch('isTrial');
 
-  const selectedTenant = tenants.find(t => t.id === watchedTenantId);
-  const selectedPlan   = plans.find(p => p.id === watchedPlanId);
-  const hasActiveSub   = selectedTenant?.subscription?.status === 'ACTIVE';
+  const selectedTenant  = tenants.find(t => t.id === watchedTenantId);
+  const selectedPlan    = plans.find(p => p.id === watchedPlanId);
+  const hasActiveSub    = selectedTenant?.subscription?.status === 'ACTIVE';
+  const hasQueuedSub    = (selectedTenant?.subscription?.status as string) === 'QUEUED';
+  const planHasDuration = !!(selectedPlan as any)?.durationDays;
 
   const mutation = useMutation({
     mutationFn: (d: object) => api.post('/web/super-admin/subscriptions', d),
@@ -182,9 +163,16 @@ function CreateModal({ onClose, plans, tenants }: { onClose: () => void; plans: 
         />
 
         {hasActiveSub && (
+          <div className="flex items-start gap-2 rounded-lg border border-blue-200 bg-blue-50 p-3 text-xs text-blue-800">
+            <AlertTriangle size={13} className="mt-0.5 shrink-0 text-blue-500" />
+            <span>This tenant has an active subscription. The new subscription will be <strong>queued</strong> and activate automatically when the current one expires.</span>
+          </div>
+        )}
+
+        {hasQueuedSub && (
           <div className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800">
             <AlertTriangle size={13} className="mt-0.5 shrink-0 text-amber-500" />
-            <span>This tenant already has an active subscription. Please renew or change the existing subscription.</span>
+            <span>This tenant already has a queued subscription. Cancel the queued subscription before adding a new one.</span>
           </div>
         )}
 
@@ -199,10 +187,20 @@ function CreateModal({ onClose, plans, tenants }: { onClose: () => void; plans: 
             label="Billing Cycle *"
             options={BILLING_CYCLES.map(c => ({ value: c.value, label: c.label }))}
             {...register('billingCycle', { required: true })}
+            disabled={!!watchedTrial}
           />
         </div>
 
-        {selectedPlan && watchedCycle && <PlanPreview plan={selectedPlan} cycle={watchedCycle} />}
+        {planHasDuration && (
+          <label className="flex items-center gap-2.5 cursor-pointer select-none">
+            <input type="checkbox" {...register('isTrial')} className="w-4 h-4 rounded accent-[var(--color-primary)]" />
+            <span className="text-sm text-[var(--color-text-secondary)]">
+              Trial — use plan duration <strong>({(selectedPlan as any).durationDays} days)</strong> instead of billing cycle
+            </span>
+          </label>
+        )}
+
+        {selectedPlan && watchedCycle && !watchedTrial && <PlanPreview plan={selectedPlan} cycle={watchedCycle} />}
 
         <div className="grid grid-cols-2 gap-3">
           <Select
@@ -221,8 +219,8 @@ function CreateModal({ onClose, plans, tenants }: { onClose: () => void; plans: 
 
         <div className="flex justify-end gap-3 pt-1">
           <Button variant="secondary" type="button" onClick={onClose}>Cancel</Button>
-          <Button type="submit" loading={isSubmitting || mutation.isPending} disabled={hasActiveSub}>
-            <Plus size={14} /> Create Subscription
+          <Button type="submit" loading={isSubmitting || mutation.isPending} disabled={hasQueuedSub}>
+            <Plus size={14} /> {hasActiveSub ? 'Queue Subscription' : 'Create Subscription'}
           </Button>
         </div>
       </form>
@@ -232,21 +230,25 @@ function CreateModal({ onClose, plans, tenants }: { onClose: () => void; plans: 
 
 // ── Renew Modal ────────────────────────────────────────────────────────────────
 
-function RenewModal({ onClose, tenants, defaultTenantId }: { onClose: () => void; tenants: Tenant[]; defaultTenantId?: string }) {
+function RenewModal({ onClose, tenants, plans, defaultTenantId }: { onClose: () => void; tenants: Tenant[]; plans: Plan[]; defaultTenantId?: string }) {
   const qc = useQueryClient();
   const { register, handleSubmit, watch, formState: { isSubmitting } } = useForm({
-    defaultValues: { tenantId: defaultTenantId ?? '', billingCycle: 'YEARLY', paymentStatus: 'PAID', paymentMethod: 'UPI' },
+    defaultValues: { tenantId: defaultTenantId ?? '', planId: '', billingCycle: 'MONTHLY', paymentStatus: 'PAID', paymentMethod: 'UPI', notes: '' },
   });
 
   const watchedTenantId = watch('tenantId');
+  const watchedPlanId   = watch('planId');
   const watchedCycle    = watch('billingCycle') as BillingCycle;
 
-  const selectedTenant = tenants.find(t => t.id === watchedTenantId);
-  const activeSub      = selectedTenant?.subscription;
-  const currentExpiry  = activeSub?.endDate ? dayjs(activeSub.endDate) : null;
-  const newExpiry      = currentExpiry && watchedCycle
-    ? currentExpiry.add(BILLING_CYCLES.find(b => b.value === watchedCycle)?.months ?? 12, 'month')
-    : null;
+  const selectedTenant  = tenants.find(t => t.id === watchedTenantId);
+  const existingSub     = selectedTenant?.subscription;
+  const isExpired       = existingSub?.status === 'EXPIRED' || (existingSub?.endDate ? new Date(existingSub.endDate) < new Date() : false);
+  const currentPlanId   = existingSub?.planId ?? '';
+  const selectedPlan    = plans.find(p => p.id === (watchedPlanId || currentPlanId));
+  const currentExpiry   = existingSub?.endDate ? dayjs(existingSub.endDate) : null;
+  const renewBase       = isExpired ? dayjs() : currentExpiry;
+  const newExpiry       = renewBase && watchedCycle ? renewBase.add(BILLING_CYCLES.find(b => b.value === watchedCycle)?.months ?? 1, 'month') : null;
+  const remainingDays   = currentExpiry ? Math.max(0, currentExpiry.diff(dayjs(), 'day')) : 0;
 
   const mutation = useMutation({
     mutationFn: (d: object) => api.post('/web/super-admin/subscriptions/renew', d),
@@ -262,50 +264,100 @@ function RenewModal({ onClose, tenants, defaultTenantId }: { onClose: () => void
 
   return (
     <Modal open onClose={onClose} title="Renew Subscription" size="sm">
-      <form onSubmit={handleSubmit(d => mutation.mutate(d))} className="space-y-4">
+      <form onSubmit={handleSubmit(d => mutation.mutate({ ...d, planId: (d as any).planId || undefined, notes: (d as any).notes || undefined }))} className="space-y-4">
+
         <Select
           label="Tenant *"
           options={[{ value: '', label: 'Select Tenant...' }, ...tenants.map(t => ({ value: t.id, label: `${t.companyName} (${t.tenantCode})` }))]}
           {...register('tenantId', { required: true })}
         />
 
-        {watchedTenantId && !activeSub && (
+        {watchedTenantId && !existingSub && (
           <p className="text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
-            This tenant has no active subscription to renew.
+            This tenant has no subscription to renew. Use <strong>Create Subscription</strong> instead.
           </p>
         )}
 
-        {activeSub && (
-          <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-elevated)] p-3 text-xs space-y-1.5">
-            <p className="font-semibold text-[var(--color-text-primary)]">Current Subscription</p>
-            <p className="text-[var(--color-text-secondary)]">Plan: <strong>{activeSub.plan?.name ?? '—'}</strong></p>
-            <p className="text-[var(--color-text-secondary)]">Expires: <strong className="text-amber-700">{currentExpiry?.format('DD MMM YYYY')}</strong></p>
-            {newExpiry && <p className="text-[var(--color-text-secondary)]">New Expiry: <strong className="text-emerald-700">{newExpiry.format('DD MMM YYYY')}</strong></p>}
-          </div>
+        {existingSub && (
+          <>
+            {/* Renewal Summary Card */}
+            <div className="rounded-xl border border-indigo-200 bg-indigo-50 p-4 space-y-3">
+              <p className="text-xs font-bold uppercase tracking-wide text-indigo-500">Renewal Summary</p>
+              <div className="grid grid-cols-2 gap-x-6 gap-y-2 text-xs text-indigo-800">
+                <div><p className="text-indigo-400">Tenant</p><p className="font-semibold">{selectedTenant?.companyName}</p></div>
+                <div><p className="text-indigo-400">Current Plan</p><p className="font-semibold">{existingSub.plan?.name ?? '—'}</p></div>
+                <div>
+                  <p className="text-indigo-400">{isExpired ? 'Expired On' : 'Expires On'}</p>
+                  <p className={`font-semibold ${isExpired ? 'text-red-600' : 'text-amber-700'}`}>
+                    {currentExpiry?.format('DD MMM YYYY')}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-indigo-400">Days Remaining</p>
+                  <p className={`font-semibold ${isExpired ? 'text-red-600' : remainingDays <= 7 ? 'text-amber-700' : 'text-indigo-900'}`}>
+                    {isExpired ? 'Expired' : `${remainingDays}d`}
+                  </p>
+                </div>
+                <div><p className="text-indigo-400">Amount</p><p className="font-semibold">₹{Number(selectedPlan?.price ?? existingSub.plan?.price ?? 0).toLocaleString()}/mo</p></div>
+                <div>
+                  <p className="text-indigo-400">New Expiry</p>
+                  <p className="font-semibold text-emerald-700">{newExpiry?.format('DD MMM YYYY') ?? '—'}</p>
+                </div>
+              </div>
+              <p className="text-[10px] text-indigo-500 border-t border-indigo-200 pt-2">
+                {isExpired ? 'Expired — new period calculated from today.' : 'Active — expiry extends from current end date (not today).'}
+              </p>
+            </div>
+
+            {/* Optional: upgrade/downgrade plan */}
+            <Select
+              label="Change Plan (optional)"
+              options={[
+                { value: '', label: `Keep current: ${existingSub.plan?.name ?? '—'}` },
+                ...plans.filter(p => p.isActive && p.id !== currentPlanId).map(p => ({
+                  value: p.id,
+                  label: `${p.name} — ₹${Number(p.price).toLocaleString()}/mo`,
+                })),
+              ]}
+              {...register('planId')}
+            />
+
+            {/* Billing Cycle */}
+            <div>
+              <p className="text-xs font-medium text-[var(--color-text-secondary)] mb-2">Billing Cycle *</p>
+              <div className="grid grid-cols-4 gap-2">
+                {BILLING_CYCLES.map(c => (
+                  <label key={c.value} className="cursor-pointer">
+                    <input type="radio" className="sr-only peer" value={c.value} {...register('billingCycle', { required: true })} />
+                    <div className="rounded-lg border border-[var(--color-border)] px-2 py-2 text-center text-xs font-medium text-[var(--color-text-secondary)] transition-colors peer-checked:border-[var(--color-primary)] peer-checked:bg-[var(--color-primary)] peer-checked:text-white hover:border-[var(--color-primary)]">
+                      {c.label}
+                    </div>
+                  </label>
+                ))}
+              </div>
+            </div>
+          </>
         )}
 
         <div className="grid grid-cols-2 gap-3">
-          <Select
-            label="Billing Cycle *"
-            options={BILLING_CYCLES.map(c => ({ value: c.value, label: c.label }))}
-            {...register('billingCycle', { required: true })}
-          />
           <Select
             label="Payment Status *"
             options={[{ value: 'PAID', label: 'Paid' }, { value: 'PENDING', label: 'Pending' }]}
             {...register('paymentStatus', { required: true })}
           />
+          <Select
+            label="Payment Method"
+            options={[{ value: '', label: 'None' }, ...PAYMENT_METHODS.map(m => ({ value: m, label: m.replace('_', ' ') }))]}
+            {...register('paymentMethod')}
+          />
         </div>
-        <Select
-          label="Payment Method"
-          options={[{ value: '', label: 'None' }, ...PAYMENT_METHODS.map(m => ({ value: m, label: m.replace('_', ' ') }))]}
-          {...register('paymentMethod')}
-        />
+
+        <Input label="Notes (optional)" placeholder="e.g. Annual renewal — bank transfer" {...register('notes')} />
 
         <div className="flex justify-end gap-3 pt-1">
           <Button variant="secondary" type="button" onClick={onClose}>Cancel</Button>
-          <Button type="submit" loading={isSubmitting || mutation.isPending} disabled={!activeSub}>
-            <RefreshCw size={14} /> Renew
+          <Button type="submit" loading={isSubmitting || mutation.isPending} disabled={!existingSub}>
+            <RefreshCw size={14} /> Renew Subscription
           </Button>
         </div>
       </form>
@@ -402,39 +454,84 @@ function DetailModal({ sub, onClose }: { sub: SubscriptionWithMeta; onClose: () 
             {[1, 2, 3, 4].map(i => <div key={i} className="h-5 bg-[var(--color-surface-elevated)] rounded animate-pulse" />)}
           </div>
         ) : tab === 'overview' ? (
-          <div className="space-y-3 text-sm">
-            <div className="flex items-center gap-2">
-              <SubStatusBadge status={sub.computedStatus as ComputedStatus} />
-              <span className="text-xs text-[var(--color-text-muted)]">
-                {sub.daysLeft > 0 ? `${sub.daysLeft} days remaining` : 'Expired'}
-              </span>
+          <div className="space-y-4 text-sm">
+            {/* Tenant + status header */}
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="font-semibold text-[var(--color-text-primary)]">{sub.tenant.companyName}</p>
+                <p className="text-xs text-[var(--color-text-muted)]">{sub.tenant.tenantCode}</p>
+              </div>
+              <div className="text-right">
+                <SubStatusBadge status={sub.computedStatus as ComputedStatus} />
+                <p className="text-xs text-[var(--color-text-muted)] mt-1">
+                  {sub.daysLeft > 0 ? `${sub.daysLeft}d remaining` : 'Expired'}
+                </p>
+              </div>
             </div>
-            <div className="grid grid-cols-2 gap-x-6 gap-y-2.5 text-[var(--color-text-secondary)]">
+
+            {/* Subscriptions table */}
+            <div className="rounded-lg border border-[var(--color-border)] overflow-hidden">
+              <table className="w-full text-xs">
+                <thead>
+                  <tr className="bg-[var(--color-surface-elevated)] border-b border-[var(--color-border)]">
+                    {['Plan', 'Cycle', 'Start', 'End', 'Status'].map(h => (
+                      <th key={h} className="px-3 py-2 text-left font-semibold text-[var(--color-text-muted)] uppercase tracking-wide">{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-[var(--color-border)]">
+                  {/* Current subscription row */}
+                  <tr className="bg-emerald-50/50">
+                    <td className="px-3 py-2.5 font-semibold text-[var(--color-text-primary)]">{plan.name}</td>
+                    <td className="px-3 py-2.5 text-[var(--color-text-secondary)] whitespace-nowrap">{cycleLabel(sub.billingCycle)}</td>
+                    <td className="px-3 py-2.5 text-[var(--color-text-secondary)] whitespace-nowrap">{dayjs(sub.startDate).format('DD MMM YYYY')}</td>
+                    <td className="px-3 py-2.5 whitespace-nowrap">
+                      <span className={sub.daysLeft <= 30 && sub.daysLeft > 0 ? 'text-amber-600 font-medium' : 'text-[var(--color-text-secondary)]'}>
+                        {dayjs(sub.endDate).format('DD MMM YYYY')}
+                      </span>
+                    </td>
+                    <td className="px-3 py-2.5">
+                      <span className="inline-flex items-center rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-emerald-700">ACTIVE</span>
+                    </td>
+                  </tr>
+                  {/* Queued subscription row */}
+                  {(detail as any)?.queuedSubscription && (() => {
+                    const q = (detail as any).queuedSubscription;
+                    return (
+                      <tr className="bg-amber-50/40">
+                        <td className="px-3 py-2.5 font-semibold text-[var(--color-text-primary)]">{q.plan?.name ?? '—'}</td>
+                        <td className="px-3 py-2.5 text-[var(--color-text-secondary)] whitespace-nowrap">{cycleLabel(q.billingCycle)}</td>
+                        <td className="px-3 py-2.5 text-[var(--color-text-secondary)] whitespace-nowrap">{dayjs(q.startDate).format('DD MMM YYYY')}</td>
+                        <td className="px-3 py-2.5 text-[var(--color-text-secondary)] whitespace-nowrap">{dayjs(q.endDate).format('DD MMM YYYY')}</td>
+                        <td className="px-3 py-2.5">
+                          <span className="inline-flex items-center rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-amber-700">QUEUED</span>
+                        </td>
+                      </tr>
+                    );
+                  })()}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Plan limits */}
+            <div className="grid grid-cols-3 gap-2">
               {[
-                ['Tenant',        sub.tenant.companyName],
-                ['Plan',          plan.name],
-                ['Price',         `₹${Number(plan.price).toLocaleString()}/mo`],
-                ['Billing Cycle', cycleLabel(sub.billingCycle)],
-                ['Start Date',    dayjs(sub.startDate).format('DD MMM YYYY')],
-                ['End Date',      dayjs(sub.endDate).format('DD MMM YYYY')],
-                ['Managers',      plan.managerLimit   >= 99999 ? 'Unlimited' : plan.managerLimit],
-                ['Technicians',   plan.technicianLimit >= 99999 ? 'Unlimited' : plan.technicianLimit],
-                ['Customers',     plan.customerLimit   >= 99999 ? 'Unlimited' : plan.customerLimit],
-                ['Tickets',       plan.ticketLimit     >= 99999 ? 'Unlimited' : plan.ticketLimit],
-                ['Storage',       `${plan.storageLimitGb} GB`],
-                ['Pay Method',    sub.paymentMethod ?? '—'],
+                ['Managers',    plan.managerLimit   >= 99999 ? 'Unlimited' : plan.managerLimit],
+                ['Technicians', plan.technicianLimit >= 99999 ? 'Unlimited' : plan.technicianLimit],
+                ['Customers',   plan.customerLimit   >= 99999 ? 'Unlimited' : plan.customerLimit],
+                ['Tickets',     plan.ticketLimit     >= 99999 ? 'Unlimited' : plan.ticketLimit],
+                ['Storage',     `${plan.storageLimitGb} GB`],
+                ['Pay Method',  sub.paymentMethod ?? '—'],
               ].map(([k, v]) => (
-                <div key={String(k)}>
-                  <p className="text-xs text-[var(--color-text-muted)]">{k}</p>
-                  <p className="font-medium">{String(v)}</p>
+                <div key={String(k)} className="rounded-lg bg-[var(--color-surface-elevated)] px-3 py-2">
+                  <p className="text-[10px] text-[var(--color-text-muted)] mb-0.5">{k}</p>
+                  <p className="text-xs font-semibold text-[var(--color-text-primary)]">{String(v)}</p>
                 </div>
               ))}
             </div>
+
             {sub.notes && (
-              <div>
-                <p className="text-xs text-[var(--color-text-muted)]">Notes</p>
-                <p className="text-sm">{sub.notes}</p>
-              </div>
+              <p className="text-xs text-[var(--color-text-muted)] italic border-t border-[var(--color-border)] pt-2">{sub.notes}</p>
             )}
           </div>
         ) : tab === 'billing' ? (
@@ -455,23 +552,73 @@ function DetailModal({ sub, onClose }: { sub: SubscriptionWithMeta; onClose: () 
             ))}
           </div>
         ) : (
-          <div className="space-y-2 max-h-64 overflow-y-auto pr-1">
-            {!detail?.subscriptionHistory?.length ? (
-              <p className="text-sm text-center py-8 text-[var(--color-text-muted)]">No history</p>
-            ) : detail.subscriptionHistory.map((s: any) => (
-              <div key={s.id} className={`flex items-center justify-between rounded-lg border px-3 py-2.5 text-sm ${s.id === sub.id ? 'border-[var(--color-primary)] bg-[var(--color-primary-light)]' : 'border-[var(--color-border)]'}`}>
-                <div>
-                  <p className="font-medium text-[var(--color-text-primary)]">{s.plan?.name ?? '—'}</p>
-                  <p className="text-xs text-[var(--color-text-muted)]">
-                    {dayjs(s.startDate).format('DD MMM YYYY')} → {dayjs(s.endDate).format('DD MMM YYYY')}
+          <div className="space-y-2 max-h-72 overflow-y-auto pr-1">
+
+            {/* Queued subscription — shown at top */}
+            {(detail as any)?.queuedSubscription && (() => {
+              const q = (detail as any).queuedSubscription;
+              return (
+                <div className="rounded-lg border border-amber-300 bg-amber-50 px-3 py-2.5 space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-full bg-amber-200 text-amber-800">
+                      QUEUED
+                    </span>
+                    <span className="text-[10px] text-amber-600 font-medium">activates when current expires</span>
+                  </div>
+                  <div className="text-xs text-amber-900">
+                    <span className="font-semibold">{q.plan?.name ?? '—'}</span>
+                    {q.billingCycle && <span className="text-amber-700"> · {cycleLabel(q.billingCycle)}</span>}
+                    <span className="text-amber-600"> · ₹{Number(q.plan?.price ?? 0).toLocaleString()}/mo</span>
+                  </div>
+                  <p className="text-xs text-amber-700">
+                    {dayjs(q.startDate).format('DD MMM YYYY')} → <strong>{dayjs(q.endDate).format('DD MMM YYYY')}</strong>
                   </p>
                 </div>
-                <div className="text-right">
-                  <SubStatusBadge status={deriveStatus(s.status, s.endDate)} />
-                  <p className="text-xs text-[var(--color-text-muted)] mt-1">{cycleLabel(s.billingCycle ?? 'YEARLY')}</p>
+              );
+            })()}
+
+            {/* History records */}
+            {!detail?.subscriptionHistory?.length && !(detail as any)?.queuedSubscription ? (
+              <p className="text-sm text-center py-8 text-[var(--color-text-muted)]">No history yet</p>
+            ) : (detail?.subscriptionHistory ?? []).map((h: any) => {
+              const actionColor: Record<string, string> = {
+                CREATED: 'bg-emerald-100 text-emerald-700',
+                RENEWED: 'bg-blue-100 text-blue-700',
+                UPGRADED: 'bg-purple-100 text-purple-700',
+                DOWNGRADED: 'bg-amber-100 text-amber-700',
+                CANCELLED: 'bg-red-100 text-red-700',
+              };
+              return (
+                <div key={h.id} className="rounded-lg border border-[var(--color-border)] px-3 py-2.5 space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <span className={`text-[10px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-full ${actionColor[h.action] ?? 'bg-gray-100 text-gray-700'}`}>
+                      {h.action}
+                    </span>
+                    <span className="text-xs font-semibold tabular-nums text-[var(--color-text-primary)]">
+                      ₹{Number(h.amount).toLocaleString()}
+                    </span>
+                  </div>
+                  <div className="text-xs text-[var(--color-text-secondary)]">
+                    <span className="font-medium">{h.plan?.name ?? '—'}</span>
+                    {h.billingCycle && <span className="text-[var(--color-text-muted)]"> · {cycleLabel(h.billingCycle)}</span>}
+                  </div>
+                  {h.previousEndDate ? (
+                    <p className="text-xs text-[var(--color-text-muted)]">
+                      {dayjs(h.previousEndDate).format('DD MMM YYYY')} → <strong className="text-emerald-700">{dayjs(h.newEndDate).format('DD MMM YYYY')}</strong>
+                    </p>
+                  ) : (
+                    <p className="text-xs text-[var(--color-text-muted)]">
+                      Start: <strong>{dayjs(h.newEndDate).format('DD MMM YYYY')}</strong>
+                    </p>
+                  )}
+                  <div className="flex items-center justify-between text-[10px] text-[var(--color-text-muted)]">
+                    <span>{dayjs(h.createdAt).format('DD MMM YYYY, HH:mm')}</span>
+                    {h.createdBy && <span>by {h.createdBy.name}</span>}
+                  </div>
+                  {h.notes && <p className="text-[10px] text-[var(--color-text-muted)] italic">{h.notes}</p>}
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
 
@@ -493,12 +640,13 @@ export default function SubscriptionsPage() {
   const [planFilter, setPlan]         = useState('');
   const [params, setParams]           = useState({ search: '', status: '', planId: '', page: 1 });
 
-  const [showCreate,     setShowCreate]     = useState(false);
-  const [showRenew,      setShowRenew]      = useState(false);
-  const [showChangePlan, setShowChangePlan] = useState(false);
-  const [showDetail,     setShowDetail]     = useState(false);
-  const [activeSub,      setActiveSub]      = useState<SubscriptionWithMeta | null>(null);
-  const [renewTenantId,  setRenewTenantId]  = useState<string | undefined>();
+  const [showCreate,           setShowCreate]           = useState(false);
+  const [showRenew,            setShowRenew]            = useState(false);
+  const [showChangePlan,       setShowChangePlan]       = useState(false);
+  const [showDetail,           setShowDetail]           = useState(false);
+  const [activeSub,            setActiveSub]            = useState<SubscriptionWithMeta | null>(null);
+  const [renewTenantId,        setRenewTenantId]        = useState<string | undefined>();
+  const [createDefaultTenantId, setCreateDefaultTenantId] = useState<string | undefined>();
 
   const { data: dashboard, isLoading: dashLoading } = useQuery<SubscriptionDashboard>({
     queryKey: ['subscription-dashboard'],
@@ -548,9 +696,9 @@ export default function SubscriptionsPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-start justify-between">
+      <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-semibold tracking-tight text-[var(--color-text-primary)]">Subscription Management</h2>
+          <h2 className="text-xl font-bold text-[var(--color-text-primary)]">Subscriptions</h2>
           <p className="mt-0.5 text-sm text-[var(--color-text-muted)]">Manage tenant subscriptions, plans, and billing cycles</p>
         </div>
         <div className="flex gap-2">
@@ -563,36 +711,98 @@ export default function SubscriptionsPage() {
         </div>
       </div>
 
-      {/* Dashboard Stats */}
-      {dashLoading ? (
-        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3">
-          {Array.from({ length: 7 }).map((_, i) => <SkeletonCard key={i} />)}
-        </div>
-      ) : dashboard && (
-        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3">
-          <StatCard icon={CheckCircle}   label="Active"             value={dashboard.activeSubscriptions}                         cls="bg-emerald-50 border-emerald-200 text-emerald-900" />
-          <StatCard icon={Users}         label="Trial"              value={dashboard.trialSubscriptions}                          cls="bg-blue-50 border-blue-200 text-blue-900" />
-          <StatCard icon={Clock}         label="Expiring This Week" value={dashboard.expiringSoon}                                cls="bg-amber-50 border-amber-200 text-amber-900" />
-          <StatCard icon={AlertTriangle} label="Expired"            value={dashboard.expiredSubscriptions}                        cls="bg-red-50 border-red-200 text-red-900" />
-          <StatCard icon={DollarSign}    label="Monthly Revenue"    value={`₹${dashboard.monthlyRevenue.toLocaleString()}`}      cls="bg-[var(--color-surface)] border-[var(--color-border)] text-[var(--color-text-primary)]" />
-          <StatCard icon={BarChart2}     label="Annual Revenue"     value={`₹${dashboard.annualRevenue.toLocaleString()}`}       cls="bg-[var(--color-surface)] border-[var(--color-border)] text-[var(--color-text-primary)]" />
-          <StatCard icon={RefreshCw}     label="Pending Renewals"   value={dashboard.pendingRenewals}                            cls="bg-indigo-50 border-indigo-200 text-indigo-900" />
-        </div>
-      )}
+      {/* Stats bar */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3">
+        {dashLoading ? (
+          Array.from({ length: 7 }).map((_, i) => (
+            <div key={i} className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4 animate-pulse">
+              <div className="h-3 bg-[var(--color-surface-elevated)] rounded mb-2 w-2/3" />
+              <div className="h-6 bg-[var(--color-surface-elevated)] rounded w-1/2" />
+            </div>
+          ))
+        ) : dashboard ? [
+          { label: 'Active',           value: dashboard.activeSubscriptions,                      dot: 'bg-emerald-500' },
+          { label: 'Trial',            value: dashboard.trialSubscriptions,                       dot: 'bg-blue-500' },
+          { label: 'Expiring Soon',    value: dashboard.expiringSoon,                             dot: 'bg-amber-500' },
+          { label: 'Expired',          value: dashboard.expiredSubscriptions,                     dot: 'bg-red-500' },
+          { label: 'Monthly Revenue',  value: `₹${dashboard.monthlyRevenue.toLocaleString()}`,   dot: 'bg-indigo-500' },
+          { label: 'Annual Revenue',   value: `₹${dashboard.annualRevenue.toLocaleString()}`,    dot: 'bg-purple-500' },
+          { label: 'Pending Renewals', value: dashboard.pendingRenewals,                          dot: 'bg-gray-400' },
+        ].map(s => (
+          <div key={s.label} className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4 shadow-sm">
+            <div className="flex items-center gap-1.5 mb-1">
+              <span className={`h-2 w-2 rounded-full ${s.dot}`} />
+              <p className="text-xs text-[var(--color-text-muted)]">{s.label}</p>
+            </div>
+            <p className="text-lg font-bold text-[var(--color-text-primary)] tabular-nums">{s.value}</p>
+          </div>
+        )) : null}
+      </div>
+
+      {/* Trial Tenants — pending activation */}
+      {(() => {
+        const trialTenants = tenants.filter((t: any) => t.status === 'TRIAL');
+        if (!trialTenants.length) return null;
+        return (
+          <div className="rounded-xl border border-blue-200 bg-blue-50 shadow-sm overflow-hidden">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-blue-200">
+              <div className="flex items-center gap-2">
+                <Clock size={14} className="text-blue-600" />
+                <span className="text-sm font-semibold text-blue-800">Trial Tenants ({trialTenants.length})</span>
+                <span className="text-xs text-blue-600">— activate to convert to a paid subscription</span>
+              </div>
+            </div>
+            <div className="divide-y divide-blue-100">
+              {trialTenants.map((t: any) => {
+                const trialEnd = t.trialEndsAt ? dayjs(t.trialEndsAt) : null;
+                const dLeft = trialEnd ? trialEnd.diff(dayjs(), 'day') : null;
+                const planName = t.plan?.name ?? t.selectedPlan?.name ?? '—';
+                return (
+                  <div key={t.id} className="flex items-center justify-between px-4 py-3 text-sm">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="h-8 w-8 rounded-lg bg-blue-200 flex items-center justify-center text-xs font-bold text-blue-800 shrink-0">
+                        {t.companyName.charAt(0).toUpperCase()}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="font-medium text-blue-900 truncate">{t.companyName}</p>
+                        <p className="text-xs text-blue-600">{t.tenantCode} · Plan: {planName}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3 shrink-0">
+                      {trialEnd && (
+                        <div className="text-right">
+                          <p className="text-xs text-blue-700 font-medium">
+                            {dLeft !== null && dLeft >= 0 ? `${dLeft}d left` : 'Expired'}
+                          </p>
+                          <p className="text-xs text-blue-500">{trialEnd.format('DD MMM YYYY')}</p>
+                        </div>
+                      )}
+                      <Button size="sm" onClick={() => { setCreateDefaultTenantId(t.id); setShowCreate(true); }}>
+                        <CheckCircle size={12} /> Activate
+                      </Button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Filters */}
-      <div className="flex flex-wrap gap-3 items-end rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4 shadow-sm">
-        <div className="flex-1 min-w-[180px] max-w-xs">
-          <Input placeholder="Search tenant name..." value={search} onChange={e => setSearch(e.target.value)} onKeyDown={e => e.key === 'Enter' && apply(1)} />
+      <div className="flex flex-wrap gap-3 items-center rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-3 shadow-sm">
+        <div className="relative flex-1 min-w-[180px] max-w-xs">
+          <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--color-text-muted)]" />
+          <input
+            placeholder="Search tenant name..."
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && apply(1)}
+            className="w-full rounded-[10px] border border-[var(--color-border-input)] bg-[var(--color-input-bg)] pl-8 pr-3 py-2 text-sm text-[var(--color-text-primary)] placeholder:text-[var(--color-text-muted)] focus:border-[var(--color-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-ring)] transition-all"
+          />
         </div>
-        <Select
-          options={[{ value: '', label: 'All Status' }, { value: 'ACTIVE', label: 'Active' }, { value: 'EXPIRING_SOON', label: 'Expiring Soon' }, { value: 'EXPIRED', label: 'Expired' }, { value: 'CANCELLED', label: 'Cancelled' }]}
-          value={statusFilter} onChange={e => setStatus(e.target.value)} className="w-40"
-        />
-        <Select
-          options={[{ value: '', label: 'All Plans' }, ...plans.map(p => ({ value: p.id, label: p.name }))]}
-          value={planFilter} onChange={e => setPlan(e.target.value)} className="w-36"
-        />
+        <Select options={[{ value: '', label: 'All Status' }, { value: 'ACTIVE', label: 'Active' }, { value: 'EXPIRING_SOON', label: 'Expiring Soon' }, { value: 'EXPIRED', label: 'Expired' }, { value: 'CANCELLED', label: 'Cancelled' }]} value={statusFilter} onChange={e => setStatus(e.target.value)} className="w-40" />
+        <Select options={[{ value: '', label: 'All Plans' }, ...plans.map(p => ({ value: p.id, label: p.name }))]} value={planFilter} onChange={e => setPlan(e.target.value)} className="w-36" />
         <Button onClick={() => apply(1)}><Search size={14} /> Apply</Button>
       </div>
 
@@ -699,8 +909,8 @@ export default function SubscriptionsPage() {
       )}
 
       {/* Modals */}
-      {showCreate && <CreateModal onClose={() => setShowCreate(false)} plans={plans} tenants={tenants} />}
-      {showRenew  && <RenewModal  onClose={() => { setShowRenew(false); setRenewTenantId(undefined); }} tenants={tenants} defaultTenantId={renewTenantId} />}
+      {showCreate && <CreateModal onClose={() => { setShowCreate(false); setCreateDefaultTenantId(undefined); }} plans={plans} tenants={tenants} defaultTenantId={createDefaultTenantId} />}
+      {showRenew  && <RenewModal  onClose={() => { setShowRenew(false); setRenewTenantId(undefined); }} tenants={tenants} plans={plans} defaultTenantId={renewTenantId} />}
       {showChangePlan && activeSub && <ChangePlanModal sub={activeSub} plans={plans} onClose={() => { setShowChangePlan(false); setActiveSub(null); }} />}
       {showDetail     && activeSub && <DetailModal     sub={activeSub}               onClose={() => { setShowDetail(false);     setActiveSub(null); }} />}
     </div>
