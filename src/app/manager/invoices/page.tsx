@@ -33,9 +33,9 @@ export default function InvoicesPage() {
   const columns: ColumnDef<Invoice, unknown>[] = [
     { accessorKey: 'invoiceNumber', header: 'Invoice #' },
     { accessorKey: 'ticket.ticketNumber', header: 'Ticket', cell: ({ row }) => row.original.ticket?.ticketNumber ?? row.original.ticketId },
-    { accessorKey: 'amount', header: 'Amount', cell: ({ row }) => `₹${row.original.amount.toLocaleString()}` },
+    { accessorKey: 'amount', header: 'Amount', cell: ({ row }) => `₹${row.original.amount?.toLocaleString() ?? '0'}` },
     { accessorKey: 'gstAmount', header: 'GST', cell: ({ row }) => row.original.gstAmount ? `₹${row.original.gstAmount.toLocaleString()}` : '—' },
-    { accessorKey: 'totalAmount', header: 'Total', cell: ({ row }) => `₹${row.original.totalAmount.toLocaleString()}` },
+    { accessorKey: 'totalAmount', header: 'Total', cell: ({ row }) => `₹${row.original.totalAmount?.toLocaleString() ?? '0'}` },
     { accessorKey: 'createdAt', header: 'Date', cell: ({ row }) => dayjs(row.original.createdAt).format('DD MMM YYYY') },
     { id: 'actions', header: '', cell: ({ row }) => <Link href={`/${prefix}/invoices/${row.original.id}`}><Button variant="ghost" size="sm"><Eye size={14} /></Button></Link> },
   ];
