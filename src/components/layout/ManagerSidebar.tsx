@@ -1,35 +1,44 @@
 'use client';
 
-import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
-    LayoutDashboard, Wrench, Tag, Users, Ticket, UserCheck,
-    Star, CreditCard, Receipt, Gift, Zap,
-} from 'lucide-react';
+    DashboardIcon,
+    UsersIcon,
+    UserCheckIcon,
+    StarIcon,
+    CreditCardIcon,
+    SparklesIcon,
+    WalletIcon,
+    HandCoinsIcon,
+    ClipboardIcon,
+    ZapIcon,
+} from '@animateicons/react/lucide';
 import { cn } from '@/lib/utils';
+import { SidebarNavItem } from './SidebarNavItem';
+import type { NavItemDef } from './SidebarNavItem';
 
-const overviewNav = [
-    { href: '/manager/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+const overviewNav: NavItemDef[] = [
+    { href: '/manager/dashboard', label: 'Dashboard', icon: DashboardIcon },
 ];
 
-const operationsNav = [
-    { href: '/manager/tickets', label: 'Tickets', icon: Ticket },
-    { href: '/manager/technicians', label: 'Technicians', icon: Wrench },
-    { href: '/manager/skills', label: 'Skills', icon: Star },
-    { href: '/manager/customers', label: 'Customers', icon: Users },
-    { href: '/manager/attendance', label: 'Attendance', icon: UserCheck },
-    { href: '/manager/feedback', label: 'Feedback', icon: Star },
+const operationsNav: NavItemDef[] = [
+    { href: '/manager/tickets', label: 'Tickets', icon: ClipboardIcon },
+    { href: '/manager/technicians', label: 'Technicians', icon: WalletIcon },
+    { href: '/manager/skills', label: 'Skills', icon: StarIcon },
+    { href: '/manager/customers', label: 'Customers', icon: UsersIcon },
+    { href: '/manager/attendance', label: 'Attendance', icon: UserCheckIcon },
+    { href: '/manager/feedback', label: 'Feedback', icon: StarIcon },
 ];
 
-const catalogNav = [
-    { href: '/manager/service-categories', label: 'Categories', icon: Tag },
-    { href: '/manager/service-sub-categories', label: 'Sub Categories', icon: Tag },
+const catalogNav: NavItemDef[] = [
+    { href: '/manager/service-categories', label: 'Categories', icon: SparklesIcon },
+    { href: '/manager/service-sub-categories', label: 'Sub Categories', icon: SparklesIcon },
 ];
 
-const financeNav = [
-    { href: '/manager/payments', label: 'Payments', icon: CreditCard },
-    { href: '/manager/invoices', label: 'Invoices', icon: Receipt },
-    { href: '/manager/offers', label: 'Offers', icon: Gift },
+const financeNav: NavItemDef[] = [
+    { href: '/manager/payments', label: 'Payments', icon: HandCoinsIcon },
+    { href: '/manager/invoices', label: 'Invoices', icon: CreditCardIcon },
+    { href: '/manager/offers', label: 'Offers', icon: SparklesIcon },
 ];
 
 interface ManagerSidebarProps {
@@ -40,43 +49,6 @@ interface ManagerSidebarProps {
 export function ManagerSidebar({ onClose, isCollapsed = false }: ManagerSidebarProps) {
     const path = usePathname();
     const isActive = (href: string) => path === href || path.startsWith(href + '/');
-
-    const renderNavItem = (item: { href: string; label: string; icon: React.ElementType }) => {
-        const active = isActive(item.href);
-        const Icon = item.icon;
-
-        return (
-            <Link
-                key={item.href}
-                href={item.href}
-                onClick={onClose}
-                title={isCollapsed ? item.label : undefined}
-                className={cn(
-                    'relative flex items-center gap-3 px-3 py-2 rounded-xl text-[13px] font-medium transition-all duration-200 mb-0.5 group',
-                    isCollapsed ? 'justify-center w-10 h-10 mx-auto' : 'w-full',
-                    active
-                        ? 'bg-[var(--color-sidebar-active)] text-[var(--color-primary)]'
-                        : 'text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-sidebar-hover)]'
-                )}
-            >
-                {/* Active left indicator */}
-                {active && !isCollapsed && (
-                    <span className="absolute left-0 top-1/4 bottom-1/4 w-0.5 rounded-full bg-[var(--color-primary)]" />
-                )}
-                <span className={cn(
-                    'flex h-6 w-6 items-center justify-center rounded-lg shrink-0 transition-colors',
-                    active
-                        ? 'text-[var(--color-primary)]'
-                        : 'text-[var(--color-text-muted)] group-hover:text-[var(--color-text-primary)]'
-                )}>
-                    <Icon size={15} />
-                </span>
-                {!isCollapsed && (
-                    <span className="truncate">{item.label}</span>
-                )}
-            </Link>
-        );
-    };
 
     const renderSectionHeader = (label: string, showDivider: boolean) => {
         if (isCollapsed) {
@@ -111,7 +83,7 @@ export function ManagerSidebar({ onClose, isCollapsed = false }: ManagerSidebarP
                         boxShadow: '0 4px 12px var(--color-primary-ring)',
                     }}
                 >
-                    <Zap size={17} className="text-white" />
+                    <ZapIcon size={17} className="text-white" isAnimated />
                 </div>
                 {!isCollapsed && (
                     <div className="animate-fe-slide-left">
@@ -126,16 +98,24 @@ export function ManagerSidebar({ onClose, isCollapsed = false }: ManagerSidebarP
             {/* Navigation */}
             <nav className="flex-1 overflow-y-auto sidebar-scroll py-3 px-3 space-y-0.5">
                 {renderSectionHeader("Overview", false)}
-                {overviewNav.map(item => renderNavItem(item))}
+                {overviewNav.map(item => (
+                    <SidebarNavItem key={item.href} item={item} isActive={isActive(item.href)} isCollapsed={isCollapsed} onClose={onClose} />
+                ))}
 
                 {renderSectionHeader("Operations", true)}
-                {operationsNav.map(item => renderNavItem(item))}
+                {operationsNav.map(item => (
+                    <SidebarNavItem key={item.href} item={item} isActive={isActive(item.href)} isCollapsed={isCollapsed} onClose={onClose} />
+                ))}
 
                 {renderSectionHeader("Service Catalog", true)}
-                {catalogNav.map(item => renderNavItem(item))}
+                {catalogNav.map(item => (
+                    <SidebarNavItem key={item.href} item={item} isActive={isActive(item.href)} isCollapsed={isCollapsed} onClose={onClose} />
+                ))}
 
                 {renderSectionHeader("Finance", true)}
-                {financeNav.map(item => renderNavItem(item))}
+                {financeNav.map(item => (
+                    <SidebarNavItem key={item.href} item={item} isActive={isActive(item.href)} isCollapsed={isCollapsed} onClose={onClose} />
+                ))}
             </nav>
 
             {/* Footer */}

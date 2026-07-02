@@ -1,24 +1,31 @@
 'use client';
 
-import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
-  LayoutDashboard, Building2, CreditCard, Receipt, FileText,
-  Activity, History, BarChart2, ClipboardCheck, Settings,
-} from 'lucide-react';
+  DashboardIcon,
+  CreditCardIcon,
+  WalletIcon,
+  HandCoinsIcon,
+  ChartBarIcon,
+  ClipboardIcon,
+  SettingsIcon,
+  ActivityIcon,
+} from '@animateicons/react/lucide';
 import { cn } from '@/lib/utils';
+import { SidebarNavItem } from './SidebarNavItem';
+import type { NavItemDef } from './SidebarNavItem';
 
-const nav = [
-  { href: '/super-admin/dashboard', label: 'Dashboard', icon: LayoutDashboard, section: 'Overview' },
-  { href: '/super-admin/tenants', label: 'Tenants', icon: Building2, section: 'Management' },
-  { href: '/super-admin/plans', label: 'Plans', icon: CreditCard, section: 'Management' },
-  { href: '/super-admin/subscriptions', label: 'Subscriptions', icon: Receipt, section: 'Management' },
-  { href: '/super-admin/payment-requests', label: 'Payment Requests', icon: ClipboardCheck, section: 'Management' },
-  { href: '/super-admin/billing', label: 'Billing', icon: FileText, section: 'Finance' },
-  { href: '/super-admin/payment-history', label: 'Payment History', icon: History, section: 'Finance' },
-  { href: '/super-admin/revenue-reports', label: 'Revenue Reports', icon: BarChart2, section: 'Finance' },
-  { href: '/super-admin/activity-logs', label: 'Activity Logs', icon: Activity, section: 'System' },
-  { href: '/super-admin/platform-settings', label: 'Platform Settings', icon: Settings, section: 'System' },
+const nav: (NavItemDef & { section: string })[] = [
+  { href: '/super-admin/dashboard', label: 'Dashboard', icon: DashboardIcon, section: 'Overview' },
+  { href: '/super-admin/tenants', label: 'Tenants', icon: ChartBarIcon, section: 'Management' },
+  { href: '/super-admin/plans', label: 'Plans', icon: CreditCardIcon, section: 'Management' },
+  { href: '/super-admin/subscriptions', label: 'Subscriptions', icon: WalletIcon, section: 'Management' },
+  { href: '/super-admin/payment-requests', label: 'Payment Requests', icon: HandCoinsIcon, section: 'Management' },
+  { href: '/super-admin/billing', label: 'Billing', icon: ClipboardIcon, section: 'Finance' },
+  { href: '/super-admin/payment-history', label: 'Payment History', icon: HandCoinsIcon, section: 'Finance' },
+  { href: '/super-admin/revenue-reports', label: 'Revenue Reports', icon: ChartBarIcon, section: 'Finance' },
+  { href: '/super-admin/activity-logs', label: 'Activity Logs', icon: ActivityIcon, section: 'System' },
+  { href: '/super-admin/platform-settings', label: 'Platform Settings', icon: SettingsIcon, section: 'System' },
 ];
 
 const sections = ['Overview', 'Management', 'Finance', 'System'];
@@ -65,7 +72,6 @@ export function SuperAdminSidebar({ onClose, isCollapsed = false }: SuperAdminSi
       <nav className="flex-1 overflow-y-auto sidebar-scroll py-3 px-3 space-y-0.5">
         {sections.map((section, secIdx) => {
           const items = nav.filter(n => n.section === section);
-
           return (
             <div key={section} className="mb-3">
               {isCollapsed ? (
@@ -75,40 +81,15 @@ export function SuperAdminSidebar({ onClose, isCollapsed = false }: SuperAdminSi
                   {section}
                 </p>
               )}
-              {items.map(({ href, label, icon: Icon }) => {
-                const active = path === href || path.startsWith(href + '/');
-                return (
-                  <Link
-                    key={href}
-                    href={href}
-                    onClick={onClose}
-                    title={isCollapsed ? label : undefined}
-                    className={cn(
-                      'relative flex items-center gap-3 px-3 py-2 rounded-xl text-[13px] font-medium transition-all duration-200 mb-0.5 group',
-                      isCollapsed ? 'justify-center w-10 h-10 mx-auto' : 'w-full',
-                      active
-                        ? 'bg-[var(--color-sidebar-active)] text-[var(--color-primary)]'
-                        : 'text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-sidebar-hover)]'
-                    )}
-                  >
-                    {/* Active left indicator */}
-                    {active && !isCollapsed && (
-                      <span className="absolute left-0 top-1/4 bottom-1/4 w-0.5 rounded-full bg-[var(--color-primary)]" />
-                    )}
-                    <span className={cn(
-                      'flex h-6 w-6 items-center justify-center rounded-lg shrink-0 transition-colors',
-                      active
-                        ? 'text-[var(--color-primary)]'
-                        : 'text-[var(--color-text-muted)] group-hover:text-[var(--color-text-primary)]'
-                    )}>
-                      <Icon size={15} />
-                    </span>
-                    {!isCollapsed && (
-                      <span className="truncate">{label}</span>
-                    )}
-                  </Link>
-                );
-              })}
+              {items.map(item => (
+                <SidebarNavItem
+                  key={item.href}
+                  item={item}
+                  isActive={path === item.href || path.startsWith(item.href + '/')}
+                  isCollapsed={isCollapsed}
+                  onClose={onClose}
+                />
+              ))}
             </div>
           );
         })}
@@ -123,4 +104,3 @@ export function SuperAdminSidebar({ onClose, isCollapsed = false }: SuperAdminSi
     </aside>
   );
 }
-

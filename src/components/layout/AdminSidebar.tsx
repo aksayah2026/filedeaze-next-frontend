@@ -3,49 +3,60 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
-  LayoutDashboard, Building2, Settings, Users, BarChart2, FileText,
-  ClipboardList, Wrench, Tag, Ticket, UserCheck, Star,
-  CreditCard, Receipt, Gift, Zap,
-} from 'lucide-react';
+  DashboardIcon,
+  UsersIcon,
+  SettingsIcon,
+  UserCheckIcon,
+  ChartBarIcon,
+  ClipboardIcon,
+  CreditCardIcon,
+  StarIcon,
+  WalletIcon,
+  SparklesIcon,
+  ZapIcon,
+  HandCoinsIcon,
+} from '@animateicons/react/lucide';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
+import { SidebarNavItem } from './SidebarNavItem';
+import type { NavItemDef } from './SidebarNavItem';
 
-const adminOnlyNav = [
-  { href: '/admin/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { href: '/admin/managers', label: 'Managers', icon: Users },
-  { href: '/admin/company-settings', label: 'Company Settings', icon: Building2 },
-  { href: '/admin/tenant-settings', label: 'Tenant Settings', icon: Settings },
-  { href: '/admin/profile', label: 'My Profile', icon: UserCheck },
+const adminOnlyNav: NavItemDef[] = [
+  { href: '/admin/dashboard', label: 'Dashboard', icon: DashboardIcon },
+  { href: '/admin/managers', label: 'Managers', icon: UsersIcon },
+  { href: '/admin/company-settings', label: 'Company Settings', icon: SettingsIcon },
+  { href: '/admin/tenant-settings', label: 'Tenant Settings', icon: SettingsIcon },
+  { href: '/admin/profile', label: 'My Profile', icon: UserCheckIcon },
 ];
 
-const reportsNav = [
-  { href: '/admin/reports/revenue', label: 'Revenue', icon: BarChart2 },
-  { href: '/admin/reports/tickets', label: 'Tickets', icon: ClipboardList },
-  { href: '/admin/reports/technicians', label: 'Technicians', icon: Users },
+const reportsNav: NavItemDef[] = [
+  { href: '/admin/reports/revenue', label: 'Revenue', icon: ChartBarIcon },
+  { href: '/admin/reports/tickets', label: 'Tickets', icon: ClipboardIcon },
+  { href: '/admin/reports/technicians', label: 'Technicians', icon: UsersIcon },
 ];
 
-const adminMiscNav = [
-  { href: '/admin/audit-logs', label: 'Audit Logs', icon: FileText },
-  { href: '/admin/platform-settings', label: 'Platform Settings', icon: Settings },
-  { href: '/admin/subscription', label: 'Subscription', icon: CreditCard },
+const adminMiscNav: NavItemDef[] = [
+  { href: '/admin/audit-logs', label: 'Audit Logs', icon: ClipboardIcon },
+  { href: '/admin/platform-settings', label: 'Platform Settings', icon: SettingsIcon },
+  { href: '/admin/subscription', label: 'Subscription', icon: CreditCardIcon },
 ];
 
-const operationsNav = [
-  { href: '/admin/tickets', label: 'Tickets', icon: Ticket },
-  { href: '/admin/technicians', label: 'Technicians', icon: Wrench },
-  { href: '/admin/skills', label: 'Skills', icon: Star },
-  { href: '/admin/service-categories', label: 'Categories', icon: Tag },
-  { href: '/admin/service-sub-categories', label: 'Sub-Categories', icon: Tag },
-  { href: '/admin/customers', label: 'Customers', icon: Users },
-  { href: '/admin/attendance', label: 'Attendance', icon: UserCheck },
-  { href: '/admin/feedback', label: 'Feedback', icon: Star },
-  { href: '/admin/payments', label: 'Payments', icon: CreditCard },
-  { href: '/admin/invoices', label: 'Invoices', icon: Receipt },
-  { href: '/admin/offers', label: 'Offers', icon: Gift },
+const operationsNav: NavItemDef[] = [
+  { href: '/admin/tickets', label: 'Tickets', icon: ClipboardIcon },
+  { href: '/admin/technicians', label: 'Technicians', icon: WalletIcon },
+  { href: '/admin/skills', label: 'Skills', icon: StarIcon },
+  { href: '/admin/service-categories', label: 'Categories', icon: SparklesIcon },
+  { href: '/admin/service-sub-categories', label: 'Sub-Categories', icon: SparklesIcon },
+  { href: '/admin/customers', label: 'Customers', icon: UsersIcon },
+  { href: '/admin/attendance', label: 'Attendance', icon: UserCheckIcon },
+  { href: '/admin/feedback', label: 'Feedback', icon: StarIcon },
+  { href: '/admin/payments', label: 'Payments', icon: HandCoinsIcon },
+  { href: '/admin/invoices', label: 'Invoices', icon: CreditCardIcon },
+  { href: '/admin/offers', label: 'Offers', icon: SparklesIcon },
 ];
 
-const managerDashNav = [
-  { href: '/manager/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+const managerDashNav: NavItemDef[] = [
+  { href: '/manager/dashboard', label: 'Dashboard', icon: DashboardIcon },
 ];
 
 interface AdminSidebarProps {
@@ -57,43 +68,6 @@ export function AdminSidebar({ onClose, isCollapsed = false }: AdminSidebarProps
   const path = usePathname();
   const { role } = useAuth();
   const isActive = (href: string) => path === href || path.startsWith(href + '/');
-
-  const renderNavItem = (item: { href: string; label: string; icon: React.ElementType }) => {
-    const active = isActive(item.href);
-    const Icon = item.icon;
-
-    return (
-      <Link
-        key={item.href}
-        href={item.href}
-        onClick={onClose}
-        title={isCollapsed ? item.label : undefined}
-        className={cn(
-          'relative flex items-center gap-3 px-3 py-2 rounded-xl text-[13px] font-medium transition-all duration-200 mb-0.5 group',
-          isCollapsed ? 'justify-center w-10 h-10 mx-auto' : 'w-full',
-          active
-            ? 'bg-[var(--color-sidebar-active)] text-[var(--color-primary)]'
-            : 'text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-sidebar-hover)]'
-        )}
-      >
-        {/* Active left indicator */}
-        {active && !isCollapsed && (
-          <span className="absolute left-0 top-1/4 bottom-1/4 w-0.5 rounded-full bg-[var(--color-primary)]" />
-        )}
-        <span className={cn(
-          'flex h-6 w-6 items-center justify-center rounded-lg shrink-0 transition-colors',
-          active
-            ? 'text-[var(--color-primary)]'
-            : 'text-[var(--color-text-muted)] group-hover:text-[var(--color-text-primary)]'
-        )}>
-          <Icon size={15} />
-        </span>
-        {!isCollapsed && (
-          <span className="truncate">{item.label}</span>
-        )}
-      </Link>
-    );
-  };
 
   const renderSectionHeader = (label: string, showDivider: boolean) => {
     if (isCollapsed) {
@@ -128,7 +102,7 @@ export function AdminSidebar({ onClose, isCollapsed = false }: AdminSidebarProps
             boxShadow: '0 4px 12px var(--color-primary-ring)',
           }}
         >
-          <Zap size={17} className="text-white" />
+          <ZapIcon size={17} className="text-white" isAnimated />
         </div>
         {!isCollapsed && (
           <div className="animate-fe-slide-left">
@@ -145,25 +119,35 @@ export function AdminSidebar({ onClose, isCollapsed = false }: AdminSidebarProps
         {role === 'ADMIN' && (
           <>
             {renderSectionHeader("Admin", false)}
-            {adminOnlyNav.map(item => renderNavItem(item))}
+            {adminOnlyNav.map(item => (
+              <SidebarNavItem key={item.href} item={item} isActive={isActive(item.href)} isCollapsed={isCollapsed} onClose={onClose} />
+            ))}
 
             {renderSectionHeader("Reports", true)}
-            {reportsNav.map(item => renderNavItem(item))}
+            {reportsNav.map(item => (
+              <SidebarNavItem key={item.href} item={item} isActive={isActive(item.href)} isCollapsed={isCollapsed} onClose={onClose} />
+            ))}
 
             {renderSectionHeader("System", true)}
-            {adminMiscNav.map(item => renderNavItem(item))}
+            {adminMiscNav.map(item => (
+              <SidebarNavItem key={item.href} item={item} isActive={isActive(item.href)} isCollapsed={isCollapsed} onClose={onClose} />
+            ))}
           </>
         )}
 
         {role === 'MANAGER' && (
           <>
             {renderSectionHeader("Overview", false)}
-            {managerDashNav.map(item => renderNavItem(item))}
+            {managerDashNav.map(item => (
+              <SidebarNavItem key={item.href} item={item} isActive={isActive(item.href)} isCollapsed={isCollapsed} onClose={onClose} />
+            ))}
           </>
         )}
 
         {renderSectionHeader("Operations", true)}
-        {operationsNav.map(item => renderNavItem(item))}
+        {operationsNav.map(item => (
+          <SidebarNavItem key={item.href} item={item} isActive={isActive(item.href)} isCollapsed={isCollapsed} onClose={onClose} />
+        ))}
       </nav>
 
       {/* Footer */}
