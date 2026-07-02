@@ -340,6 +340,120 @@ body {
   border-radius: var(--radius-md);
 }
 
+/* ══════════════════════════════════════════════════════════
+   DASHBOARD PREMIUM ANIMATIONS & UTILITIES
+   ══════════════════════════════════════════════════════════ */
+
+/* Staggered card entrance */
+@keyframes fe-stagger-in {
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Progress bar fill animation */
+@keyframes fe-grow-x {
+  from { width: 0%; }
+}
+
+/* Gentle floating blob */
+@keyframes fe-float {
+  0%, 100% { transform: translateY(0px) scale(1); }
+  50%       { transform: translateY(-6px) scale(1.02); }
+}
+
+/* Icon bounce on load */
+@keyframes fe-bounce-in {
+  0%   { transform: scale(0.6); opacity: 0; }
+  60%  { transform: scale(1.12); opacity: 1; }
+  80%  { transform: scale(0.95); }
+  100% { transform: scale(1); }
+}
+
+/* Stagger utilities (1–5 children) */
+.stagger-1 { animation: fe-stagger-in 0.35s cubic-bezier(0.22,1,.36,1) both; animation-delay: 0.04s; }
+.stagger-2 { animation: fe-stagger-in 0.35s cubic-bezier(0.22,1,.36,1) both; animation-delay: 0.09s; }
+.stagger-3 { animation: fe-stagger-in 0.35s cubic-bezier(0.22,1,.36,1) both; animation-delay: 0.14s; }
+.stagger-4 { animation: fe-stagger-in 0.35s cubic-bezier(0.22,1,.36,1) both; animation-delay: 0.19s; }
+.stagger-5 { animation: fe-stagger-in 0.35s cubic-bezier(0.22,1,.36,1) both; animation-delay: 0.24s; }
+.stagger-6 { animation: fe-stagger-in 0.35s cubic-bezier(0.22,1,.36,1) both; animation-delay: 0.29s; }
+
+/* Animated progress bar fill */
+.fe-progress-fill {
+  animation: fe-grow-x 0.7s cubic-bezier(0.22,1,.36,1) both;
+  animation-delay: 0.3s;
+}
+
+/* Icon bounce */
+.fe-icon-bounce {
+  animation: fe-bounce-in 0.5s cubic-bezier(0.22,1,.36,1) both;
+}
+
+/* KPI Card base */
+.dashboard-kpi-card {
+  position: relative;
+  overflow: hidden;
+  border-radius: 16px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  box-shadow: var(--shadow-sm);
+  transition: transform 0.2s cubic-bezier(0.22,1,.36,1),
+              box-shadow 0.2s cubic-bezier(0.22,1,.36,1),
+              border-color 0.2s ease;
+}
+
+.dashboard-kpi-card:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-md);
+}
+
+.dark .dashboard-kpi-card:hover {
+  border-color: rgba(255,255,255,0.12);
+}
+
+/* Quick action card */
+.quick-action-card {
+  position: relative;
+  overflow: hidden;
+  border-radius: 14px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  box-shadow: var(--shadow-sm);
+  transition: transform 0.2s cubic-bezier(0.22,1,.36,1),
+              box-shadow 0.2s cubic-bezier(0.22,1,.36,1),
+              background 0.2s ease;
+  cursor: pointer;
+}
+
+.quick-action-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+  background: var(--color-surface-elevated);
+}
+
+.quick-action-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--color-primary) 6%, transparent) 0%,
+    transparent 60%
+  );
+  pointer-events: none;
+}
+
+.quick-action-card:hover::before {
+  opacity: 1;
+}
+
 /* ── Table utilities ────────────────────────────────────── */
 .table-sticky-head thead {
   position: sticky;

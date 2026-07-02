@@ -210,16 +210,16 @@ export default function RevenueReportsPage() {
         <>
           {/* Total Revenue Hero */}
           {data && (
-            <div className="relative overflow-hidden rounded-xl border border-emerald-100 bg-gradient-to-r from-emerald-50 to-teal-50 px-6 py-5 shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
-              <div className="absolute right-4 top-1/2 -translate-y-1/2 opacity-10">
-                <TrendingUp size={64} className="text-emerald-600" />
+            <div className="relative overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-6 py-5 shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
+              <div className="absolute right-4 top-1/2 -translate-y-1/2 opacity-5">
+                <TrendingUp size={64} className="text-[var(--color-primary)]" />
               </div>
               <div className="flex items-center gap-4">
-                <div className="h-12 w-12 rounded-xl bg-emerald-100 flex items-center justify-center">
-                  <TrendingUp size={22} className="text-emerald-600" />
+                <div className="h-12 w-12 rounded-xl bg-[var(--color-primary-ring)] flex items-center justify-center">
+                  <TrendingUp size={22} className="text-[var(--color-primary)]" />
                 </div>
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-widest text-emerald-600 mb-0.5">
+                  <p className="text-xs font-semibold uppercase tracking-widest text-[var(--color-primary)] mb-0.5">
                     Total Revenue
                   </p>
                   <p className="text-3xl font-bold tabular-nums text-[var(--color-text-primary)]">
