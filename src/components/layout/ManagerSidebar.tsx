@@ -96,7 +96,7 @@ export function ManagerSidebar({ onClose, isCollapsed = false }: ManagerSidebarP
             </div>
 
             {/* Navigation */}
-            <nav className="flex-1 overflow-y-auto sidebar-scroll py-3 px-3 space-y-0.5">
+            <nav className="flex-1 flex flex-col overflow-y-auto sidebar-scroll py-3 px-3 space-y-0.5">
                 {renderSectionHeader("Overview", false)}
                 {overviewNav.map(item => (
                     <SidebarNavItem key={item.href} item={item} isActive={isActive(item.href)} isCollapsed={isCollapsed} onClose={onClose} />
