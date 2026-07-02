@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -21,6 +22,11 @@ const sizes = {
 
 export function Modal({ open, onClose, title, children, size = 'md' }: ModalProps) {
   const overlayRef = useRef<HTMLDivElement>(null);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     if (!open) return;
@@ -33,12 +39,12 @@ export function Modal({ open, onClose, title, children, size = 'md' }: ModalProp
     };
   }, [open, onClose]);
 
-  if (!open) return null;
+  if (!open || !mounted) return null;
 
-  return (
+  const modalContent = (
     <div
       ref={overlayRef}
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 select-none"
+      className="fixed inset-0 z-[9999] flex items-center justify-center p-4 select-none"
       style={{ background: 'rgba(15, 23, 42, 0.4)' }}
       onClick={e => { if (e.target === overlayRef.current) onClose(); }}
     >
@@ -73,4 +79,6 @@ export function Modal({ open, onClose, title, children, size = 'md' }: ModalProp
       </div>
     </div>
   );
+
+  return createPortal(modalContent, document.body);
 }
