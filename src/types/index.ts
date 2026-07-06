@@ -451,6 +451,7 @@ export interface PlanUsage {
     managers: PlanUsageEntry;
     technicians: PlanUsageEntry;
     tickets: PlanUsageEntry;
+    customers?: PlanUsageEntry;
     storage: PlanUsageEntry;
   };
 }

@@ -40,7 +40,11 @@ function hardLogout() {
     localStorage.removeItem(`${prefix}_user`);
     eraseCookie(`${prefix}_accessToken`);
     eraseCookie(`${prefix}_refreshToken`);
-    window.location.href = '/login';
+    
+    const path = window.location.pathname;
+    if (path !== '/login' && !path.endsWith('/login')) {
+      window.location.href = '/login';
+    }
   }
 }
 

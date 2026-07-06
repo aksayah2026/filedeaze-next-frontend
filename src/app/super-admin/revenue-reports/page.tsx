@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { BarChart, Bar, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import api from '@/lib/axios';
 import { SuperAdminRevenueReport, Tenant } from '@/types';
 import { DataTable } from '@/components/ui/DataTable';
@@ -11,7 +11,7 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
 import { PageSpinner } from '@/components/ui/Spinner';
-import { Download, Search, TrendingUp, BarChart2 } from 'lucide-react';
+import { Download, Search, TrendingUp, BarChart2, Calendar } from 'lucide-react';
 import dayjs from 'dayjs';
 
 type ReportRow = SuperAdminRevenueReport['payments'][number];
@@ -132,6 +132,32 @@ export default function RevenueReportsPage() {
 
   const rows = data?.payments ?? [];
 
+  const byDurationChart: Array<{ date: string; amount: number }> = [];
+  if (data?.payments) {
+    const fromDate = dayjs(from);
+    const toDate = dayjs(to);
+    const isMonthly = toDate.diff(fromDate, 'day') > 60;
+    const formatStr = isMonthly ? 'MMM YYYY' : 'DD MMM';
+    
+    const map = new Map<string, number>();
+    let curr = fromDate.clone();
+    while (curr.isBefore(toDate) || curr.isSame(toDate, isMonthly ? 'month' : 'day')) {
+      map.set(curr.format(formatStr), 0);
+      curr = curr.add(1, isMonthly ? 'month' : 'day');
+    }
+
+    data.payments.forEach(p => {
+      if (p.status === 'PAID' && p.paidAt) {
+        const key = dayjs(p.paidAt).format(formatStr);
+        if (map.has(key)) {
+          map.set(key, map.get(key)! + p.amount);
+        }
+      }
+    });
+
+    map.forEach((amount, date) => byDurationChart.push({ date, amount }));
+  }
+
   return (
     <div className="space-y-5">
       {/* Page Header */}
@@ -230,6 +256,36 @@ export default function RevenueReportsPage() {
             </div>
           )}
 
+          {/* Revenue by Duration Chart */}
+          {mounted && byDurationChart.length > 0 && (
+            <div className="bg-[var(--color-surface)] rounded-xl border border-[var(--color-border)] p-5 shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
+              <div className="flex items-center gap-2 mb-4">
+                <Calendar size={15} className="text-[var(--color-text-muted)]" />
+                <h3 className="text-sm font-semibold text-[var(--color-text-primary)]">Revenue by Duration</h3>
+              </div>
+              <ResponsiveContainer width="100%" height={250}>
+                <AreaChart data={byDurationChart}>
+                  <defs>
+                    <linearGradient id="colorAmount" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#10B981" stopOpacity={0.3}/>
+                      <stop offset="95%" stopColor="#10B981" stopOpacity={0}/>
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" vertical={false} />
+                  <XAxis dataKey="date" tick={{ fontSize: 11, fill: 'var(--color-text-muted)' }} axisLine={false} tickLine={false} />
+                  <YAxis tick={{ fontSize: 11, fill: 'var(--color-text-muted)' }} axisLine={false} tickLine={false} />
+                  <Tooltip
+                    formatter={(v) => [`₹${Number(v).toLocaleString()}`, 'Revenue']}
+                    contentStyle={{ borderRadius: '10px', border: '1px solid var(--color-border)', backgroundColor: 'var(--color-surface-elevated)', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', fontSize: '12px' }}
+                    labelStyle={{ color: 'var(--color-text-primary)', fontWeight: 600, marginBottom: '4px' }}
+                    itemStyle={{ color: 'var(--color-text-secondary)' }}
+                  />
+                  <Area type="monotone" dataKey="amount" stroke="#10B981" strokeWidth={2} fillOpacity={1} fill="url(#colorAmount)" />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+          )}
+
           {/* Charts */}
           {mounted && (byPlanChart.length > 0 || byTenantChart.length > 0) && (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
@@ -241,15 +297,15 @@ export default function RevenueReportsPage() {
                   </div>
                   <ResponsiveContainer width="100%" height={200}>
                     <BarChart data={byPlanChart} barSize={36}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
+                      <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" vertical={false} />
                       <XAxis
                         dataKey="name"
-                        tick={{ fontSize: 11, fill: '#94A3B8' }}
+                        tick={{ fontSize: 11, fill: 'var(--color-text-muted)' }}
                         axisLine={false}
                         tickLine={false}
                       />
                       <YAxis
-                        tick={{ fontSize: 11, fill: '#94A3B8' }}
+                        tick={{ fontSize: 11, fill: 'var(--color-text-muted)' }}
                         axisLine={false}
                         tickLine={false}
                       />
@@ -257,10 +313,13 @@ export default function RevenueReportsPage() {
                         formatter={(v) => [`₹${Number(v).toLocaleString()}`, 'Revenue']}
                         contentStyle={{
                           borderRadius: '10px',
-                          border: '1px solid #E2E8F0',
-                          boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
+                          border: '1px solid var(--color-border)',
+                          backgroundColor: 'var(--color-surface-elevated)',
+                          boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
                           fontSize: '12px',
                         }}
+                        labelStyle={{ color: 'var(--color-text-primary)', fontWeight: 600, marginBottom: '4px' }}
+                        itemStyle={{ color: 'var(--color-text-secondary)' }}
                       />
                       <Bar dataKey="amount" fill="#2563EB" radius={[6, 6, 0, 0]} />
                     </BarChart>
@@ -276,17 +335,17 @@ export default function RevenueReportsPage() {
                   </div>
                   <ResponsiveContainer width="100%" height={200}>
                     <BarChart data={byTenantChart} layout="vertical" barSize={16}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" horizontal={false} />
+                      <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" horizontal={false} />
                       <XAxis
                         type="number"
-                        tick={{ fontSize: 10, fill: '#94A3B8' }}
+                        tick={{ fontSize: 10, fill: 'var(--color-text-muted)' }}
                         axisLine={false}
                         tickLine={false}
                       />
                       <YAxis
                         dataKey="tenantName"
                         type="category"
-                        tick={{ fontSize: 10, fill: '#64748B' }}
+                        tick={{ fontSize: 10, fill: 'var(--color-text-secondary)' }}
                         width={80}
                         axisLine={false}
                         tickLine={false}
@@ -295,10 +354,13 @@ export default function RevenueReportsPage() {
                         formatter={(v) => [`₹${Number(v).toLocaleString()}`, 'Revenue']}
                         contentStyle={{
                           borderRadius: '10px',
-                          border: '1px solid #E2E8F0',
-                          boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
+                          border: '1px solid var(--color-border)',
+                          backgroundColor: 'var(--color-surface-elevated)',
+                          boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
                           fontSize: '12px',
                         }}
+                        labelStyle={{ color: 'var(--color-text-primary)', fontWeight: 600, marginBottom: '4px' }}
+                        itemStyle={{ color: 'var(--color-text-secondary)' }}
                       />
                       <Bar dataKey="amount" fill="#8B5CF6" radius={[0, 6, 6, 0]} />
                     </BarChart>
