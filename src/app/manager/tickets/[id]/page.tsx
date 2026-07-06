@@ -232,13 +232,26 @@ export default function TicketDetailPage() {
               </div>
               <div className="pb-3">
                 <TicketStatusBadge status={log.status} />
-                <p className="text-xs text-[var(--color-text-muted)] mt-0.5">{dayjs(log.createdAt).format('DD MMM YYYY, HH:mm')}</p>
+                <p className="text-xs text-[var(--color-text-muted)] mt-0.5">{dayjs(log.changedAt).format('DD MMM YYYY, HH:mm')}</p>
                 {log.notes && <p className="text-xs text-[var(--color-text-muted)] mt-0.5">{log.notes}</p>}
               </div>
             </div>
           ))}
         </div>
       </div>
+
+      {ticket.images && ticket.images.some(i => i.type === 'RAISED') && (
+        <div className="bg-[var(--color-surface)] rounded-xl p-4 border border-[var(--color-border)] shadow-sm">
+          <h3 className="font-medium text-[var(--color-text-secondary)] mb-3">Customer Photos</h3>
+          <div className="grid grid-cols-3 gap-4">
+            {ticket.images.filter(i => i.type === 'RAISED').map(img => (
+              <a key={img.id} href={img.imageUrl} target="_blank" rel="noopener noreferrer">
+                <img src={img.imageUrl} alt="Customer upload" className="rounded-lg w-full object-cover aspect-video border border-[var(--color-border)] hover:opacity-90 transition-opacity" />
+              </a>
+            ))}
+          </div>
+        </div>
+      )}
 
       {ticket.images && ticket.images.length > 0 && (
         <div className="bg-[var(--color-surface)] rounded-xl p-4 border border-[var(--color-border)] shadow-sm">

@@ -327,7 +327,7 @@ export interface StatusLog {
   id: string;
   status: TicketStatus;
   notes?: string;
-  createdAt: string;
+  changedAt: string;
   updatedBy?: User;
 }
 
