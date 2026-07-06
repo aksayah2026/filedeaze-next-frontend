@@ -95,16 +95,16 @@ export function SidebarNavItem({ item, isActive, isCollapsed, onClose }: Sidebar
         // Active vs default
         isActive
           ? [
-              'bg-[var(--color-sidebar-active)] text-[var(--color-primary)]',
-              'shadow-[0_1px_6px_color-mix(in_srgb,var(--color-primary)_10%,transparent)]',
-              'scale-[1.01]',
-            ]
+            'bg-[var(--color-sidebar-active)] text-[var(--color-primary)]',
+            'shadow-[0_1px_6px_color-mix(in_srgb,var(--color-primary)_10%,transparent)]',
+            'scale-[1.01]',
+          ]
           : [
-              'text-[var(--color-text-secondary)]',
-              'hover:text-[var(--color-text-primary)]',
-              'hover:bg-[var(--color-sidebar-hover)]',
-              'hover:-translate-y-0.5',
-            ],
+            'text-[var(--color-text-secondary)]',
+            'hover:text-[var(--color-text-primary)]',
+            'hover:bg-[var(--color-sidebar-hover)]',
+            'hover:-translate-y-0.5',
+          ],
         // Pop animation class applied on click
         isPopping && 'sb-nav-item-popping'
       )}

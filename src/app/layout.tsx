@@ -16,7 +16,20 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={`${geist.variable} h-full antialiased`} suppressHydrationWarning>
-      <body className="min-h-full text-[var(--color-text-primary)] bg-[var(--color-bg)] transition-colors duration-250 ease-in-out" suppressHydrationWarning>
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              try {
+                if (localStorage.getItem('fieldeaze-theme') === 'dark') {
+                  document.documentElement.classList.add('dark');
+                }
+              } catch (_) {}
+            `,
+          }}
+        />
+      </head>
+      <body className="min-h-full text-[var(--color-text-primary)] bg-[var(--color-bg)] transition-colors duration-300 ease-in-out" suppressHydrationWarning>
         <Providers>{children}</Providers>
       </body>
     </html>

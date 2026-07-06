@@ -43,24 +43,24 @@ const QUICK_ACTIONS = [
     label: 'Add Technician',
     desc: 'Onboard a new provider',
     href: '/admin/technicians',
-    color: 'text-emerald-600',
-    bg: 'bg-emerald-50 dark:bg-emerald-950/40',
+    color: 'text-[var(--color-success)]',
+    bg: 'bg-[var(--color-success-light)] dark:bg-[var(--color-success)]/10',
   },
   {
     icon: Users,
     label: 'Invite Manager',
     desc: 'Expand your team',
     href: '/admin/managers',
-    color: 'text-violet-600',
-    bg: 'bg-violet-50 dark:bg-violet-950/40',
+    color: 'text-[var(--color-accent-purple)]',
+    bg: 'bg-[var(--color-accent-purple)]/10',
   },
   {
     icon: BarChart2,
     label: 'View Reports',
     desc: 'Revenue & ticket analytics',
     href: '/admin/reports/revenue',
-    color: 'text-amber-600',
-    bg: 'bg-amber-50 dark:bg-amber-950/40',
+    color: 'text-[var(--color-warning)]',
+    bg: 'bg-[var(--color-warning-light)] dark:bg-[var(--color-warning)]/10',
   },
 ];
 
@@ -174,9 +174,9 @@ export default function AdminDashboardPage() {
               title="Open Tickets"
               value={data.openTickets}
               icon={Ticket}
-              iconBg="bg-orange-50 dark:bg-orange-950/40"
-              iconColor="text-orange-500"
-              accentColor="bg-orange-500"
+              iconBg="bg-[var(--color-warning-light)] dark:bg-[var(--color-warning)]/10"
+              iconColor="text-[var(--color-warning)]"
+              accentColor="bg-[var(--color-warning)]"
               subtitle="Currently active/pending tickets"
               staggerClass="stagger-2"
             />
@@ -184,9 +184,9 @@ export default function AdminDashboardPage() {
               title="Total Technicians"
               value={data.totalTechnicians}
               icon={Users}
-              iconBg="bg-emerald-50 dark:bg-emerald-950/40"
-              iconColor="text-emerald-600"
-              accentColor="bg-emerald-500"
+              iconBg="bg-[var(--color-success-light)] dark:bg-[var(--color-success)]/10"
+              iconColor="text-[var(--color-success)]"
+              accentColor="bg-[var(--color-success)]"
               subtitle="Registered service providers"
               staggerClass="stagger-3"
             />
@@ -194,9 +194,9 @@ export default function AdminDashboardPage() {
               title="Total Customers"
               value={data.totalCustomers}
               icon={UserCheck}
-              iconBg="bg-violet-50 dark:bg-violet-950/40"
-              iconColor="text-violet-600"
-              accentColor="bg-violet-500"
+              iconBg="bg-[var(--color-accent-purple)]/10"
+              iconColor="text-[var(--color-accent-purple)]"
+              accentColor="bg-[var(--color-accent-purple)]"
               subtitle="Registered client profiles"
               staggerClass="stagger-4"
             />
@@ -204,9 +204,9 @@ export default function AdminDashboardPage() {
               title="Monthly Revenue"
               value={`₹${data.monthlyRevenue.toLocaleString()}`}
               icon={DollarSign}
-              iconBg="bg-teal-50 dark:bg-teal-950/40"
-              iconColor="text-teal-600"
-              accentColor="bg-teal-500"
+              iconBg="bg-[var(--color-info-light)] dark:bg-[var(--color-info)]/10"
+              iconColor="text-[var(--color-info)]"
+              accentColor="bg-[var(--color-info)]"
               subtitle="Collected revenue this month"
               staggerClass="stagger-5"
             />
@@ -246,7 +246,7 @@ export default function AdminDashboardPage() {
 
           {/* ── Plan Resource Usage ──────────────────────── */}
           <div className="stagger-6">
-            <div className="relative overflow-hidden rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-[var(--shadow-sm)] max-w-2xl">
+            <div className="relative overflow-hidden rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-[var(--shadow-sm)]">
               {/* Top accent */}
               <div className="absolute left-0 top-0 right-0 h-[3px] bg-[var(--color-primary)] rounded-t-2xl" />
 
@@ -277,7 +277,7 @@ export default function AdminDashboardPage() {
                 </div>
 
                 {data.planUsage ? (
-                  <div className="space-y-5">
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-12 gap-y-3">
                     <ProgressBar
                       label="Managers"
                       used={data.planUsage.usage.managers.current}

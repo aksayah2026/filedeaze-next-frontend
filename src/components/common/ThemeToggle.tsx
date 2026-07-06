@@ -14,23 +14,45 @@ export function ThemeToggle({ className }: { className?: string }) {
   }, []);
 
   if (!mounted) {
-    return <div className="w-8 h-8" />; // Placeholder to prevent hydration mismatch
+    return <div className={cn("w-14 h-8 rounded-full", className)} />;
   }
+
+  const isDark = theme === 'dark';
 
   return (
     <button
       onClick={toggleTheme}
       className={cn(
-        "flex items-center justify-center w-8 h-8 rounded-full transition-colors",
-        theme === 'light' 
-          ? "bg-[var(--color-surface-elevated)] hover:bg-slate-200 text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]" 
-          : "bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white",
+        "group relative flex items-center w-14 h-8 rounded-full p-1 transition-all duration-150 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] active:scale-95",
+        isDark 
+          ? "bg-[#1F2330] border border-[rgba(255,255,255,0.08)] shadow-[inset_0_2px_4px_rgba(0,0,0,0.4)] hover:border-[rgba(255,255,255,0.15)] hover:shadow-[0_0_12px_rgba(79,139,255,0.15)]" 
+          : "bg-slate-200 border border-slate-300 shadow-[inset_0_2px_4px_rgba(0,0,0,0.06)] hover:border-slate-400 hover:shadow-[0_0_12px_rgba(37,99,235,0.15)]",
         className
       )}
       aria-label="Toggle Theme"
-      title={`Switch to ${theme === 'light' ? 'dark' : 'light'} theme`}
+      title={`Switch to ${isDark ? 'light' : 'dark'} theme`}
     >
-      {theme === 'light' ? <Moon size={16} /> : <Sun size={16} />}
+      <div 
+        className={cn(
+          "absolute flex items-center justify-center w-6 h-6 rounded-full bg-[var(--color-surface)] shadow-md transform transition-all duration-150 ease-in-out group-hover:scale-105",
+          isDark ? "translate-x-6" : "translate-x-0"
+        )}
+      >
+        <Sun 
+          size={14} 
+          className={cn(
+            "absolute text-amber-500 transition-all duration-120 ease-in-out",
+            isDark ? "opacity-0 rotate-[135deg] scale-50" : "opacity-100 rotate-0 scale-100"
+          )} 
+        />
+        <Moon 
+          size={14} 
+          className={cn(
+            "absolute text-[var(--color-primary)] transition-all duration-120 ease-in-out",
+            isDark ? "opacity-100 rotate-0 scale-100" : "opacity-0 -rotate-[135deg] scale-50"
+          )} 
+        />
+      </div>
     </button>
   );
 }
