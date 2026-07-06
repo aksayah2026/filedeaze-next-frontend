@@ -179,7 +179,7 @@ export default function TenantsPage() {
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-[var(--color-border)] bg-[var(--color-surface-elevated)]">
+              <tr className="border-b border-[var(--colx`or-border)] bg-[var(--color-surface-elevated)]">
                 {['Company', 'Code', 'Email', 'Phone', 'Status', 'Plan', 'Created', 'Login URL', 'Active', 'Actions'].map(h => (
                   <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wide whitespace-nowrap">{h}</th>
                 ))}

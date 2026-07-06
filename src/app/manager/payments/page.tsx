@@ -41,7 +41,7 @@ export default function PaymentsPage() {
     onError: () => toast.error('Failed'),
   });
 
-  const totalVerified = data.filter(p => p.status === 'VERIFIED').reduce((sum, p) => sum + p.amount, 0);
+  const totalVerified = data.filter(p => p.status === 'VERIFIED').reduce((sum, p) => sum + Number(p.amount), 0);
 
   const columns: ColumnDef<Payment, unknown>[] = [
     {
@@ -58,7 +58,7 @@ export default function PaymentsPage() {
       header: 'Amount',
       cell: ({ row }) => (
         <span className="tabular-nums font-semibold text-[var(--color-text-primary)]">
-          ₹{row.original.amount.toLocaleString()}
+          ₹{Number(row.original.amount).toLocaleString()}
         </span>
       ),
     },
