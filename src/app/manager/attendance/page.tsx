@@ -6,10 +6,8 @@ import { ColumnDef } from '@tanstack/react-table';
 import api from '@/lib/axios';
 import { Attendance, Technician } from '@/types';
 import { DataTable } from '@/components/ui/DataTable';
-import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
-import { Button } from '@/components/ui/Button';
-import { Search } from 'lucide-react';
+import { FilterCard } from '@/components/ui/FilterCard';
 import dayjs from 'dayjs';
 
 export default function AttendancePage() {
@@ -40,12 +38,21 @@ export default function AttendancePage() {
   return (
     <div>
       <h2 className="text-xl font-semibold text-[var(--color-text-primary)] mb-6">Attendance</h2>
-      <div className="flex flex-wrap gap-3 mb-4 items-end">
-        <Select options={techOptions} value={techId} onChange={e => setTechId(e.target.value)} className="w-48" />
-        <Input type="date" value={from} onChange={e => setFrom(e.target.value)} className="w-44" />
-        <Input type="date" value={to} onChange={e => setTo(e.target.value)} className="w-44" />
-        <Button variant="secondary" onClick={() => setParams({ technicianId: techId, from, to })}><Search size={14} /> Filter</Button>
-      </div>
+      <FilterCard
+        title="Attendance Filter"
+        from={from}
+        to={to}
+        onFromChange={setFrom}
+        onToChange={setTo}
+        onApply={() => setParams({ technicianId: techId, from, to })}
+        onReset={() => { setTechId(''); setFrom(monthStart); setTo(today); setParams({ technicianId: '', from: monthStart, to: today }); }}
+        isLoading={isLoading}
+      >
+        <div className="space-y-1">
+          <label className="text-xs font-medium text-[var(--color-text-secondary)]">Technician</label>
+          <Select options={techOptions} value={techId} onChange={e => setTechId(e.target.value)} className="w-48 h-10" />
+        </div>
+      </FilterCard>
       <DataTable data={data} columns={columns} isLoading={isLoading} />
     </div>
   );

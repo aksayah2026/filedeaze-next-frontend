@@ -11,6 +11,7 @@ import { Invoice } from '@/types';
 import { DataTable } from '@/components/ui/DataTable';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
+import { FilterCard } from '@/components/ui/FilterCard';
 import dayjs from 'dayjs';
 
 export default function InvoicesPage() {
@@ -43,12 +44,21 @@ export default function InvoicesPage() {
   return (
     <div>
       <h2 className="text-xl font-semibold text-[var(--color-text-primary)] mb-6">Invoices</h2>
-      <div className="flex flex-wrap gap-3 mb-4 items-end">
-        <Input placeholder="Search..." value={search} onChange={e => setSearch(e.target.value)} className="w-48" />
-        <Input type="date" value={from} onChange={e => setFrom(e.target.value)} className="w-44" />
-        <Input type="date" value={to} onChange={e => setTo(e.target.value)} className="w-44" />
-        <Button variant="secondary" onClick={() => setParams({ search, from, to })}>Filter</Button>
-      </div>
+      <FilterCard
+        title="Invoices Filter"
+        from={from}
+        to={to}
+        onFromChange={setFrom}
+        onToChange={setTo}
+        onApply={() => setParams({ search, from, to })}
+        onReset={() => { setSearch(''); setFrom(monthStart); setTo(today); setParams({ search: '', from: monthStart, to: today }); }}
+        isLoading={isLoading}
+      >
+        <div className="space-y-1">
+          <label className="text-xs font-medium text-[var(--color-text-secondary)]">Search</label>
+          <Input placeholder="Invoice # or Ticket" value={search} onChange={e => setSearch(e.target.value)} className="w-48 h-10" />
+        </div>
+      </FilterCard>
       <DataTable data={data} columns={columns} isLoading={isLoading} />
     </div>
   );

@@ -12,6 +12,7 @@ import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
 import { PageSpinner } from '@/components/ui/Spinner';
 import { Download, Search, TrendingUp, BarChart2, Calendar } from 'lucide-react';
+import { FilterCard } from '@/components/ui/FilterCard';
 import dayjs from 'dayjs';
 
 type ReportRow = SuperAdminRevenueReport['payments'][number];
@@ -172,7 +173,21 @@ export default function RevenueReportsPage() {
       </div>
 
       {/* Filter Bar */}
-      <div className="flex flex-wrap gap-3 items-end rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4 shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
+      <FilterCard
+        title="Filter Revenue"
+        from={from}
+        to={to}
+        onFromChange={setFrom}
+        onToChange={setTo}
+        onApply={() => setParams({ tenantId, plan, from, to })}
+        onReset={() => {
+          setTenantId('');
+          setPlan('');
+          setFrom(monthStart);
+          setTo(today);
+          setParams({ tenantId: '', plan: '', from: monthStart, to: today });
+        }}
+      >
         <Select
           label="Tenant"
           options={tenantOptions}
@@ -192,45 +207,7 @@ export default function RevenueReportsPage() {
           onChange={e => setPlan(e.target.value)}
           className="w-40"
         />
-        <div className="flex flex-col gap-1.5">
-          <span className="text-[10px] font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">From</span>
-          <Input 
-            type="date" 
-            value={from} 
-            onChange={e => {
-              const val = e.target.value;
-              setFrom(val);
-              if (to && val > to) {
-                setTo(val);
-              }
-            }} 
-            max={to || undefined} 
-            className="w-44"
-          />
-        </div>
-        <div className="flex flex-col gap-1.5">
-          <span className="text-[10px] font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">To</span>
-          <Input 
-            type="date" 
-            value={to} 
-            onChange={e => {
-              const val = e.target.value;
-              setTo(val);
-              if (from && val < from) {
-                setFrom(val);
-              }
-            }} 
-            min={from || undefined} 
-            className="w-44"
-          />
-        </div>
-        <div className="flex flex-col gap-1.5">
-          <span className="text-[10px] font-semibold uppercase tracking-wide text-[var(--color-text-muted)] invisible">_</span>
-          <Button variant="secondary" onClick={() => setParams({ tenantId, plan, from, to })}>
-            <Search size={14} /> Apply
-          </Button>
-        </div>
-      </div>
+      </FilterCard>
 
       {isLoading ? <PageSpinner /> : (
         <>

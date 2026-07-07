@@ -17,6 +17,7 @@ import { Select } from '@/components/ui/Select';
 import { Modal } from '@/components/ui/Modal';
 import { Textarea } from '@/components/ui/Textarea';
 import { TicketStatusBadge } from '@/components/ui/Badge';
+import { FilterCard } from '@/components/ui/FilterCard';
 import dayjs from 'dayjs';
 
 const STATUS_OPTIONS = [
@@ -155,45 +156,20 @@ export default function TicketsPage() {
         </Button>
       </div>
 
-      <div className="flex flex-wrap gap-3 mb-4 items-end rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4 shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
-        <div className="flex flex-col gap-1.5">
-          <span className="text-[10px] font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">Status</span>
-          <Select options={STATUS_OPTIONS} value={status} onChange={e => setStatus(e.target.value)} className="w-48" />
+      <FilterCard
+        title="Tickets Filter"
+        from={from}
+        to={to}
+        onFromChange={val => setFrom(val)}
+        onToChange={val => setTo(val)}
+        onApply={() => { setPage(1); setParams({ status, from, to }); }}
+        onReset={() => { setStatus(''); setFrom(''); setTo(''); setParams({}); setPage(1); }}
+      >
+        <div className="space-y-1">
+          <label className="text-xs font-medium text-[var(--color-text-secondary)]">Status</label>
+          <Select options={STATUS_OPTIONS} value={status} onChange={e => setStatus(e.target.value)} className="w-48 h-10" />
         </div>
-        <div className="flex flex-col gap-1.5">
-          <span className="text-[10px] font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">From</span>
-          <Input
-            type="date"
-            value={from}
-            onChange={e => {
-              const val = e.target.value;
-              setFrom(val);
-              if (to && val > to) {
-                setTo(val);
-              }
-            }}
-            max={to || undefined}
-            className="w-40"
-          />
-        </div>
-        <div className="flex flex-col gap-1.5">
-          <span className="text-[10px] font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">To</span>
-          <Input
-            type="date"
-            value={to}
-            onChange={e => {
-              const val = e.target.value;
-              setTo(val);
-              if (from && val < from) {
-                setFrom(val);
-              }
-            }}
-            min={from || undefined}
-            className="w-40"
-          />
-        </div>
-        <Button variant="secondary" onClick={() => { setPage(1); setParams({ status, from, to }); }}>Filter</Button>
-      </div>
+      </FilterCard>
 
       <DataTable data={data} columns={columns} isLoading={isLoading} />
 

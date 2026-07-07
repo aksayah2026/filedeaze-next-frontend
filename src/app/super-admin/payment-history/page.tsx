@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { JSX, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import api from '@/lib/axios';
@@ -12,6 +12,7 @@ import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
 import { Modal } from '@/components/ui/Modal';
 import { Download, Search, FileText, Eye } from 'lucide-react';
+import { FilterCard } from '@/components/ui/FilterCard';
 import dayjs from 'dayjs';
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
@@ -347,18 +348,40 @@ export default function PaymentHistoryPage() {
       ) : null}
 
       {/* Filters */}
-      <div className="flex flex-wrap gap-3 items-end rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4 shadow-sm">
-        <div className="flex-1 min-w-[160px] max-w-xs">
-          <Input
-            placeholder="Search tenant name..."
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            onKeyDown={e => { if (e.key === 'Enter') applyFilters(1); }}
-          />
+      <FilterCard
+        title="Search & Filter"
+        from={from}
+        to={to}
+        onFromChange={setFrom}
+        onToChange={setTo}
+        onApply={() => applyFilters(1)}
+        onReset={() => {
+          setSearch('');
+          setTenantId('');
+          setPlan('');
+          setStatus('');
+          setFrom('');
+          setTo(today);
+          setParams({ tenantId: '', status: '', plan: '', search: '', from: '', to: today, page: 1 });
+        }}
+      >
+        <div className="flex-1 min-w-[160px] max-w-xs flex flex-col gap-1.5">
+          <span className="text-[10px] font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">Search</span>
+          <div className="relative">
+            <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--color-text-muted)]" />
+            <input
+              placeholder="Search tenant name..."
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && applyFilters(1)}
+              className="w-full rounded-[10px] border border-[var(--color-border-input)] bg-[var(--color-input-bg)] pl-8 pr-3 py-2 text-sm text-[var(--color-text-primary)] placeholder:text-[var(--color-text-muted)] focus:border-[var(--color-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-ring)] transition-all h-10"
+            />
+          </div>
         </div>
-        <Select options={tenantOptions} value={tenantId} onChange={e => setTenantId(e.target.value)} className="w-52" />
-        <Select options={planOptions} value={plan} onChange={e => setPlan(e.target.value)} className="w-36" />
+        <Select label="Tenant" options={tenantOptions} value={tenantId} onChange={e => setTenantId(e.target.value)} className="w-52" />
+        <Select label="Plan" options={planOptions} value={plan} onChange={e => setPlan(e.target.value)} className="w-36" />
         <Select
+          label="Status"
           options={[
             { value: '', label: 'All Status' },
             { value: 'PAID', label: 'Paid' },
@@ -369,18 +392,7 @@ export default function PaymentHistoryPage() {
           onChange={e => setStatus(e.target.value)}
           className="w-32"
         />
-        <div className="flex flex-col gap-1">
-          <label className="text-xs font-medium text-[var(--color-text-muted)]">From</label>
-          <Input type="date" value={from} onChange={e => setFrom(e.target.value)} max={to || undefined} />
-        </div>
-        <div className="flex flex-col gap-1">
-          <label className="text-xs font-medium text-[var(--color-text-muted)]">To</label>
-          <Input type="date" value={to} onChange={e => setTo(e.target.value)} min={from || undefined} />
-        </div>
-        <Button onClick={() => applyFilters(1)}>
-          <Search size={14} /> Apply
-        </Button>
-      </div>
+      </FilterCard>
 
       {/* Table */}
       {isError ? (

@@ -6,10 +6,8 @@ import { ColumnDef } from '@tanstack/react-table';
 import api from '@/lib/axios';
 import { AuditLog } from '@/types';
 import { DataTable } from '@/components/ui/DataTable';
-import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
-import { Button } from '@/components/ui/Button';
-import { Search } from 'lucide-react';
+import { FilterCard } from '@/components/ui/FilterCard';
 import dayjs from 'dayjs';
 
 export default function AuditLogsPage() {
@@ -34,9 +32,23 @@ export default function AuditLogsPage() {
   return (
     <div>
       <h2 className="text-xl font-semibold text-[var(--color-text-primary)] mb-6">Audit Logs</h2>
-      <div className="flex flex-wrap gap-3 mb-4 items-end rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4 shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
-        <div className="flex flex-col gap-1.5">
-          <span className="text-[10px] font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">Entity</span>
+      <FilterCard
+        title="Audit Logs"
+        from={draftFilters.from}
+        to={draftFilters.to}
+        onFromChange={val => setDraftFilters(p => ({ ...p, from: val }))}
+        onToChange={val => setDraftFilters(p => ({ ...p, to: val }))}
+        onApply={() => { setFilters(draftFilters); setPage(1); }}
+        onReset={() => { 
+          const reset = { entity: '', from: '', to: '' };
+          setDraftFilters(reset); 
+          setFilters(reset); 
+          setPage(1); 
+        }}
+        isLoading={isLoading}
+      >
+        <div className="space-y-1">
+          <label className="text-xs font-medium text-[var(--color-text-secondary)]">Entity</label>
           <Select
             options={[
               { value: '', label: 'All Entities' },
@@ -50,49 +62,10 @@ export default function AuditLogsPage() {
             ]}
             value={draftFilters.entity}
             onChange={e => setDraftFilters(p => ({ ...p, entity: e.target.value }))}
-            className="w-44"
+            className="w-44 h-10"
           />
         </div>
-        <div className="flex flex-col gap-1.5">
-          <span className="text-[10px] font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">From</span>
-          <Input 
-            type="date" 
-            value={draftFilters.from} 
-            onChange={e => {
-              const val = e.target.value;
-              setDraftFilters(p => {
-                const next = { ...p, from: val };
-                if (p.to && val > p.to) {
-                  next.to = val;
-                }
-                return next;
-              });
-            }} 
-            max={draftFilters.to || undefined}
-            className="w-40"
-          />
-        </div>
-        <div className="flex flex-col gap-1.5">
-          <span className="text-[10px] font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">To</span>
-          <Input 
-            type="date" 
-            value={draftFilters.to} 
-            onChange={e => {
-              const val = e.target.value;
-              setDraftFilters(p => {
-                const next = { ...p, to: val };
-                if (p.from && val < p.from) {
-                  next.from = val;
-                }
-                return next;
-              });
-            }} 
-            min={draftFilters.from || undefined}
-            className="w-40"
-          />
-        </div>
-        <Button variant="secondary" onClick={() => { setFilters(draftFilters); setPage(1); }}><Search size={14} /> Filter</Button>
-      </div>
+      </FilterCard>
       <DataTable data={data} columns={columns} isLoading={isLoading} />
     </div>
   );

@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
-import { 
+import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, Cell,
   LineChart, Line
 } from 'recharts';
@@ -43,12 +43,12 @@ export default function TechniciansReportPage() {
   // Calculate KPIs
   const totalTechnicians = data.length;
   const activeToday = Math.floor(totalTechnicians * 0.85); // Mocked
-  
+
   const totalJobs = data.reduce((sum, t) => sum + t.totalTickets, 0);
   const totalPossibleDays = 22; // Mocked working days in a month
   const totalAttendance = data.reduce((sum, t) => sum + t.attendanceDays, 0);
   const attendanceRate = totalTechnicians > 0 ? Math.round((totalAttendance / (totalTechnicians * totalPossibleDays)) * 100) : 0;
-  
+
   const avgRating = totalTechnicians > 0 ? (data.reduce((sum, t) => sum + t.rating, 0) / totalTechnicians).toFixed(1) : '0.0';
   const avgCompletionTime = totalTechnicians > 0 ? '1h 45m' : '0h 0m'; // Mocked
 
@@ -71,18 +71,18 @@ export default function TechniciansReportPage() {
     if (totalTechnicians === 0) return ['No technician data recorded for this period.'];
     const i = [];
     i.push(`Your workforce currently consists of ${totalTechnicians} registered technicians.`);
-    
+
     const topTech = [...data].sort((a, b) => b.totalTickets - a.totalTickets)[0];
     if (topTech && topTech.totalTickets > 0) {
       i.push(`Top performer is ${topTech.name} with ${topTech.totalTickets} completed jobs and a ${topTech.rating.toFixed(1)} star rating.`);
     }
-    
+
     if (attendanceRate > 0) {
       i.push(`Overall team attendance rate is strong at ${Math.min(attendanceRate, 100)}% for the selected period.`);
     }
-    
+
     i.push(`Customer satisfaction remains steady with an average rating of ${avgRating} stars across all completed jobs.`);
-    
+
     return i;
   }, [totalTechnicians, data, attendanceRate, avgRating]);
 
@@ -186,7 +186,7 @@ export default function TechniciansReportPage() {
       </KpiGrid>
 
       {totalTechnicians === 0 && !isLoading ? (
-        <EmptyState title="No Technician Data" description="No technicians found for this period." />
+        <EmptyState message="No Technician Data" description="No technicians found for this period." />
       ) : (
         <>
           {/* Primary Chart */}

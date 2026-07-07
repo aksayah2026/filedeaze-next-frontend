@@ -15,6 +15,7 @@ import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
 import { Modal } from '@/components/ui/Modal';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
+import { FilterCard } from '@/components/ui/FilterCard';
 import dayjs from 'dayjs';
 
 const schema = z.object({
@@ -150,7 +151,17 @@ export default function TenantsPage() {
       </div>
 
       {/* Filter Bar */}
-      <div className="flex flex-wrap gap-3 items-end rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4 shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
+      <FilterCard
+        title="Filter Tenants"
+        hideDateRange
+        onApply={() => setParams({ search, status: statusFilter, plan: planFilter })}
+        onReset={() => {
+          setSearch('');
+          setStatusFilter('');
+          setPlanFilter('');
+          setParams({ search: '', status: '', plan: '' });
+        }}
+      >
         <div className="flex flex-col gap-1.5">
           <span className="text-[10px] font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">Search</span>
           <div className="relative">
@@ -160,19 +171,13 @@ export default function TenantsPage() {
               value={search}
               onChange={e => setSearch(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && setParams({ search, status: statusFilter, plan: planFilter })}
-              className="w-52 rounded-[10px] border border-[var(--color-border-input)] bg-[var(--color-input-bg)] pl-8 pr-3 py-2 text-sm text-[var(--color-text-primary)] placeholder:text-[var(--color-text-muted)] focus:border-[var(--color-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-ring)] transition-all"
+              className="w-52 rounded-[10px] border border-[var(--color-border-input)] bg-[var(--color-input-bg)] pl-8 pr-3 py-2 text-sm text-[var(--color-text-primary)] placeholder:text-[var(--color-text-muted)] focus:border-[var(--color-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-ring)] transition-all h-10"
             />
           </div>
         </div>
         <Select label="Status" options={[{ value: '', label: 'All Status' }, { value: 'ACTIVE', label: 'Active' }, { value: 'SUSPENDED', label: 'Suspended' }, { value: 'EXPIRED', label: 'Expired' }, { value: 'TRIAL', label: 'Trial' }]} value={statusFilter} onChange={e => setStatusFilter(e.target.value)} className="w-36" />
         <Select label="Plan" options={[{ value: '', label: 'All Plans' }, ...plans.map(p => ({ value: p.name, label: p.name }))]} value={planFilter} onChange={e => setPlanFilter(e.target.value)} className="w-40" />
-        <div className="flex flex-col gap-1.5">
-          <span className="text-[10px] font-semibold uppercase tracking-wide text-[var(--color-text-muted)] invisible">_</span>
-          <Button variant="secondary" onClick={() => setParams({ search, status: statusFilter, plan: planFilter })}>
-            <Search size={14} /> Apply
-          </Button>
-        </div>
-      </div>
+      </FilterCard>
 
       {/* Table */}
       <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-sm overflow-hidden">

@@ -12,7 +12,8 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
 import { PaymentStatusBadge } from '@/components/ui/Badge';
-import { CheckCircle, DollarSign, Filter } from 'lucide-react';
+import { FilterCard } from '@/components/ui/FilterCard';
+import { CheckCircle, DollarSign } from 'lucide-react';
 import dayjs from 'dayjs';
 
 export default function PaymentsPage() {
@@ -130,34 +131,31 @@ export default function PaymentsPage() {
       </div>
 
       {/* Filter bar */}
-      <div className="flex flex-wrap items-end gap-3 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4 shadow-sm">
-        <div className="flex items-center gap-1.5 text-xs font-medium uppercase tracking-widest text-[var(--color-text-muted)] self-center mr-1">
-          <Filter size={13} />
-          Filters
+      <FilterCard
+        title="Payments Filter"
+        from={from}
+        to={to}
+        onFromChange={setFrom}
+        onToChange={setTo}
+        onApply={() => setParams({ status, from, to })}
+        onReset={() => { setStatus(''); setFrom(monthStart); setTo(today); setParams({ status: '', from: monthStart, to: today }); }}
+        isLoading={isLoading}
+      >
+        <div className="space-y-1">
+          <label className="text-xs font-medium text-[var(--color-text-secondary)]">Status</label>
+          <Select
+            options={[
+              { value: '', label: 'All Status' },
+              { value: 'PENDING', label: 'Pending' },
+              { value: 'COLLECTED', label: 'Collected' },
+              { value: 'VERIFIED', label: 'Verified' },
+            ]}
+            value={status}
+            onChange={e => setStatus(e.target.value)}
+            className="w-48 h-10"
+          />
         </div>
-        <Select
-          options={[
-            { value: '', label: 'All Status' },
-            { value: 'PENDING', label: 'Pending' },
-            { value: 'COLLECTED', label: 'Collected' },
-            { value: 'VERIFIED', label: 'Verified' },
-          ]}
-          value={status}
-          onChange={e => setStatus(e.target.value)}
-          className="w-40"
-        />
-        <div className="flex flex-col gap-1">
-          <label className="text-xs font-medium text-[var(--color-text-muted)]">From</label>
-          <Input type="date" value={from} onChange={e => setFrom(e.target.value)} className="w-44" />
-        </div>
-        <div className="flex flex-col gap-1">
-          <label className="text-xs font-medium text-[var(--color-text-muted)]">To</label>
-          <Input type="date" value={to} onChange={e => setTo(e.target.value)} className="w-44" />
-        </div>
-        <Button variant="secondary" onClick={() => setParams({ status, from, to })}>
-          Apply
-        </Button>
-      </div>
+      </FilterCard>
 
       {/* Table */}
       <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-sm overflow-hidden">

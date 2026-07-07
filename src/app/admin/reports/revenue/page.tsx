@@ -224,7 +224,7 @@ export default function RevenueReportPage() {
       </KpiGrid>
 
       {payments.length === 0 && !isLoading ? (
-        <EmptyState title="No Revenue Data" description="Try adjusting your date filters to see data." />
+        <EmptyState message="No Revenue Data" description="Try adjusting your date filters to see data." />
       ) : (
         <>
           {/* Primary Chart */}
