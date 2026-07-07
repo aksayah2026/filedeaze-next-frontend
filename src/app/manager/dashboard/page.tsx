@@ -1,7 +1,8 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
-import { Ticket, Users, DollarSign, ClipboardCheck, ClipboardList, Clock, AlertCircle, CheckCircle } from 'lucide-react';
+import Link from 'next/link';
+import { Ticket, Users, DollarSign, ClipboardCheck, ClipboardList, Clock, AlertCircle, AlertTriangle, CheckCircle, CalendarCheck } from 'lucide-react';
 import api from '@/lib/axios';
 import { ManagerDashboard } from '@/types';
 import { StatsCard } from '@/components/ui/StatsCard';
@@ -113,6 +114,51 @@ export default function ManagerDashboardPage() {
             subtitle="Unpaid invoices total"
           />
         </div>
+
+          {/* Ticket Assignment Section */}
+          <div>
+            <h3 className="text-xs font-bold uppercase tracking-wider text-[var(--color-text-muted)] mb-3">Ticket Assignment</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              <StatsCard
+                title="Pending Tickets"
+                value={data.newTickets}
+                icon={ClipboardList}
+                iconBg="bg-[var(--color-surface-elevated)]"
+                iconColor="text-violet-650"
+                accentColor="bg-violet-500"
+                subtitle="Awaiting assignment"
+              />
+              <StatsCard
+                title="Assigned Tickets"
+                value={data.assignedTickets}
+                icon={ClipboardCheck}
+                iconBg="bg-[var(--color-surface-elevated)]"
+                iconColor="text-blue-650"
+                accentColor="bg-blue-500"
+                subtitle="Assigned to technicians"
+              />
+              <Link href="/manager/tickets?expired=true" className="block">
+                <StatsCard
+                  title="Expired Assignments"
+                  value={data.expiredAssignments}
+                  icon={AlertTriangle}
+                  iconBg="bg-rose-50"
+                  iconColor="text-rose-655"
+                  accentColor="bg-rose-500"
+                  subtitle="Waiting for reassignment"
+                />
+              </Link>
+              <StatsCard
+                title="Completed Today"
+                value={data.completedToday}
+                icon={CalendarCheck}
+                iconBg="bg-[var(--color-surface-elevated)]"
+                iconColor="text-emerald-600"
+                accentColor="bg-emerald-500"
+                subtitle="Jobs finished today"
+              />
+            </div>
+          </div>
 
           {/* Plan Usage Section */}
           <div className="relative overflow-hidden bg-[var(--color-surface)] rounded-xl p-6 border border-[var(--color-border)] shadow-[0_2px_8px_rgba(0,0,0,0.04)] dark:shadow-none max-w-xl transition-colors duration-250">

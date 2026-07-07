@@ -1,12 +1,12 @@
 'use client';
 
 import { useState } from 'react';
-import { usePathname } from 'next/navigation';
+import { usePathname, useSearchParams } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
-import { Eye, Phone, Plus } from 'lucide-react';
+import { AlertTriangle, Eye, Phone, Plus } from 'lucide-react';
 import Link from 'next/link';
 import api from '@/lib/axios';
 import { Ticket, TicketStatus, Customer, ServiceCategory, ServiceSubCategory } from '@/types';
@@ -50,7 +50,10 @@ export default function TicketsPage() {
   const [to, setTo] = useState('');
   const pathname = usePathname();
   const prefix = pathname.startsWith('/admin/') ? 'admin' : 'manager';
-  const [params, setParams] = useState<Record<string, string>>({});
+  const searchParams = useSearchParams();
+  const initialExpiredOnly = searchParams.get('expired') === 'true';
+  const [expiredOnly] = useState(initialExpiredOnly);
+  const [params, setParams] = useState<Record<string, string>>(initialExpiredOnly ? { expiredOnly: 'true' } : {});
   const [page, setPage] = useState(1);
   const [showCreate, setShowCreate] = useState(false);
   const [showNewCustomer, setShowNewCustomer] = useState(false);
@@ -154,6 +157,13 @@ export default function TicketsPage() {
           <Phone size={15} /> New Ticket (Call)
         </Button>
       </div>
+
+      {expiredOnly && (
+        <div className="flex items-center gap-2 rounded-lg bg-rose-50 border border-rose-100 px-3 py-2 mb-4 text-sm text-rose-700">
+          <AlertTriangle size={14} className="shrink-0" />
+          Showing tickets whose assignment expired and are still waiting for reassignment.
+        </div>
+      )}
 
       <div className="flex flex-wrap gap-3 mb-4 items-end rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4 shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
         <div className="flex flex-col gap-1.5">

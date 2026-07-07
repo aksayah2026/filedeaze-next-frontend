@@ -1,14 +1,21 @@
 'use client';
 
+import { useEffect, useRef, useState } from 'react';
 import { LogOut, Menu, Bell, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter, usePathname } from 'next/navigation';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '@/lib/axios';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { RefreshButton } from '@/components/ui/RefreshButton';
 import { ThemeToggle } from '@/components/common/ThemeToggle';
 import { getPortalPrefix } from '@/lib/auth-helper';
+import { AppNotification } from '@/types';
+import dayjs from 'dayjs';
+import relativeTime from 'dayjs/plugin/relativeTime';
+
+dayjs.extend(relativeTime);
 
 interface TopbarProps {
   title?: string;
@@ -84,6 +91,43 @@ export function Topbar({ title, onMenuClick, isCollapsed, onToggleCollapse }: To
   const { user, clearAuth } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
+  const qc = useQueryClient();
+  const [showNotifications, setShowNotifications] = useState(false);
+  const notifRef = useRef<HTMLDivElement>(null);
+  const ticketsPrefix = pathname.startsWith('/admin/') ? 'admin' : 'manager';
+
+  const { data: notifications = [] } = useQuery<AppNotification[]>({
+    queryKey: ['notifications'],
+    queryFn: async () => (await api.get('/mobile/notifications')).data.data,
+    refetchInterval: 30_000,
+  });
+  const unreadCount = notifications.filter(n => !n.read).length;
+
+  const markReadMutation = useMutation({
+    mutationFn: (id: string) => api.patch(`/mobile/notifications/${id}/read`),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['notifications'] }),
+  });
+  const markAllReadMutation = useMutation({
+    mutationFn: () => api.patch('/mobile/notifications/read-all'),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['notifications'] }),
+  });
+
+  useEffect(() => {
+    if (!showNotifications) return;
+    const onClickOutside = (e: MouseEvent) => {
+      if (notifRef.current && !notifRef.current.contains(e.target as Node)) setShowNotifications(false);
+    };
+    document.addEventListener('mousedown', onClickOutside);
+    return () => document.removeEventListener('mousedown', onClickOutside);
+  }, [showNotifications]);
+
+  const handleNotificationClick = (n: AppNotification) => {
+    if (!n.read) markReadMutation.mutate(n.id);
+    if (n.ticketId) {
+      router.push(`/${ticketsPrefix}/tickets/${n.ticketId}`);
+      setShowNotifications(false);
+    }
+  };
 
   const logout = async () => {
     const role = user?.role;
@@ -163,10 +207,56 @@ export function Topbar({ title, onMenuClick, isCollapsed, onToggleCollapse }: To
         <RefreshButton />
 
         {/* Notification Bell */}
-        <button className="flex h-8 w-8 items-center justify-center rounded-lg text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-text-primary)] transition-colors relative">
-          <Bell size={16} />
-          <span className="absolute top-1.5 right-1.5 h-1.5 w-1.5 rounded-full bg-red-500" />
-        </button>
+        <div className="relative" ref={notifRef}>
+          <button
+            onClick={() => setShowNotifications(v => !v)}
+            className="flex h-8 w-8 items-center justify-center rounded-lg text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-text-primary)] transition-colors relative"
+            aria-label="Notifications"
+          >
+            <Bell size={16} />
+            {unreadCount > 0 && (
+              <span className="absolute top-1 right-1 min-w-[14px] h-[14px] px-0.5 rounded-full bg-red-500 text-white text-[9px] font-bold flex items-center justify-center leading-none">
+                {unreadCount > 9 ? '9+' : unreadCount}
+              </span>
+            )}
+          </button>
+
+          {showNotifications && (
+            <div className="absolute right-0 mt-2 w-80 max-h-96 overflow-y-auto rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-lg z-20">
+              <div className="flex items-center justify-between px-3 py-2.5 border-b border-[var(--color-border)]">
+                <span className="text-xs font-semibold text-[var(--color-text-primary)]">Notifications</span>
+                {unreadCount > 0 && (
+                  <button
+                    onClick={() => markAllReadMutation.mutate()}
+                    className="text-[11px] font-medium text-[var(--color-primary)] hover:underline"
+                  >
+                    Mark all as read
+                  </button>
+                )}
+              </div>
+              {notifications.length === 0 ? (
+                <p className="px-3 py-6 text-center text-xs text-[var(--color-text-muted)]">No notifications yet</p>
+              ) : (
+                <div className="divide-y divide-[var(--color-border)]">
+                  {notifications.slice(0, 20).map(n => (
+                    <button
+                      key={n.id}
+                      onClick={() => handleNotificationClick(n)}
+                      className={cn(
+                        'w-full text-left px-3 py-2.5 hover:bg-[var(--color-surface-hover)] transition-colors',
+                        !n.read && 'bg-[var(--color-primary-light)]/40',
+                      )}
+                    >
+                      <p className="text-xs font-semibold text-[var(--color-text-primary)]">{n.title}</p>
+                      <p className="text-xs text-[var(--color-text-secondary)] mt-0.5 line-clamp-2">{n.body}</p>
+                      <p className="text-[10px] text-[var(--color-text-muted)] mt-1">{dayjs(n.createdAt).fromNow()}</p>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
 
         {/* Divider */}
         <div className="h-5 w-px bg-[var(--color-border)] mx-1" />

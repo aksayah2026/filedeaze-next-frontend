@@ -7,15 +7,15 @@ import { TechnicianReportRow } from '@/types';
 import { DataTable } from '@/components/ui/DataTable';
 import { Star } from 'lucide-react';
 
-export default function TechniciansReportPage() {
+export default function ManagerTechniciansReportPage() {
   const { data = [], isLoading } = useQuery<TechnicianReportRow[]>({
-    queryKey: ['technicians-report'],
+    queryKey: ['manager-technicians-report'],
     queryFn: async () => {
       const raw: {
         id: string; name: string; rating: number;
         acceptanceRate: number; averageResponseMinutes: number | null;
         _count: { tickets: number; attendance: number };
-      }[] = (await api.get('/web/admin/reports/technicians')).data.data;
+      }[] = (await api.get('/web/manager/reports/technicians')).data.data;
       return raw.map(t => ({
         id: t.id,
         name: t.name,
