@@ -251,7 +251,7 @@ export default function TechniciansReportPage() {
             <div className="px-6 py-5 border-b border-[var(--color-border)]">
               <h3 className="text-base font-semibold text-[var(--color-text-primary)]">Detailed Performance</h3>
             </div>
-            <DataTable data={data} columns={columns} isLoading={false} />
+            <DataTable<TechnicianReportRow> data={data} columns={columns} isLoading={false} />
           </div>
         </>
       )}

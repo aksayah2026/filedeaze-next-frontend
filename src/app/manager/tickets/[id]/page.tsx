@@ -149,7 +149,14 @@ export default function TicketDetailPage() {
 
       <div className="flex items-start justify-between">
         <div>
-          <p className="text-sm text-[var(--color-text-muted)] font-mono">{ticket.ticketNumber}</p>
+          <div className="flex items-center gap-2">
+            <p className="text-sm text-[var(--color-text-muted)] font-mono">{ticket.ticketNumber}</p>
+            {!!ticket.assignmentCount && ticket.assignmentCount > 1 && (
+              <span className="inline-flex items-center rounded-full bg-amber-100 text-amber-700 px-2 py-0.5 text-[11px] font-medium">
+                Reassigned {ticket.assignmentCount} times
+              </span>
+            )}
+          </div>
           <h2 className="text-xl font-semibold text-[var(--color-text-primary)] mt-0.5">{ticket.customer?.name}</h2>
           <p className="text-sm text-[var(--color-text-muted)]">{ticket.customer?.phone}</p>
         </div>
@@ -233,12 +240,47 @@ export default function TicketDetailPage() {
               <div className="pb-3">
                 <TicketStatusBadge status={log.status} />
                 <p className="text-xs text-[var(--color-text-muted)] mt-0.5">{dayjs(log.changedAt).format('DD MMM YYYY, HH:mm')}</p>
-                {log.notes && <p className="text-xs text-[var(--color-text-muted)] mt-0.5">{log.notes}</p>}
+                {log.notes && <p className="text-xs text-[var(--color-text-muted)] mt-0.5 whitespace-pre-line">{log.notes}</p>}
               </div>
             </div>
           ))}
         </div>
       </div>
+
+      {!!ticket.assignmentHistory?.length && (
+        <div className="bg-[var(--color-surface)] rounded-xl p-4 border border-[var(--color-border)] shadow-sm">
+          <h3 className="font-medium text-[var(--color-text-secondary)] mb-3">Assignment History</h3>
+          <div className="space-y-3">
+            {ticket.assignmentHistory.map((entry, i) => (
+              <div key={entry.id} className="flex gap-3">
+                <div className="flex flex-col items-center">
+                  <div className={`h-2.5 w-2.5 rounded-full mt-1 ${i === (ticket.assignmentHistory!.length - 1) ? 'bg-blue-500' : 'bg-[var(--color-border-strong)]'}`} />
+                  {i < ticket.assignmentHistory!.length - 1 && <div className="flex-1 w-px bg-[var(--color-border)] mt-1" />}
+                </div>
+                <div className="pb-3">
+                  <p className="text-sm text-[var(--color-text-secondary)]">
+                    Assigned to <span className="font-medium">{entry.technician.name}</span>
+                    {entry.assigner && <span className="text-[var(--color-text-muted)]"> by {entry.assigner.name}</span>}
+                  </p>
+                  <p className="text-xs text-[var(--color-text-muted)] mt-0.5">{dayjs(entry.assignedAt).format('DD MMM YYYY, HH:mm')}</p>
+                  <span
+                    className={`inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium mt-1 ${
+                      entry.status === 'ACCEPTED' || entry.status === 'COMPLETED'
+                        ? 'bg-emerald-100 text-emerald-700'
+                        : entry.status === 'REJECTED' || entry.status === 'EXPIRED'
+                        ? 'bg-rose-100 text-rose-700'
+                        : 'bg-amber-100 text-amber-700'
+                    }`}
+                  >
+                    {entry.status}
+                  </span>
+                  {entry.reason && <p className="text-xs text-[var(--color-text-muted)] mt-0.5">{entry.reason}</p>}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {ticket.images && ticket.images.some(i => i.type === 'RAISED') && (
         <div className="bg-[var(--color-surface)] rounded-xl p-4 border border-[var(--color-border)] shadow-sm">

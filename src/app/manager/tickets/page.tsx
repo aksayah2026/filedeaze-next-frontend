@@ -1,12 +1,12 @@
 'use client';
 
 import { useState } from 'react';
-import { usePathname } from 'next/navigation';
+import { usePathname, useSearchParams } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
-import { Eye, Phone, Plus } from 'lucide-react';
+import { AlertTriangle, Eye, Phone, Plus } from 'lucide-react';
 import Link from 'next/link';
 import api from '@/lib/axios';
 import { Ticket, TicketStatus, Customer, ServiceCategory, ServiceSubCategory } from '@/types';
@@ -51,7 +51,10 @@ export default function TicketsPage() {
   const [to, setTo] = useState('');
   const pathname = usePathname();
   const prefix = pathname.startsWith('/admin/') ? 'admin' : 'manager';
-  const [params, setParams] = useState<Record<string, string>>({});
+  const searchParams = useSearchParams();
+  const initialExpiredOnly = searchParams.get('expired') === 'true';
+  const [expiredOnly] = useState(initialExpiredOnly);
+  const [params, setParams] = useState<Record<string, string>>(initialExpiredOnly ? { expiredOnly: 'true' } : {});
   const [page, setPage] = useState(1);
   const [showCreate, setShowCreate] = useState(false);
   const [showNewCustomer, setShowNewCustomer] = useState(false);

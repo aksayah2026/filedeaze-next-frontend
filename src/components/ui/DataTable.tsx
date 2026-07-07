@@ -73,14 +73,14 @@ export function DataTable<T>({ data, columns, isLoading }: DataTableProps<T>) {
             ))}
           </thead>
           <tbody className="divide-y divide-[var(--color-border)] bg-[var(--color-surface)]">
-            {table.getRowModel().rows.length === 0 ? (
+            {table.getRowModel()?.rows?.length === 0 ? (
               <tr>
                 <td colSpan={columns.length}>
                   <EmptyState />
                 </td>
               </tr>
             ) : (
-              table.getRowModel().rows.map((row, idx) => (
+              table.getRowModel()?.rows?.map((row, idx) => (
                 <tr
                   key={row.id}
                   className={cn(

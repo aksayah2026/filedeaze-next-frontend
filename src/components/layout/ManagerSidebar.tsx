@@ -11,6 +11,7 @@ import {
     WalletIcon,
     HandCoinsIcon,
     ClipboardIcon,
+    ChartBarIcon,
     ZapIcon,
 } from '@animateicons/react/lucide';
 import { cn } from '@/lib/utils';
@@ -33,6 +34,10 @@ const operationsNav: NavItemDef[] = [
 const catalogNav: NavItemDef[] = [
     { href: '/manager/service-categories', label: 'Categories', icon: SparklesIcon },
     { href: '/manager/service-sub-categories', label: 'Sub Categories', icon: SparklesIcon },
+];
+
+const reportsNav: NavItemDef[] = [
+    { href: '/manager/reports/technicians', label: 'Technicians', icon: ChartBarIcon },
 ];
 
 const financeNav: NavItemDef[] = [
@@ -109,6 +114,11 @@ export function ManagerSidebar({ onClose, isCollapsed = false }: ManagerSidebarP
 
                 {renderSectionHeader("Service Catalog", true)}
                 {catalogNav.map(item => (
+                    <SidebarNavItem key={item.href} item={item} isActive={isActive(item.href)} isCollapsed={isCollapsed} onClose={onClose} />
+                ))}
+
+                {renderSectionHeader("Reports", true)}
+                {reportsNav.map(item => (
                     <SidebarNavItem key={item.href} item={item} isActive={isActive(item.href)} isCollapsed={isCollapsed} onClose={onClose} />
                 ))}
 

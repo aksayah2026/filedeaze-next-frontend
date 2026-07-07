@@ -19,6 +19,17 @@ export interface AuthTokens {
   refreshToken: string;
 }
 
+export interface AppNotification {
+  id: string;
+  title: string;
+  body: string;
+  type: string;
+  ticketId?: string;
+  role?: string;
+  read: boolean;
+  createdAt: string;
+}
+
 export interface LoginResponse {
   user: User;
   accessToken: string;
@@ -338,6 +349,21 @@ export interface TicketImage {
   createdAt: string;
 }
 
+export type AssignmentHistoryStatus = 'ASSIGNED' | 'ACCEPTED' | 'REJECTED' | 'EXPIRED' | 'COMPLETED';
+
+export interface AssignmentHistoryEntry {
+  id: string;
+  technician: { name: string };
+  assigner?: { name: string };
+  assignedAt: string;
+  acceptedAt?: string;
+  rejectedAt?: string;
+  expiredAt?: string;
+  completedAt?: string;
+  status: AssignmentHistoryStatus;
+  reason?: string;
+}
+
 export interface Ticket {
   id: string;
   ticketNumber: string;
@@ -352,6 +378,8 @@ export interface Ticket {
   scheduledAt?: string;
   notes?: string;
   statusLogs: StatusLog[];
+  assignmentCount?: number;
+  assignmentHistory?: AssignmentHistoryEntry[];
   images?: TicketImage[];
   payment?: Payment;
   invoice?: Invoice;
@@ -482,6 +510,8 @@ export interface ManagerDashboard {
   totalTechnicians: number;
   pendingPayments: number;
   planUsage: PlanUsage | null;
+  expiredAssignments: number;
+  completedToday: number;
 }
 
 // ─── Settings ─────────────────────────────────────────────────────────────────
@@ -549,6 +579,8 @@ export interface TechnicianReportRow {
   totalTickets: number;
   attendanceDays: number;
   rating: number;
+  acceptanceRate: number;
+  averageResponseMinutes: number | null;
 }
 
 export interface AuditLog {
