@@ -28,16 +28,28 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const toggleTheme = () => {
-    setTheme(prev => {
-      const newTheme = prev === 'light' ? 'dark' : 'light';
-      localStorage.setItem('fieldeaze-theme', newTheme);
-      if (newTheme === 'dark') {
-        document.documentElement.classList.add('dark');
-      } else {
-        document.documentElement.classList.remove('dark');
-      }
-      return newTheme;
-    });
+    const doSwap = () => {
+      setTheme(prev => {
+        const newTheme = prev === 'light' ? 'dark' : 'light';
+        localStorage.setItem('fieldeaze-theme', newTheme);
+        if (newTheme === 'dark') {
+          document.documentElement.classList.add('dark');
+        } else {
+          document.documentElement.classList.remove('dark');
+        }
+        return newTheme;
+      });
+    };
+
+    // @ts-ignore
+    if (document.startViewTransition) {
+      // @ts-ignore
+      document.startViewTransition(() => {
+        doSwap();
+      });
+    } else {
+      doSwap();
+    }
   };
 
   return (

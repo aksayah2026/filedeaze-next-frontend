@@ -159,10 +159,10 @@
 
   /* ── Shadows (atmospheric depth, not black boxes) ── */
   --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.3);
-  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255,255,255,0.04);
-  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255,255,255,0.04);
-  --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255,255,255,0.05);
-  --shadow-xl: 0 20px 60px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255,255,255,0.06);
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.04);
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.04);
+  --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.05);
+  --shadow-xl: 0 20px 60px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255, 255, 255, 0.06);
 }
 
 /* ── Dark mode role overrides ── */
@@ -350,6 +350,7 @@ body {
     opacity: 0;
     transform: translateY(14px) scale(0.98);
   }
+
   to {
     opacity: 1;
     transform: translateY(0) scale(1);
@@ -358,40 +359,85 @@ body {
 
 /* Progress bar fill animation */
 @keyframes fe-grow-x {
-  from { width: 0%; }
+  from {
+    width: 0%;
+  }
 }
 
 /* Gentle floating blob */
 @keyframes fe-float {
-  0%, 100% { transform: translateY(0px) scale(1); }
-  50%       { transform: translateY(-6px) scale(1.02); }
+
+  0%,
+  100% {
+    transform: translateY(0px) scale(1);
+  }
+
+  50% {
+    transform: translateY(-6px) scale(1.02);
+  }
 }
 
 /* Icon bounce on load */
 @keyframes fe-bounce-in {
-  0%   { transform: scale(0.6); opacity: 0; }
-  60%  { transform: scale(1.12); opacity: 1; }
-  80%  { transform: scale(0.95); }
-  100% { transform: scale(1); }
+  0% {
+    transform: scale(0.6);
+    opacity: 0;
+  }
+
+  60% {
+    transform: scale(1.12);
+    opacity: 1;
+  }
+
+  80% {
+    transform: scale(0.95);
+  }
+
+  100% {
+    transform: scale(1);
+  }
 }
 
 /* Stagger utilities (1–5 children) */
-.stagger-1 { animation: fe-stagger-in 0.35s cubic-bezier(0.22,1,.36,1) both; animation-delay: 0.04s; }
-.stagger-2 { animation: fe-stagger-in 0.35s cubic-bezier(0.22,1,.36,1) both; animation-delay: 0.09s; }
-.stagger-3 { animation: fe-stagger-in 0.35s cubic-bezier(0.22,1,.36,1) both; animation-delay: 0.14s; }
-.stagger-4 { animation: fe-stagger-in 0.35s cubic-bezier(0.22,1,.36,1) both; animation-delay: 0.19s; }
-.stagger-5 { animation: fe-stagger-in 0.35s cubic-bezier(0.22,1,.36,1) both; animation-delay: 0.24s; }
-.stagger-6 { animation: fe-stagger-in 0.35s cubic-bezier(0.22,1,.36,1) both; animation-delay: 0.29s; }
+.stagger-1 {
+  animation: fe-stagger-in 0.35s cubic-bezier(0.22, 1, .36, 1) both;
+  animation-delay: 0.04s;
+}
+
+.stagger-2 {
+  animation: fe-stagger-in 0.35s cubic-bezier(0.22, 1, .36, 1) both;
+  animation-delay: 0.09s;
+}
+
+.stagger-3 {
+  animation: fe-stagger-in 0.35s cubic-bezier(0.22, 1, .36, 1) both;
+  animation-delay: 0.14s;
+}
+
+.stagger-4 {
+  animation: fe-stagger-in 0.35s cubic-bezier(0.22, 1, .36, 1) both;
+  animation-delay: 0.19s;
+}
+
+.stagger-5 {
+  animation: fe-stagger-in 0.35s cubic-bezier(0.22, 1, .36, 1) both;
+  animation-delay: 0.24s;
+}
+
+.stagger-6 {
+  animation: fe-stagger-in 0.35s cubic-bezier(0.22, 1, .36, 1) both;
+  animation-delay: 0.29s;
+}
 
 /* Animated progress bar fill */
 .fe-progress-fill {
-  animation: fe-grow-x 0.7s cubic-bezier(0.22,1,.36,1) both;
+  animation: fe-grow-x 0.7s cubic-bezier(0.22, 1, .36, 1) both;
   animation-delay: 0.3s;
 }
 
 /* Icon bounce */
 .fe-icon-bounce {
-  animation: fe-bounce-in 0.5s cubic-bezier(0.22,1,.36,1) both;
+  animation: fe-bounce-in 0.5s cubic-bezier(0.22, 1, .36, 1) both;
 }
 
 /* KPI Card base */
@@ -402,9 +448,9 @@ body {
   background: var(--color-surface);
   border: 1px solid var(--color-border);
   box-shadow: var(--shadow-sm);
-  transition: transform 0.2s cubic-bezier(0.22,1,.36,1),
-              box-shadow 0.2s cubic-bezier(0.22,1,.36,1),
-              border-color 0.2s ease;
+  transition: transform 0.2s cubic-bezier(0.22, 1, .36, 1),
+    box-shadow 0.2s cubic-bezier(0.22, 1, .36, 1),
+    border-color 0.2s ease;
 }
 
 .dashboard-kpi-card:hover {
@@ -413,7 +459,7 @@ body {
 }
 
 .dark .dashboard-kpi-card:hover {
-  border-color: rgba(255,255,255,0.12);
+  border-color: rgba(255, 255, 255, 0.12);
 }
 
 /* Quick action card */
@@ -424,9 +470,9 @@ body {
   background: var(--color-surface);
   border: 1px solid var(--color-border);
   box-shadow: var(--shadow-sm);
-  transition: transform 0.2s cubic-bezier(0.22,1,.36,1),
-              box-shadow 0.2s cubic-bezier(0.22,1,.36,1),
-              background 0.2s ease;
+  transition: transform 0.2s cubic-bezier(0.22, 1, .36, 1),
+    box-shadow 0.2s cubic-bezier(0.22, 1, .36, 1),
+    background 0.2s ease;
   cursor: pointer;
 }
 
@@ -442,11 +488,9 @@ body {
   inset: 0;
   opacity: 0;
   transition: opacity 0.2s ease;
-  background: linear-gradient(
-    135deg,
-    color-mix(in srgb, var(--color-primary) 6%, transparent) 0%,
-    transparent 60%
-  );
+  background: linear-gradient(135deg,
+      color-mix(in srgb, var(--color-primary) 6%, transparent) 0%,
+      transparent 60%);
   pointer-events: none;
 }
 
@@ -532,7 +576,7 @@ body {
 }
 
 /* Ant Design Table Background Override */
-.ant-table-wrapper .ant-table-tbody > tr.ant-table-row > td.ant-table-cell {
+.ant-table-wrapper .ant-table-tbody>tr.ant-table-row>td.ant-table-cell {
   background-color: var(--color-surface);
 }
 
@@ -543,10 +587,21 @@ body {
 
 /* ── Keyframes ─────────────────────────────────────────── */
 @keyframes sidebar-icon-pop {
-  0%   { transform: scale(1) rotate(0deg); }
-  40%  { transform: scale(1.18) rotate(4deg); }
-  70%  { transform: scale(0.94) rotate(-1deg); }
-  100% { transform: scale(1) rotate(0deg); }
+  0% {
+    transform: scale(1) rotate(0deg);
+  }
+
+  40% {
+    transform: scale(1.18) rotate(4deg);
+  }
+
+  70% {
+    transform: scale(0.94) rotate(-1deg);
+  }
+
+  100% {
+    transform: scale(1) rotate(0deg);
+  }
 }
 
 @keyframes sidebar-indicator-in {
@@ -554,6 +609,7 @@ body {
     opacity: 0;
     transform: scaleY(0) translateX(-2px);
   }
+
   to {
     opacity: 1;
     transform: scaleY(1) translateX(0);
@@ -565,6 +621,7 @@ body {
     opacity: 0;
     transform: translateX(-6px) scale(0.94);
   }
+
   to {
     opacity: 1;
     transform: translateX(0) scale(1);
@@ -576,6 +633,7 @@ body {
     opacity: 0;
     transform: scaleX(0.88) scaleY(0.7);
   }
+
   to {
     opacity: 1;
     transform: scaleX(1) scaleY(1);
@@ -597,10 +655,10 @@ body {
   color: var(--color-text-secondary);
   /* Base transition — governs ALL properties */
   transition:
-    color 200ms cubic-bezier(.22,1,.36,1),
-    background-color 210ms cubic-bezier(.22,1,.36,1),
-    transform 200ms cubic-bezier(.22,1,.36,1),
-    box-shadow 200ms cubic-bezier(.22,1,.36,1);
+    color 200ms cubic-bezier(.22, 1, .36, 1),
+    background-color 210ms cubic-bezier(.22, 1, .36, 1),
+    transform 200ms cubic-bezier(.22, 1, .36, 1),
+    box-shadow 200ms cubic-bezier(.22, 1, .36, 1);
   will-change: transform, color;
   -webkit-tap-highlight-color: transparent;
 }
@@ -635,8 +693,8 @@ body {
   letter-spacing: 0px;
   color: var(--color-text-secondary);
   transition:
-    letter-spacing 200ms cubic-bezier(.22,1,.36,1),
-    color 200ms cubic-bezier(.22,1,.36,1);
+    letter-spacing 200ms cubic-bezier(.22, 1, .36, 1),
+    color 200ms cubic-bezier(.22, 1, .36, 1);
 }
 
 /* ── Sidebar Icon Wrapper ─────────────────────────────────── */
@@ -650,24 +708,102 @@ body {
   flex-shrink: 0;
   color: var(--color-text-muted);
   transition:
-    transform 200ms cubic-bezier(.22,1,.36,1),
-    color 200ms cubic-bezier(.22,1,.36,1);
+    transform 200ms cubic-bezier(.22, 1, .36, 1),
+    color 200ms cubic-bezier(.22, 1, .36, 1);
   will-change: transform;
 }
 
 /* ── Click Pop ───────────────────────────────────────────── */
 .sidebar-icon-popping {
-  animation: sidebar-icon-pop 220ms cubic-bezier(.22,1,.36,1) both;
+  animation: sidebar-icon-pop 220ms cubic-bezier(.22, 1, .36, 1) both;
+}
+
+/* Hide tooltip if item is active (optional, usually active item doesn't need tooltip) */
+.sidebar-item-active .sidebar-tooltip {
+  display: none;
+}
+
+/* ── PREMIUM MULTI-STAGE THEME ENGINE ───────────────────── */
+
+/* 1. Disable full-page view transition screenshotting for performance */
+:root {
+  view-transition-name: none;
+}
+
+/* 2. Assign dedicated view-transition-names only to the lightweight shell */
+.sidebar-container, .ant-layout-sider {
+  view-transition-name: theme-sidebar;
+}
+.ant-layout-header {
+  view-transition-name: theme-header;
+}
+body {
+  view-transition-name: theme-body;
+}
+
+/* 3. Base text & generic elements (150ms) */
+*, *::before, *::after {
+  transition-property: background-color, border-color, color, fill, stroke, box-shadow, opacity, filter;
+  transition-duration: 150ms;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Stage 1: Application Shell (180ms) */
+body,
+.ant-layout,
+.ant-layout-sider,
+.ant-layout-header,
+.ant-layout-content,
+.sidebar-container {
+  transition-duration: 180ms;
+}
+
+/* Stage 2: Cards & Containers (120ms) */
+.ant-card,
+.dashboard-kpi-card,
+.quick-action-card,
+.ant-modal-content,
+.ant-drawer-content,
+.ant-dropdown-menu,
+.ant-popover-inner {
+  transition-duration: 120ms;
+}
+
+/* Icons (120ms) */
+svg, .anticon {
+  transition-duration: 120ms;
+}
+
+/* Stage 3: Heavy Components (Instant - 0ms) */
+.ant-table,
+.ant-table *,
+canvas,
+.recharts-wrapper,
+.recharts-wrapper *,
+.heavy-list,
+.map-container,
+.timeline-container,
+img {
+  transition: none !important;
+}
+
+/* Shell View Transitions Settings */
+::view-transition-old(theme-body),
+::view-transition-new(theme-body),
+::view-transition-old(theme-sidebar),
+::view-transition-new(theme-sidebar),
+::view-transition-old(theme-header),
+::view-transition-new(theme-header) {
+  animation-duration: 180ms;
+  animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* ── Active State ────────────────────────────────────────── */
 .sidebar-item-active {
   color: var(--color-primary) !important;
-  background: linear-gradient(
-    135deg,
-    var(--color-sidebar-active) 0%,
-    color-mix(in srgb, var(--color-primary) 6%, transparent) 100%
-  ) !important;
+  background: linear-gradient(135deg,
+      var(--color-sidebar-active) 0%,
+      color-mix(in srgb, var(--color-primary) 6%, transparent) 100%) !important;
   transform: scale(1.01);
   box-shadow: 0 1px 6px color-mix(in srgb, var(--color-primary) 10%, transparent);
 }
@@ -701,7 +837,7 @@ body {
   background: var(--color-primary);
   box-shadow: 0 0 8px color-mix(in srgb, var(--color-primary) 60%, transparent);
   transform-origin: center;
-  animation: sidebar-indicator-in 280ms cubic-bezier(.34,1.56,.64,1) both;
+  animation: sidebar-indicator-in 280ms cubic-bezier(.34, 1.56, .64, 1) both;
 }
 
 /* ── Collapsed Tooltip ───────────────────────────────────── */
@@ -718,7 +854,7 @@ body {
   white-space: nowrap;
   z-index: 9999;
   opacity: 0;
-  transition: opacity 200ms cubic-bezier(.22,1,.36,1), transform 200ms cubic-bezier(.22,1,.36,1);
+  transition: opacity 200ms cubic-bezier(.22, 1, .36, 1), transform 200ms cubic-bezier(.22, 1, .36, 1);
 
   /* Glass bg */
   background: color-mix(in srgb, var(--color-surface) 88%, transparent);
@@ -730,14 +866,14 @@ body {
   font-size: 12px;
   font-weight: 500;
   color: var(--color-text-primary);
-  box-shadow: 0 4px 16px rgba(0,0,0,0.12), 0 1px 4px rgba(0,0,0,0.08);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12), 0 1px 4px rgba(0, 0, 0, 0.08);
 
   /* Hidden by default */
   opacity: 0;
   transform: translateY(-50%) translateX(-6px) scale(0.94);
   transition:
-    opacity 160ms cubic-bezier(.22,1,.36,1),
-    transform 160ms cubic-bezier(.22,1,.36,1);
+    opacity 160ms cubic-bezier(.22, 1, .36, 1),
+    transform 160ms cubic-bezier(.22, 1, .36, 1);
 }
 
 /* Arrow on tooltip */
@@ -806,7 +942,7 @@ body {
 }
 
 .dark .sidebar-tooltip {
-  box-shadow: 0 8px 24px rgba(0,0,0,0.4), 0 1px 4px rgba(0,0,0,0.3);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4), 0 1px 4px rgba(0, 0, 0, 0.3);
 }
 
 /* ── Responsive: disable hover transforms on touch devices ── */
@@ -814,12 +950,15 @@ body {
   .sidebar-item:hover {
     transform: none;
   }
+
   .sidebar-item:hover .sidebar-icon-wrap {
     transform: none;
   }
+
   .sidebar-item:hover .sidebar-item-label {
     letter-spacing: 0;
   }
+
   .sidebar-tooltip {
     display: none;
   }
