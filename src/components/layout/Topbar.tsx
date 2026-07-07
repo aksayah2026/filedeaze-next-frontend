@@ -1,6 +1,6 @@
 'use client';
 
-import { LogOut, Menu, Bell, ChevronLeft, ChevronRight } from 'lucide-react';
+import { LogOut, Menu, Bell, ChevronLeft, ChevronRight, PanelRight, PanelLeft } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter, usePathname } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -13,6 +13,7 @@ import { getPortalPrefix } from '@/lib/auth-helper';
 import { AppNotification } from '@/types';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
+import { useEffect, useRef, useState } from 'react';
 
 dayjs.extend(relativeTime);
 
