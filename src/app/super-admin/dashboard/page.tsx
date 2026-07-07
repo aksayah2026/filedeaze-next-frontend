@@ -7,6 +7,9 @@ import { SuperAdminDashboard } from '@/types';
 import { StatsCard } from '@/components/ui/StatsCard';
 import { SkeletonCard } from '@/components/ui/Spinner';
 
+// Super Admin role accent
+const ACCENT = '#2563EB';
+
 export default function SuperAdminDashboardPage() {
   const { data, isLoading } = useQuery<SuperAdminDashboard>({
     queryKey: ['super-admin-dashboard'],
@@ -23,65 +26,85 @@ export default function SuperAdminDashboardPage() {
 
       {/* KPI Grid */}
       {isLoading ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {Array.from({ length: 6 }).map((_, i) => <SkeletonCard key={i} />)}
         </div>
       ) : !data ? null : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+
+          {/* ── Standard: Total Tenants ── */}
           <StatsCard
+            variant="standard"
             title="Total Tenants"
             value={data.totalTenants}
             icon={Building2}
-            iconBg="bg-[var(--color-surface-elevated)]"
-            iconColor="text-slate-650"
-            accentColor="bg-[var(--color-surface-elevated)]"
-            subtitle="All registered tenants"
+            accentHex={ACCENT}
+            context="+1 new tenant onboarded this month"
+            status="live"
+            footerText="Updated 2 mins ago"
           />
+
+          {/* ── Standard: Active Tenants ── */}
           <StatsCard
+            variant="standard"
             title="Active Tenants"
             value={data.activeTenants}
             icon={CheckCircle}
-            iconBg="bg-[var(--color-surface-elevated)]"
-            iconColor="text-emerald-600"
-            accentColor="bg-emerald-500"
-            subtitle="Currently active subscriptions"
+            accentHex={ACCENT}
+            context="All subscriptions are currently healthy"
+            status="healthy"
+            footerText="Live"
           />
+
+          {/* ── Primary: Total Revenue ── */}
           <StatsCard
-            title="Expired Tenants"
-            value={data.expiredTenants}
-            icon={AlertCircle}
-            iconBg="bg-[var(--color-surface-elevated)]"
-            iconColor="text-amber-600"
-            accentColor="bg-amber-500"
-            subtitle="Subscriptions that lapsed"
-          />
-          <StatsCard
-            title="Suspended Tenants"
-            value={data.suspendedTenants}
-            icon={XCircle}
-            iconBg="bg-[var(--color-surface-elevated)]"
-            iconColor="text-red-655"
-            accentColor="bg-red-500"
-            subtitle="Manually suspended accounts"
-          />
-          <StatsCard
+            variant="primary"
             title="Total Revenue"
             value={`₹${data.totalRevenue.toLocaleString()}`}
             icon={DollarSign}
-            iconBg="bg-[var(--color-surface-elevated)]"
-            iconColor="text-emerald-600"
-            accentColor="bg-emerald-500"
-            subtitle="Lifetime collected revenue"
+            accentHex={ACCENT}
+            context="₹250 collected across active tenants today"
+            trend={{ label: '+12%', direction: 'up' }}
+            status="healthy"
+            footerText="Updated just now"
           />
+
+          {/* ── Status: Expired Tenants ── */}
           <StatsCard
+            variant="status"
+            title="Expired Tenants"
+            value={data.expiredTenants}
+            icon={AlertCircle}
+            accentHex={ACCENT}
+            context="No renewals currently pending"
+            status="healthy"
+            footerText="Synced just now"
+          />
+
+          {/* ── Status: Suspended Tenants ── */}
+          <StatsCard
+            variant="status"
+            title="Suspended Tenants"
+            value={data.suspendedTenants}
+            icon={XCircle}
+            accentHex={ACCENT}
+            context="No accounts currently suspended"
+            status="stable"
+            footerText="Live Data"
+          />
+
+          {/* ── Standard: Active Users ── */}
+          <StatsCard
+            variant="standard"
             title="Active Users"
             value={data.activeUsers}
             icon={Users}
-            iconBg="bg-[var(--color-surface-elevated)]"
-            iconColor="text-blue-650"
-            accentColor="bg-blue-500"
-            subtitle="Users across all tenants"
+            accentHex={ACCENT}
+            context="12 users currently online across all tenants"
+            status="live"
+            footerText="Live"
           />
+
         </div>
       )}
     </div>

@@ -10,7 +10,7 @@ import {
   SubscriptionDashboard, SubscriptionListResponse, BillingCycle, Billing,
 } from '@/types';
 import { Button } from '@/components/ui/Button';
-import { Badge } from '@/components/ui/Badge';
+import { Badge, PlanBadge } from '@/components/ui/Badge';
 import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
 import { Modal } from '@/components/ui/Modal';
@@ -45,22 +45,20 @@ function calcEndFromNow(cycle: BillingCycle): Date {
 
 type ComputedStatus = 'ACTIVE' | 'EXPIRING_SOON' | 'EXPIRED' | 'TRIAL' | 'SUSPENDED' | 'CANCELLED' | 'QUEUED';
 
-const STATUS_CFG: Record<ComputedStatus, { label: string; cls: string }> = {
-  ACTIVE:        { label: 'Active',         cls: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
-  EXPIRING_SOON: { label: 'Expiring Soon',  cls: 'bg-amber-50  text-amber-700  border-amber-200'  },
-  EXPIRED:       { label: 'Expired',        cls: 'bg-red-50    text-red-700    border-red-200'    },
-  TRIAL:         { label: 'Trial',          cls: 'bg-blue-50   text-blue-700   border-blue-200'   },
-  SUSPENDED:     { label: 'Suspended',      cls: 'bg-gray-100  text-gray-600   border-gray-200'   },
-  CANCELLED:     { label: 'Cancelled',      cls: 'bg-red-50    text-red-400    border-red-100'    },
-  QUEUED:        { label: 'Queued',         cls: 'bg-purple-50 text-purple-700 border-purple-200' },
+const STATUS_CFG: Record<ComputedStatus, { label: string; variant: string }> = {
+  ACTIVE:        { label: 'Active',         variant: 'success' },
+  EXPIRING_SOON: { label: 'Expiring Soon',  variant: 'warning' },
+  EXPIRED:       { label: 'Expired',        variant: 'danger' },
+  TRIAL:         { label: 'Trial',          variant: 'info' },
+  SUSPENDED:     { label: 'Suspended',      variant: 'default' },
+  CANCELLED:     { label: 'Cancelled',      variant: 'danger' },
+  QUEUED:        { label: 'Queued',         variant: 'purple' },
 };
 
 function SubStatusBadge({ status }: { status: ComputedStatus }) {
   const cfg = STATUS_CFG[status] ?? STATUS_CFG.ACTIVE;
   return (
-    <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-semibold ${cfg.cls}`}>
-      {cfg.label}
-    </span>
+    <Badge variant={cfg.variant as any} showDot={false}>{cfg.label}</Badge>
   );
 }
 
@@ -436,7 +434,7 @@ function DetailModal({ sub, onClose }: { sub: SubscriptionWithMeta; onClose: () 
   const plan = detail?.plan ?? sub.plan;
 
   return (
-    <Modal open onClose={onClose} title="Subscription Detail" size="sm">
+    <Modal open onClose={onClose} title="Subscription Detail" size="lg">
       <div className="space-y-4">
         <div className="flex border-b border-[var(--color-border)] gap-5 text-sm">
           {(['overview', 'billing', 'history'] as const).map(t => (
@@ -471,8 +469,8 @@ function DetailModal({ sub, onClose }: { sub: SubscriptionWithMeta; onClose: () 
             </div>
 
             {/* Subscriptions table */}
-            <div className="rounded-lg border border-[var(--color-border)] overflow-hidden">
-              <table className="w-full text-xs">
+            <div className="rounded-lg border border-[var(--color-border)] overflow-x-auto">
+              <table className="w-full text-xs min-w-[400px]">
                 <thead>
                   <tr className="bg-[var(--color-surface-elevated)] border-b border-[var(--color-border)]">
                     {['Plan', 'Cycle', 'Start', 'End', 'Status'].map(h => (
@@ -862,7 +860,7 @@ export default function SubscriptionsPage() {
                         </div>
                       </td>
                       <td className="px-4 py-3">
-                        <span className="inline-flex rounded-full bg-indigo-50 border border-indigo-100 px-2 py-0.5 text-xs font-semibold text-indigo-700">{sub.plan.name}</span>
+                        <PlanBadge planName={sub.plan.name} />
                       </td>
                       <td className="px-4 py-3 text-xs text-[var(--color-text-secondary)] whitespace-nowrap">{cycleLabel(sub.billingCycle)}</td>
                       <td className="px-4 py-3"><SubStatusBadge status={sub.computedStatus as ComputedStatus} /></td>

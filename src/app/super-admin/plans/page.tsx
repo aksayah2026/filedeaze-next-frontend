@@ -7,6 +7,7 @@ import { toast } from 'sonner';
 import { Plus, Pencil, Trash2, Users, Ticket, HardDrive, ShieldCheck } from 'lucide-react';
 import api from '@/lib/axios';
 import { Plan } from '@/types';
+import { PlanBadge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Modal } from '@/components/ui/Modal';
@@ -28,11 +29,6 @@ type Form = {
 
 const lim = (v: number) => (v >= 99999 ? 'Unlimited' : v.toLocaleString());
 
-const planColor: Record<string, string> = {
-  STARTER:      'bg-sky-50 text-sky-700 border-sky-200',
-  PROFESSIONAL: 'bg-indigo-50 text-indigo-700 border-indigo-200',
-  ENTERPRISE:   'bg-purple-50 text-purple-700 border-purple-200',
-};
 
 export default function PlansPage() {
   const qc = useQueryClient();
@@ -140,9 +136,7 @@ export default function PlansPage() {
                   {/* Plan name */}
                   <td className="px-5 py-4">
                     <div className="flex items-center gap-2">
-                      <span className={`text-xs font-bold border px-2.5 py-0.5 rounded-full ${planColor[plan.name.toUpperCase()] ?? 'bg-gray-50 text-gray-700 border-gray-200'}`}>
-                        {plan.name}
-                      </span>
+                      <PlanBadge planName={plan.name} />
                       {(plan as any).isTrial && (
                         <span className="text-[10px] font-bold bg-blue-50 text-blue-600 border border-blue-200 px-2 py-0.5 rounded-full">Trial</span>
                       )}

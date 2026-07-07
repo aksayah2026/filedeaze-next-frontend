@@ -6,7 +6,7 @@ import { ColumnDef } from '@tanstack/react-table';
 import api from '@/lib/axios';
 import { Billing, BillingReport, PaymentStats, Tenant, Plan } from '@/types';
 import { DataTable } from '@/components/ui/DataTable';
-import { Badge } from '@/components/ui/Badge';
+import { Badge, PlanBadge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
@@ -95,12 +95,17 @@ td{padding:5px 8px;border-bottom:1px solid #eee}tr:nth-child(even)td{background:
 
 // ── Stat Card ──────────────────────────────────────────────────────────────────
 
-function StatCard({ label, value, sub, colorClass }: { label: string; value: string | number; sub?: string; colorClass: string }) {
+function StatCard({ label, value, sub, dotClass }: { label: string; value: string | number; sub?: string; dotClass: string }) {
   return (
-    <div className={`rounded-xl p-4 border ${colorClass}`}>
-      <p className="text-xs font-medium opacity-70">{label}</p>
-      <p className="text-xl font-bold tabular-nums mt-0.5">{value}</p>
-      {sub && <p className="text-xs opacity-60 mt-0.5">{sub}</p>}
+    <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4 shadow-sm">
+      <div className="flex items-center justify-between mb-1">
+        <div className="flex items-center gap-1.5">
+          <span className={`h-2 w-2 rounded-full ${dotClass}`} />
+          <p className="text-xs text-[var(--color-text-muted)]">{label}</p>
+        </div>
+        {sub && <p className="text-[10px] text-[var(--color-text-muted)]">{sub}</p>}
+      </div>
+      <p className="text-lg font-bold text-[var(--color-text-primary)] tabular-nums">{value}</p>
     </div>
   );
 }
@@ -234,7 +239,7 @@ export default function PaymentHistoryPage() {
       cell: ({ row }) => {
         const name = row.original.subscription?.plan?.name;
         return name
-          ? <span className="inline-flex items-center rounded-full bg-indigo-50 border border-indigo-100 px-2 py-0.5 text-xs font-semibold text-indigo-700">{name}</span>
+          ? <PlanBadge planName={name} />
           : <span className="text-[var(--color-text-muted)]">—</span>;
       },
     },
@@ -319,30 +324,30 @@ export default function PaymentHistoryPage() {
             label="Total Revenue"
             value={`₹${stats.totalRevenue.toLocaleString()}`}
             sub={`${stats.paidCount} paid`}
-            colorClass="bg-emerald-50 border-emerald-200 text-emerald-900"
+            dotClass="bg-emerald-500"
           />
           <StatCard
             label="Pending"
             value={`₹${stats.totalPending.toLocaleString()}`}
             sub={`${stats.pendingCount} invoices`}
-            colorClass="bg-amber-50 border-amber-200 text-amber-900"
+            dotClass="bg-amber-500"
           />
           <StatCard
             label="Failed"
             value={`₹${stats.totalFailed.toLocaleString()}`}
             sub={`${stats.failedCount} records`}
-            colorClass="bg-red-50 border-red-200 text-red-900"
+            dotClass="bg-red-500"
           />
           <StatCard
             label="Active Subscriptions"
             value={stats.activeSubscriptions}
             sub={`${stats.expiredSubscriptions} expired`}
-            colorClass="bg-indigo-50 border-indigo-200 text-indigo-900"
+            dotClass="bg-indigo-500"
           />
           <StatCard
             label="Renewals This Month"
             value={stats.renewalsThisMonth}
-            colorClass="bg-[var(--color-surface)] border-[var(--color-border)] text-[var(--color-text-primary)]"
+            dotClass="bg-gray-400"
           />
         </div>
       ) : null}

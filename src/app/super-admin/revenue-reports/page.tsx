@@ -6,6 +6,7 @@ import { ColumnDef } from '@tanstack/react-table';
 import { BarChart, Bar, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import api from '@/lib/axios';
 import { SuperAdminRevenueReport, Tenant } from '@/types';
+import { PlanBadge } from '@/components/ui/Badge';
 import { DataTable } from '@/components/ui/DataTable';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
@@ -80,18 +81,7 @@ export default function RevenueReportsPage() {
     {
       accessorKey: 'planName',
       header: 'Plan',
-      cell: ({ row }) => {
-        const colors: Record<string, string> = {
-          STARTER: 'bg-[var(--color-surface-elevated)] text-[var(--color-text-secondary)]',
-          PROFESSIONAL: 'bg-[var(--color-surface-elevated)] text-blue-700',
-          ENTERPRISE: 'bg-[var(--color-surface-elevated)] text-violet-700',
-        };
-        return (
-          <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${colors[row.original.planName] ?? 'bg-[var(--color-surface-elevated)] text-[var(--color-text-secondary)]'}`}>
-            {row.original.planName}
-          </span>
-        );
-      },
+      cell: ({ row }) => <PlanBadge planName={row.original.planName} />,
     },
     {
       accessorKey: 'amount',

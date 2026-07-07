@@ -84,69 +84,92 @@ export function FilterCard({
     if (onToChange) onToChange(newTo);
   };
 
-  const getButtonClass = (preset: string) => {
+  const getPresetClass = (preset: string) => {
     return cn(
-      "h-10 text-xs px-3 transition-colors",
+      'h-7 text-xs px-2.5 rounded-md font-medium transition-colors',
       activePreset === preset
-        ? "bg-[var(--color-primary)]/10 text-[var(--color-primary)] font-semibold hover:bg-[var(--color-primary)]/20"
-        : "text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-surface-elevated)]"
+        ? 'bg-[var(--color-primary)]/15 text-[var(--color-primary)]'
+        : 'text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-surface-elevated)]'
     );
   };
 
   return (
-    <div className="bg-[var(--color-surface)] rounded-2xl border border-[var(--color-border)] shadow-sm overflow-hidden mb-6">
-      <div className="px-5 py-3 border-b border-[var(--color-border)] bg-[var(--color-surface-elevated)] flex items-center gap-2">
-        <Filter size={15} className="text-[var(--color-text-muted)]" />
-        <h3 className="text-sm font-semibold text-[var(--color-text-primary)]">{title}</h3>
-      </div>
-      <div className="p-5 flex flex-col xl:flex-row gap-6 xl:items-end justify-between">
-        <div className="flex flex-wrap items-end gap-4 flex-1">
-          {children}
+    <div className="bg-[var(--color-surface)] rounded-xl border border-[var(--color-border)] shadow-sm overflow-hidden">
+      {/* Single-row compact filter bar */}
+      <div className="px-4 py-2.5 flex flex-wrap xl:flex-nowrap items-center gap-3">
 
-          {!hideDateRange && (
-            <>
-              <div className="space-y-1">
-                <label className="text-xs font-medium text-[var(--color-text-secondary)]">Date Range</label>
-                <div className="flex items-center gap-2">
-                  <Input
-                    type="date"
-                    value={from}
-                    onChange={e => onFromChange && onFromChange(e.target.value)}
-                    max={to && to < todayStr ? to : todayStr}
-                    className="w-[140px] h-10"
-                  />
-                  <span className="text-[var(--color-text-muted)] text-sm">to</span>
-                  <Input
-                    type="date"
-                    value={to}
-                    onChange={e => onToChange && onToChange(e.target.value)}
-                    min={from || undefined}
-                    max={todayStr}
-                    className="w-[140px] h-10"
-                  />
-                </div>
-              </div>
-
-              <div className="flex items-center gap-2 flex-wrap">
-                <Button variant="ghost" onClick={() => handleQuickFilter('today')} className={getButtonClass('today')}>Today</Button>
-                <Button variant="ghost" onClick={() => handleQuickFilter('yesterday')} className={getButtonClass('yesterday')}>Yesterday</Button>
-                <Button variant="ghost" onClick={() => handleQuickFilter('last7')} className={getButtonClass('last7')}>Last 7 Days</Button>
-                <Button variant="ghost" onClick={() => handleQuickFilter('last30')} className={getButtonClass('last30')}>Last 30 Days</Button>
-                <Button variant="ghost" onClick={() => handleQuickFilter('thisMonth')} className={getButtonClass('thisMonth')}>This Month</Button>
-              </div>
-            </>
-          )}
+        {/* Filter icon + label */}
+        <div className="flex items-center gap-1.5 text-[var(--color-text-muted)] shrink-0">
+          <Filter size={13} />
+          <span className="text-xs font-semibold text-[var(--color-text-secondary)] hidden sm:inline">Filters</span>
         </div>
 
-        <div className="flex items-center gap-3">
+        {/* Divider */}
+        <div className="hidden xl:block w-px h-5 bg-[var(--color-border)] shrink-0" />
+
+        {/* Extra filter slots (e.g., Status dropdown) */}
+        {children && (
+          <div className="flex items-center gap-3 flex-wrap">
+            {children}
+          </div>
+        )}
+
+        {!hideDateRange && (
+          <>
+            {/* Date Range Inputs */}
+            <div className="flex items-center gap-1.5 shrink-0">
+              <Input
+                type="date"
+                value={from}
+                onChange={e => onFromChange && onFromChange(e.target.value)}
+                max={to && to < todayStr ? to : todayStr}
+                className="w-[130px] h-8 text-xs"
+              />
+              <span className="text-[var(--color-text-muted)] text-xs">–</span>
+              <Input
+                type="date"
+                value={to}
+                onChange={e => onToChange && onToChange(e.target.value)}
+                min={from || undefined}
+                max={todayStr}
+                className="w-[130px] h-8 text-xs"
+              />
+            </div>
+
+            {/* Quick preset buttons */}
+            <div className="flex items-center gap-1 flex-wrap">
+              <button onClick={() => handleQuickFilter('today')} className={getPresetClass('today')}>Today</button>
+              <button onClick={() => handleQuickFilter('yesterday')} className={getPresetClass('yesterday')}>Yesterday</button>
+              <button onClick={() => handleQuickFilter('last7')} className={getPresetClass('last7')}>Last 7 Days</button>
+              <button onClick={() => handleQuickFilter('last30')} className={getPresetClass('last30')}>Last 30 Days</button>
+              <button onClick={() => handleQuickFilter('thisMonth')} className={getPresetClass('thisMonth')}>This Month</button>
+            </div>
+          </>
+        )}
+
+        {/* Spacer */}
+        <div className="flex-1" />
+
+        {/* Actions */}
+        <div className="flex items-center gap-2 shrink-0">
           {onReset && (
-            <Button variant="secondary" onClick={onReset} className="h-10 px-5" disabled={isLoading}>
-              <RefreshCw size={14} className="mr-2" /> Reset
+            <Button
+              variant="secondary"
+              onClick={onReset}
+              className="h-8 px-3 text-xs"
+              disabled={isLoading}
+            >
+              <RefreshCw size={12} className="mr-1.5" /> Reset
             </Button>
           )}
           {onApply && (
-            <Button variant="primary" onClick={onApply} className="h-10 px-6 shadow-md shadow-[var(--color-primary-light)]" disabled={isLoading}>
-              {isLoading ? 'Applying...' : 'Apply Filters'}
+            <Button
+              variant="primary"
+              onClick={onApply}
+              className="h-8 px-4 text-xs shadow-sm"
+              disabled={isLoading}
+            >
+              {isLoading ? 'Applying…' : 'Apply Filters'}
             </Button>
           )}
         </div>

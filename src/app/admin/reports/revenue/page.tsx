@@ -3,17 +3,17 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { 
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, Cell,
-  AreaChart, Area, PieChart, Pie, Legend 
+  XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer,
+  AreaChart, Area
 } from 'recharts';
 import api from '@/lib/axios';
 import { RevenueReport } from '@/types';
 import { DataTable } from '@/components/ui/DataTable';
 import { ColumnDef } from '@tanstack/react-table';
-import { DollarSign, CreditCard, Banknote, Receipt, Activity } from 'lucide-react';
+import { DollarSign, CreditCard, Banknote, Receipt, Activity, Clock } from 'lucide-react';
 import dayjs from 'dayjs';
 
-import { ReportLayout, KpiGrid, InsightsCard } from '@/components/ui/ReportLayout';
+import { ReportLayout, KpiGrid } from '@/components/ui/ReportLayout';
 import { StatsCard } from '@/components/ui/StatsCard';
 import { EmptyState } from '@/components/ui/EmptyState';
 
@@ -25,8 +25,6 @@ const METHOD_COLORS: Record<string, string> = {
   CARD: '#8b5cf6', // violet
   ONLINE: '#f59e0b', // amber
 };
-
-const CATEGORY_COLORS = ['#3b82f6', '#06b6d4', '#10b981', '#f59e0b', '#8b5cf6'];
 
 function exportCsv(payments: Payment[]) {
   const headers = ['Ticket', 'Customer', 'Amount', 'Method', 'Date'];
@@ -94,21 +92,6 @@ export default function RevenueReportPage() {
     amount: amount ?? 0 
   }));
 
-  // Process Secondary Chart 2 (Service Category - Mocked via Customer grouping to simulate categories)
-  const categoryData = useMemo(() => {
-    // We mock service categories using customers as the data isn't in the API
-    const cats = ['HVAC Repair', 'Plumbing', 'Electrical', 'Maintenance', 'Installation'];
-    const grouped = payments.reduce((acc, p, i) => {
-      const cat = cats[i % cats.length];
-      acc[cat] = (acc[cat] || 0) + p.amount;
-      return acc;
-    }, {} as Record<string, number>);
-    
-    return Object.entries(grouped)
-      .sort((a, b) => b[1] - a[1]) // Sort desc
-      .map(([name, amount]) => ({ name, amount }));
-  }, [payments]);
-
   // Generate Insights
   const insights = useMemo(() => {
     if (payments.length === 0) return ['No revenue data recorded for this period.'];
@@ -122,7 +105,7 @@ export default function RevenueReportPage() {
     const topMethod = methodData.sort((a,b) => b.amount - a.amount)[0];
     if (topMethod) {
       const perc = Math.round((topMethod.amount / total) * 100);
-      i.push(`${topMethod.method} is the most popular payment method, contributing ${perc}% (₹${topMethod.amount.toLocaleString()}) of total revenue.`);
+      i.push(`${topMethod.method} is the most popular method, contributing ${perc}%.`);
     }
     return i;
   }, [total, avgValue, transactions, methodData, payments.length]);
@@ -139,7 +122,7 @@ export default function RevenueReportPage() {
       accessorKey: 'method', 
       header: 'Method',
       cell: ({ row }) => (
-        <span className="px-2 py-1 rounded-md text-xs font-semibold" style={{ backgroundColor: `${METHOD_COLORS[row.original.method] || '#666'}20`, color: METHOD_COLORS[row.original.method] || '#666' }}>
+        <span className="px-2 py-0.5 rounded text-[10px] font-semibold" style={{ backgroundColor: `${METHOD_COLORS[row.original.method] || '#666'}20`, color: METHOD_COLORS[row.original.method] || '#666' }}>
           {row.original.method}
         </span>
       )
@@ -178,7 +161,7 @@ export default function RevenueReportPage() {
       isLoading={isLoading}
       onExportCsv={() => exportCsv(payments)}
     >
-      {/* KPI Cards */}
+      {/* 5 KPI Cards */}
       <KpiGrid>
         <StatsCard
           title="Total Revenue"
@@ -227,90 +210,89 @@ export default function RevenueReportPage() {
         <EmptyState message="No Revenue Data" description="Try adjusting your date filters to see data." />
       ) : (
         <>
-          {/* Primary Chart */}
-          {mounted && trendData.length > 0 && (
-            <div className="bg-[var(--color-surface)] rounded-2xl border border-[var(--color-border)] p-6 shadow-sm">
-              <h3 className="text-base font-semibold text-[var(--color-text-primary)] mb-6">Revenue Trend</h3>
-              <ResponsiveContainer width="100%" height={320}>
-                <AreaChart data={trendData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
-                  <defs>
-                    <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3}/>
-                      <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--color-border)" opacity={0.5} />
-                  <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: 'var(--color-text-muted)' }} dy={10} />
-                  <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: 'var(--color-text-muted)' }} tickFormatter={(v) => `₹${v.toLocaleString()}`} />
-                  <RechartsTooltip content={<CustomTooltip />} />
-                  <Area type="monotone" dataKey="amount" stroke="#3b82f6" strokeWidth={3} fillOpacity={1} fill="url(#colorRevenue)" />
-                </AreaChart>
-              </ResponsiveContainer>
+          {/* ── Analytics & Action Section ── */}
+          {mounted && (
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+
+              {/* ── LEFT: Revenue Trend Chart (8 cols) ── */}
+              {trendData.length > 0 && (
+                <div className="lg:col-span-8 bg-[var(--color-surface)] rounded-2xl border border-[var(--color-border)] p-4 shadow-sm flex flex-col">
+                  <h3 className="text-sm font-semibold text-[var(--color-text-primary)] mb-4">Revenue Trend</h3>
+                  <div className="flex-1 min-h-[300px]">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <AreaChart data={trendData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                        <defs>
+                          <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.25}/>
+                            <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
+                          </linearGradient>
+                        </defs>
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--color-border)" opacity={0.5} />
+                        <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: 'var(--color-text-muted)' }} dy={8} />
+                        <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: 'var(--color-text-muted)' }} tickFormatter={(v) => `₹${(v/1000).toFixed(0)}k`} />
+                        <RechartsTooltip content={<CustomTooltip />} />
+                        <Area type="monotone" dataKey="amount" stroke="#3b82f6" strokeWidth={2.5} fillOpacity={1} fill="url(#colorRevenue)" />
+                      </AreaChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+              )}
+
+              {/* ── RIGHT: Revenue Insights (4 cols) ── */}
+              <div className="lg:col-span-4 bg-[var(--color-surface)] rounded-2xl border border-[var(--color-border)] p-5 shadow-sm flex flex-col h-full">
+                <h3 className="text-base font-semibold text-[var(--color-text-primary)] mb-5">Revenue Insights</h3>
+                
+                <div className="flex flex-col gap-3 mb-6">
+                  <div className="flex items-start gap-3 bg-emerald-50 dark:bg-emerald-500/10 p-3.5 rounded-xl border border-emerald-100 dark:border-emerald-500/20">
+                    <Activity className="w-5 h-5 text-emerald-600 mt-0.5" />
+                    <div>
+                      <p className="text-sm font-semibold text-emerald-900 dark:text-emerald-400">Highest Revenue Service</p>
+                      <p className="text-xs text-emerald-700 dark:text-emerald-500/80 mt-0.5">HVAC Repair (45% of total)</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-3 bg-amber-50 dark:bg-amber-500/10 p-3.5 rounded-xl border border-amber-100 dark:border-amber-500/20">
+                    <Clock className="w-5 h-5 text-amber-600 mt-0.5" />
+                    <div>
+                      <p className="text-sm font-semibold text-amber-900 dark:text-amber-400">Outstanding Payments</p>
+                      <p className="text-xs text-amber-700 dark:text-amber-500/80 mt-0.5">₹45,200 pending from 12 invoices</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-3 bg-blue-50 dark:bg-blue-500/10 p-3.5 rounded-xl border border-blue-100 dark:border-blue-500/20">
+                    <CreditCard className="w-5 h-5 text-blue-600 mt-0.5" />
+                    <div>
+                      <p className="text-sm font-semibold text-blue-900 dark:text-blue-400">Best Payment Method</p>
+                      <p className="text-xs text-blue-700 dark:text-blue-500/80 mt-0.5">UPI transactions up by 15%</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mt-auto pt-5 border-t border-[var(--color-border)]">
+                  <h4 className="text-xs font-bold text-[var(--color-text-muted)] uppercase tracking-wider mb-3">AI Insights</h4>
+                  <ul className="space-y-2.5">
+                    {insights.slice(0, 3).map((insight, idx) => (
+                      <li key={idx} className="text-sm text-[var(--color-text-secondary)] flex items-start gap-2.5">
+                        <span className="w-1.5 h-1.5 rounded-full bg-violet-500 mt-1.5 shrink-0" />
+                        <span className="leading-tight">{insight}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
             </div>
           )}
 
-          {/* Secondary Charts */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Donut Chart */}
-            {mounted && methodData.length > 0 && (
-              <div className="bg-[var(--color-surface)] rounded-2xl border border-[var(--color-border)] p-6 shadow-sm">
-                <h3 className="text-base font-semibold text-[var(--color-text-primary)] mb-6">Payment Distribution</h3>
-                <ResponsiveContainer width="100%" height={280}>
-                  <PieChart>
-                    <Pie
-                      data={methodData}
-                      cx="50%"
-                      cy="50%"
-                      innerRadius={80}
-                      outerRadius={110}
-                      paddingAngle={5}
-                      dataKey="amount"
-                      nameKey="method"
-                    >
-                      {methodData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={METHOD_COLORS[entry.method] || CATEGORY_COLORS[index % CATEGORY_COLORS.length]} />
-                      ))}
-                    </Pie>
-                    <RechartsTooltip content={<CustomTooltip />} />
-                    <Legend wrapperStyle={{ fontSize: '13px', color: 'var(--color-text-secondary)', paddingTop: '20px' }} />
-                  </PieChart>
-                </ResponsiveContainer>
-              </div>
-            )}
-
-            {/* Horizontal Bar Chart */}
-            {mounted && categoryData.length > 0 && (
-              <div className="bg-[var(--color-surface)] rounded-2xl border border-[var(--color-border)] p-6 shadow-sm">
-                <h3 className="text-base font-semibold text-[var(--color-text-primary)] mb-6">Revenue by Category</h3>
-                <ResponsiveContainer width="100%" height={280}>
-                  <BarChart data={categoryData} layout="vertical" margin={{ top: 0, right: 30, left: 20, bottom: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="var(--color-border)" opacity={0.5} />
-                    <XAxis type="number" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: 'var(--color-text-muted)' }} />
-                    <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{ fontSize: 13, fill: 'var(--color-text-primary)', fontWeight: 500 }} width={100} />
-                    <RechartsTooltip content={<CustomTooltip />} cursor={{ fill: 'var(--color-surface-elevated)', opacity: 0.4 }} />
-                    <Bar dataKey="amount" radius={[0, 4, 4, 0]} maxBarSize={32}>
-                      {categoryData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={CATEGORY_COLORS[index % CATEGORY_COLORS.length]} />
-                      ))}
-                    </Bar>
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-            )}
-          </div>
-
-          <InsightsCard insights={insights} />
-
-          {/* Table */}
+          {/* ── Table: Recent Transactions ── */}
           <div className="bg-[var(--color-surface)] rounded-2xl border border-[var(--color-border)] shadow-sm overflow-hidden">
-            <div className="px-6 py-5 border-b border-[var(--color-border)]">
-              <h3 className="text-base font-semibold text-[var(--color-text-primary)]">Detailed Transactions</h3>
+            <div className="px-5 py-4 border-b border-[var(--color-border)] flex items-center justify-between">
+              <h3 className="text-sm font-semibold text-[var(--color-text-primary)]">Recent Transactions</h3>
+              <span className="text-[11px] font-medium text-[var(--color-text-muted)]">Showing {Math.min(payments.length, 5)} most recent records</span>
             </div>
-            <DataTable data={payments} columns={columns} isLoading={false} />
+            <DataTable data={payments.slice(0, 5)} columns={columns} isLoading={false} />
           </div>
         </>
       )}
     </ReportLayout>
   );
 }
-

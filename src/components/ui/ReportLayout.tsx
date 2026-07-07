@@ -38,32 +38,33 @@ export function ReportLayout({
   isLoading
 }: ReportLayoutProps) {
   return (
-    <div className="space-y-6 max-w-[1600px] mx-auto pb-10">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-[var(--color-border)] pb-5">
+    <div className="space-y-4 max-w-[1600px] mx-auto pb-6">
+      {/* Compact Header */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 border-b border-[var(--color-border)] pb-3">
         <div>
-          <h2 className="text-2xl font-bold text-[var(--color-text-primary)]">{title}</h2>
-          <p className="text-sm text-[var(--color-text-muted)] mt-1">{description}</p>
+          <h2 className="text-xl font-bold text-[var(--color-text-primary)] leading-tight">{title}</h2>
+          <p className="text-xs text-[var(--color-text-muted)] mt-0.5">{description}</p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 shrink-0">
           {onExportPdf && (
-            <Button variant="secondary" onClick={onExportPdf} className="h-9 px-3 bg-[var(--color-surface)] shadow-sm">
-              <Download size={14} className="mr-1.5" /> PDF
+            <Button variant="secondary" onClick={onExportPdf} className="h-8 px-3 text-xs bg-[var(--color-surface)] shadow-sm">
+              <Download size={12} className="mr-1.5" /> PDF
             </Button>
           )}
           {onExportExcel && (
-            <Button variant="secondary" onClick={onExportExcel} className="h-9 px-3 bg-[var(--color-surface)] shadow-sm">
-              <Download size={14} className="mr-1.5" /> Excel
+            <Button variant="secondary" onClick={onExportExcel} className="h-8 px-3 text-xs bg-[var(--color-surface)] shadow-sm">
+              <Download size={12} className="mr-1.5" /> Excel
             </Button>
           )}
           {onExportCsv && (
-            <Button variant="secondary" onClick={onExportCsv} className="h-9 px-3 bg-[var(--color-surface)] shadow-sm text-[var(--color-primary)] border-[var(--color-primary-light)]">
-              <Download size={14} className="mr-1.5" /> CSV
+            <Button variant="secondary" onClick={onExportCsv} className="h-8 px-3 text-xs bg-[var(--color-surface)] shadow-sm text-[var(--color-primary)] border-[var(--color-primary-light)]">
+              <Download size={12} className="mr-1.5" /> CSV
             </Button>
           )}
         </div>
       </div>
 
+      {/* Compact Filter Bar */}
       <FilterCard
         from={from}
         to={to}
@@ -75,7 +76,7 @@ export function ReportLayout({
       />
 
       {/* Main Content */}
-      <div className={cn("space-y-6 transition-opacity duration-300", isLoading ? "opacity-60 pointer-events-none" : "opacity-100")}>
+      <div className={cn("space-y-4 transition-opacity duration-300", isLoading ? "opacity-60 pointer-events-none" : "opacity-100")}>
         {children}
       </div>
     </div>
@@ -84,35 +85,35 @@ export function ReportLayout({
 
 export function KpiGrid({ children }: { children: React.ReactNode }) {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+    <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-3">
       {children}
     </div>
   );
 }
 
+/** Compact inline insights — designed to slot into a 4-col side panel */
 export function InsightsCard({ insights }: { insights: string[] }) {
   if (!insights?.length) return null;
 
   return (
-    <div className="relative rounded-2xl bg-gradient-to-r from-blue-50/50 to-indigo-50/50 dark:from-[rgba(59,130,246,0.05)] dark:to-[rgba(99,102,241,0.05)] border border-blue-100 dark:border-[rgba(59,130,246,0.15)] p-5 shadow-sm overflow-hidden mt-6">
-      <div className="absolute top-0 right-0 p-4 opacity-10">
-        <Sparkles size={64} className="text-blue-500" />
+    <div className="relative rounded-xl bg-gradient-to-br from-blue-50/60 to-indigo-50/60 dark:from-[rgba(59,130,246,0.06)] dark:to-[rgba(99,102,241,0.06)] border border-blue-100 dark:border-[rgba(59,130,246,0.15)] p-3 overflow-hidden">
+      <div className="absolute top-0 right-0 p-2 opacity-[0.06]">
+        <Sparkles size={40} className="text-blue-500" />
       </div>
-      <div className="flex items-center gap-2 mb-4 relative z-10">
-        <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-500/20 flex items-center justify-center text-blue-600 dark:text-blue-400">
-          <Sparkles size={16} />
+      <div className="flex items-center gap-1.5 mb-2 relative z-10">
+        <div className="w-5 h-5 rounded-md bg-blue-100 dark:bg-blue-500/20 flex items-center justify-center text-blue-600 dark:text-blue-400">
+          <Sparkles size={11} />
         </div>
-        <h3 className="text-sm font-bold text-[var(--color-text-primary)]">AI Business Insights</h3>
+        <h3 className="text-[11px] font-bold text-[var(--color-text-primary)] uppercase tracking-wide">AI Insights</h3>
       </div>
-      <ul className="space-y-3 relative z-10">
+      <ul className="space-y-1.5 relative z-10">
         {insights.map((insight, idx) => (
-          <li key={idx} className="flex items-start gap-3">
-            <span className="w-1.5 h-1.5 rounded-full bg-blue-400 mt-1.5 flex-shrink-0" />
-            <span className="text-sm text-[var(--color-text-secondary)] leading-relaxed">
-              {/* Highlight numbers and percentages with a subtle style */}
+          <li key={idx} className="flex items-start gap-2">
+            <span className="w-1 h-1 rounded-full bg-blue-400 mt-1.5 flex-shrink-0" />
+            <span className="text-[11px] text-[var(--color-text-secondary)] leading-relaxed">
               {insight.split(/(\d+(?:\.\d+)?%?)/g).map((part, i) =>
                 /\d/.test(part) ? (
-                  <strong key={i} className="font-semibold text-blue-700 dark:text-blue-400 bg-blue-100/50 dark:bg-blue-500/10 px-1 rounded mx-0.5">{part}</strong>
+                  <strong key={i} className="font-semibold text-blue-700 dark:text-blue-400">{part}</strong>
                 ) : (
                   part
                 )

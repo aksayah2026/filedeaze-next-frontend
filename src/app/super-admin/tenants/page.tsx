@@ -10,6 +10,7 @@ import { Plus, Eye, Trash2, Search, Copy, CheckCheck, Link2 } from 'lucide-react
 import Link from 'next/link';
 import api from '@/lib/axios';
 import { Tenant, TenantStatus } from '@/types';
+import { TenantStatusBadge, PlanBadge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
@@ -32,24 +33,7 @@ const schema = z.object({
 
 type Form = z.infer<typeof schema>;
 
-function PlanBadge({ tenant }: { tenant: Tenant }) {
-  const sub = (tenant as any).subscription;
-  const plan = sub?.plan ?? tenant.plan ?? tenant.selectedPlan;
-  if (!plan?.name) {
-    return <span className="text-xs font-semibold text-red-500 bg-red-50 border border-red-100 px-2.5 py-0.5 rounded-full">No Active Plan</span>;
-  }
-  const colors: Record<string, string> = {
-    STARTER:      'bg-sky-50 text-sky-700 border-sky-100',
-    PROFESSIONAL: 'bg-indigo-50 text-indigo-700 border-indigo-100',
-    ENTERPRISE:   'bg-purple-50 text-purple-700 border-purple-100',
-  };
-  const cls = colors[plan.name.toUpperCase()] ?? 'bg-emerald-50 text-emerald-700 border-emerald-100';
-  return (
-    <span className={`text-xs font-semibold border px-2.5 py-0.5 rounded-full ${cls}`}>
-      {plan.name}
-    </span>
-  );
-}
+
 
 function ActiveToggle({ tenant, onToggle, loading }: { tenant: Tenant; onToggle: (id: string, next: TenantStatus) => void; loading: boolean }) {
   const isActive = tenant.status === 'ACTIVE';
@@ -230,19 +214,13 @@ export default function TenantsPage() {
 
                     {/* Status */}
                     <td className="px-4 py-3">
-                      <span className={`inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full ${
-                        t.status === 'ACTIVE'    ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' :
-                        t.status === 'TRIAL'     ? 'bg-blue-50 text-blue-700 border border-blue-200' :
-                        t.status === 'SUSPENDED' ? 'bg-red-50 text-red-600 border border-red-200' :
-                        'bg-gray-50 text-gray-500 border border-gray-200'
-                      }`}>
-                        <span className={`h-1.5 w-1.5 rounded-full ${t.status === 'ACTIVE' ? 'bg-emerald-500' : t.status === 'TRIAL' ? 'bg-blue-500' : t.status === 'SUSPENDED' ? 'bg-red-500' : 'bg-gray-400'}`} />
-                        {t.status}
-                      </span>
+                      <TenantStatusBadge status={t.status} />
                     </td>
 
                     {/* Plan */}
-                    <td className="px-4 py-3"><PlanBadge tenant={t} /></td>
+                    <td className="px-4 py-3">
+                      <PlanBadge planName={((t as any).subscription?.plan ?? t.plan ?? (t as any).selectedPlan)?.name} />
+                    </td>
 
                     {/* Created */}
                     <td className="px-4 py-3 text-xs text-[var(--color-text-muted)] whitespace-nowrap">

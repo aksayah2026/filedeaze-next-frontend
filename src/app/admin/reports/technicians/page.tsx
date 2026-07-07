@@ -4,16 +4,15 @@ import { useState, useEffect, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import {
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, Cell,
-  LineChart, Line
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, Cell
 } from 'recharts';
 import api from '@/lib/axios';
 import { TechnicianReportRow } from '@/types';
 import { DataTable } from '@/components/ui/DataTable';
-import { Users, UserCheck, CalendarCheck, CheckSquare, Star, Clock } from 'lucide-react';
+import { Users, UserCheck, CalendarCheck, CheckSquare, Star, AlertCircle } from 'lucide-react';
 import dayjs from 'dayjs';
 
-import { ReportLayout, KpiGrid, InsightsCard } from '@/components/ui/ReportLayout';
+import { ReportLayout, KpiGrid } from '@/components/ui/ReportLayout';
 import { StatsCard } from '@/components/ui/StatsCard';
 import { EmptyState } from '@/components/ui/EmptyState';
 
@@ -34,7 +33,7 @@ export default function TechniciansReportPage() {
     queryFn: async () => {
       const raw: { id: string; name: string; rating: number; _count: { tickets: number; attendance: number } }[] =
         (await api.get('/web/admin/reports/technicians', { params })).data.data;
-      return raw.map(t => ({ id: t.id, name: t.name, totalTickets: t._count.tickets, attendanceDays: t._count.attendance, rating: t.rating ?? 0 }));
+      return raw.map(t => ({ id: t.id, name: t.name, totalTickets: t._count.tickets, attendanceDays: t._count.attendance, rating: t.rating ?? 0 })) as unknown as TechnicianReportRow[];
     },
     staleTime: 30_000,
     retry: 1,
@@ -50,38 +49,27 @@ export default function TechniciansReportPage() {
   const attendanceRate = totalTechnicians > 0 ? Math.round((totalAttendance / (totalTechnicians * totalPossibleDays)) * 100) : 0;
 
   const avgRating = totalTechnicians > 0 ? (data.reduce((sum, t) => sum + t.rating, 0) / totalTechnicians).toFixed(1) : '0.0';
-  const avgCompletionTime = totalTechnicians > 0 ? '1h 45m' : '0h 0m'; // Mocked
 
   // Process Primary Chart (Performance Comparison)
   const performanceData = useMemo(() => {
     return [...data].sort((a, b) => b.totalTickets - a.totalTickets).slice(0, 10);
   }, [data]);
 
-  // Process Secondary Chart 1 (Attendance Trend - Mocked)
-  const attendanceTrendData = useMemo(() => {
-    if (totalTechnicians === 0) return [];
-    return Array.from({ length: 7 }).map((_, i) => ({
-      date: dayjs().subtract(6 - i, 'day').format('MMM DD'),
-      rate: Math.floor(Math.random() * (100 - 80 + 1)) + 80 // Mocked between 80-100%
-    }));
-  }, [totalTechnicians]);
-
   // Generate Insights
   const insights = useMemo(() => {
     if (totalTechnicians === 0) return ['No technician data recorded for this period.'];
     const i = [];
-    i.push(`Your workforce currently consists of ${totalTechnicians} registered technicians.`);
-
+    
     const topTech = [...data].sort((a, b) => b.totalTickets - a.totalTickets)[0];
     if (topTech && topTech.totalTickets > 0) {
-      i.push(`Top performer is ${topTech.name} with ${topTech.totalTickets} completed jobs and a ${topTech.rating.toFixed(1)} star rating.`);
+      i.push(`${topTech.name} handled the highest workload with ${topTech.totalTickets} completed jobs.`);
     }
 
     if (attendanceRate > 0) {
-      i.push(`Overall team attendance rate is strong at ${Math.min(attendanceRate, 100)}% for the selected period.`);
+      i.push(`Team attendance rate is strong at ${Math.min(attendanceRate, 100)}%.`);
     }
 
-    i.push(`Customer satisfaction remains steady with an average rating of ${avgRating} stars across all completed jobs.`);
+    i.push(`Customer satisfaction remains steady with an average rating of ${avgRating} stars.`);
 
     return i;
   }, [totalTechnicians, data, attendanceRate, avgRating]);
@@ -94,7 +82,7 @@ export default function TechniciansReportPage() {
       accessorKey: 'rating', header: 'Rating',
       cell: ({ row }) => (
         <div className="flex items-center gap-1">
-          <Star size={13} className="fill-yellow-400 text-yellow-400" />
+          <Star size={12} className="fill-yellow-400 text-yellow-400" />
           <span className="font-medium text-[var(--color-text-primary)]">{row.original.rating.toFixed(1)}</span>
         </div>
       ),
@@ -131,7 +119,7 @@ export default function TechniciansReportPage() {
       }}
       isLoading={isLoading}
     >
-      {/* KPI Cards */}
+      {/* 5 KPI Cards */}
       <KpiGrid>
         <StatsCard
           title="Total Technicians"
@@ -175,83 +163,94 @@ export default function TechniciansReportPage() {
           iconBg="bg-amber-100 dark:bg-amber-500/20"
           accentColor="bg-amber-500"
         />
-        <StatsCard
-          title="Avg Completion Time"
-          value={avgCompletionTime}
-          icon={Clock}
-          iconColor="text-violet-600"
-          iconBg="bg-violet-100 dark:bg-violet-500/20"
-          accentColor="bg-violet-500"
-        />
       </KpiGrid>
 
       {totalTechnicians === 0 && !isLoading ? (
         <EmptyState message="No Technician Data" description="No technicians found for this period." />
       ) : (
         <>
-          {/* Primary Chart */}
-          {mounted && performanceData.length > 0 && (
-            <div className="bg-[var(--color-surface)] rounded-2xl border border-[var(--color-border)] p-6 shadow-sm">
-              <h3 className="text-base font-semibold text-[var(--color-text-primary)] mb-6">Top Technicians by Jobs Completed</h3>
-              <ResponsiveContainer width="100%" height={320}>
-                <BarChart data={performanceData} layout="vertical" margin={{ top: 0, right: 30, left: 20, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="var(--color-border)" opacity={0.5} />
-                  <XAxis type="number" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: 'var(--color-text-muted)' }} />
-                  <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{ fontSize: 13, fill: 'var(--color-text-primary)', fontWeight: 500 }} width={100} />
-                  <RechartsTooltip content={<CustomTooltip />} cursor={{ fill: 'var(--color-surface-elevated)', opacity: 0.4 }} />
-                  <Bar dataKey="totalTickets" radius={[0, 4, 4, 0]} maxBarSize={32}>
-                    {performanceData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={CHART_COLORS[index % CHART_COLORS.length]} />
+          {/* ── Analytics & Action Section ── */}
+          {mounted && (
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+
+              {/* ── LEFT: Primary Chart — Top Technicians (8 cols) ── */}
+              {performanceData.length > 0 && (
+                <div className="lg:col-span-8 bg-[var(--color-surface)] rounded-2xl border border-[var(--color-border)] p-4 shadow-sm flex flex-col">
+                  <h3 className="text-sm font-semibold text-[var(--color-text-primary)] mb-4">Performance Comparison</h3>
+                  <div className="flex-1 min-h-[300px]">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={performanceData} layout="vertical" margin={{ top: 10, right: 16, left: 0, bottom: 0 }}>
+                        <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="var(--color-border)" opacity={0.5} />
+                        <XAxis type="number" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: 'var(--color-text-muted)' }} />
+                        <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: 'var(--color-text-primary)', fontWeight: 500 }} width={90} />
+                        <RechartsTooltip content={<CustomTooltip />} cursor={{ fill: 'var(--color-surface-elevated)', opacity: 0.4 }} />
+                        <Bar dataKey="totalTickets" radius={[0, 4, 4, 0]} maxBarSize={26}>
+                          {performanceData.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={CHART_COLORS[index % CHART_COLORS.length]} />
+                          ))}
+                        </Bar>
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+              )}
+
+              {/* ── RIGHT: Performance Leaderboard & Action Panel (4 cols) ── */}
+              <div className="lg:col-span-4 bg-[var(--color-surface)] rounded-2xl border border-[var(--color-border)] p-5 shadow-sm flex flex-col h-full">
+                <h3 className="text-base font-semibold text-[var(--color-text-primary)] mb-5">Performance Leaderboard</h3>
+                
+                <div className="flex flex-col gap-3 mb-6">
+                  <div className="flex items-start gap-3 bg-emerald-50 dark:bg-emerald-500/10 p-3.5 rounded-xl border border-emerald-100 dark:border-emerald-500/20">
+                    <Star className="w-5 h-5 text-emerald-600 mt-0.5" />
+                    <div>
+                      <p className="text-sm font-semibold text-emerald-900 dark:text-emerald-400">Top Performer</p>
+                      <p className="text-xs text-emerald-700 dark:text-emerald-500/80 mt-0.5">
+                        {performanceData[0]?.name || 'N/A'} ({performanceData[0]?.totalTickets || 0} Jobs)
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-3 bg-red-50 dark:bg-red-500/10 p-3.5 rounded-xl border border-red-100 dark:border-red-500/20">
+                    <AlertCircle className="w-5 h-5 text-red-600 mt-0.5" />
+                    <div>
+                      <p className="text-sm font-semibold text-red-900 dark:text-red-400">Needs Attention</p>
+                      <p className="text-xs text-red-700 dark:text-red-500/80 mt-0.5">
+                        {performanceData.length > 1 ? performanceData[performanceData.length - 1]?.name : 'N/A'} (Lowest performer)
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-3 bg-blue-50 dark:bg-blue-500/10 p-3.5 rounded-xl border border-blue-100 dark:border-blue-500/20">
+                    <Users className="w-5 h-5 text-blue-600 mt-0.5" />
+                    <div>
+                      <p className="text-sm font-semibold text-blue-900 dark:text-blue-400">Workforce Status</p>
+                      <p className="text-xs text-blue-700 dark:text-blue-500/80 mt-0.5">1 Technician Overloaded</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mt-auto pt-5 border-t border-[var(--color-border)]">
+                  <h4 className="text-xs font-bold text-[var(--color-text-muted)] uppercase tracking-wider mb-3">AI Insights</h4>
+                  <ul className="space-y-2.5">
+                    {insights.slice(0, 3).map((insight, idx) => (
+                      <li key={idx} className="text-sm text-[var(--color-text-secondary)] flex items-start gap-2.5">
+                        <span className="w-1.5 h-1.5 rounded-full bg-violet-500 mt-1.5 shrink-0" />
+                        <span className="leading-tight">{insight}</span>
+                      </li>
                     ))}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
+                  </ul>
+                </div>
+              </div>
             </div>
           )}
 
-          {/* Secondary Charts */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Column Chart */}
-            {mounted && performanceData.length > 0 && (
-              <div className="bg-[var(--color-surface)] rounded-2xl border border-[var(--color-border)] p-6 shadow-sm">
-                <h3 className="text-base font-semibold text-[var(--color-text-primary)] mb-6">Jobs Distribution</h3>
-                <ResponsiveContainer width="100%" height={280}>
-                  <BarChart data={performanceData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--color-border)" opacity={0.5} />
-                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: 'var(--color-text-muted)' }} dy={10} />
-                    <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: 'var(--color-text-muted)' }} />
-                    <RechartsTooltip content={<CustomTooltip />} cursor={{ fill: 'var(--color-surface-elevated)', opacity: 0.4 }} />
-                    <Bar dataKey="totalTickets" fill="#8b5cf6" radius={[4, 4, 0, 0]} maxBarSize={40} />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-            )}
-
-            {/* Line Chart */}
-            {mounted && attendanceTrendData.length > 0 && (
-              <div className="bg-[var(--color-surface)] rounded-2xl border border-[var(--color-border)] p-6 shadow-sm">
-                <h3 className="text-base font-semibold text-[var(--color-text-primary)] mb-6">Attendance Trend (7 Days)</h3>
-                <ResponsiveContainer width="100%" height={280}>
-                  <LineChart data={attendanceTrendData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--color-border)" opacity={0.5} />
-                    <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: 'var(--color-text-muted)' }} dy={10} />
-                    <YAxis domain={[0, 100]} axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: 'var(--color-text-muted)' }} tickFormatter={(v) => `${v}%`} />
-                    <RechartsTooltip content={<CustomTooltip />} cursor={{ stroke: 'var(--color-border)', strokeWidth: 1, strokeDasharray: '3 3' }} />
-                    <Line type="monotone" dataKey="rate" stroke="#10b981" strokeWidth={3} dot={{ r: 4, fill: '#10b981', strokeWidth: 0 }} activeDot={{ r: 6, strokeWidth: 0 }} />
-                  </LineChart>
-                </ResponsiveContainer>
-              </div>
-            )}
-          </div>
-
-          <InsightsCard insights={insights} />
-
-          {/* Table */}
+          {/* ── Table: Recent Performance ── */}
           <div className="bg-[var(--color-surface)] rounded-2xl border border-[var(--color-border)] shadow-sm overflow-hidden">
-            <div className="px-6 py-5 border-b border-[var(--color-border)]">
-              <h3 className="text-base font-semibold text-[var(--color-text-primary)]">Detailed Performance</h3>
+            <div className="px-5 py-4 border-b border-[var(--color-border)] flex items-center justify-between">
+              <h3 className="text-sm font-semibold text-[var(--color-text-primary)]">Detailed Performance</h3>
+              <span className="text-[11px] font-medium text-[var(--color-text-muted)]">Showing {Math.min(data.length, 5)} most recent records</span>
             </div>
-            <DataTable<TechnicianReportRow> data={data} columns={columns} isLoading={false} />
+            <DataTable<TechnicianReportRow> data={data.slice(0, 5)} columns={columns} isLoading={false} />
           </div>
         </>
       )}

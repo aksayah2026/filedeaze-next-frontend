@@ -1,5 +1,5 @@
 import { cn } from '@/lib/utils';
-import { TicketStatus, TenantStatus, PaymentStatus } from '@/types';
+import { TicketStatus, TenantStatus, PaymentStatus, UserRole } from '@/types';
 
 const variants = {
   default:  { bg: 'bg-[var(--color-surface-elevated)]',        text: 'text-[var(--color-text-secondary)]',       dot: 'bg-[var(--color-surface-elevated)]' },
@@ -74,6 +74,20 @@ export function TenantStatusBadge({ status }: { status: TenantStatus }) {
   return <Badge variant={tenantColors[status]}>{status.replace(/_/g, ' ')}</Badge>;
 }
 
+const planColors: Record<string, BadgeVariant> = {
+  STARTER: 'info',
+  PROFESSIONAL: 'purple',
+  ENTERPRISE: 'success',
+};
+
+export function PlanBadge({ planName }: { planName?: string }) {
+  if (!planName) {
+    return <Badge variant="danger" showDot={false}>No Active Plan</Badge>;
+  }
+  const variant = planColors[planName.toUpperCase()] || 'default';
+  return <Badge variant={variant} showDot={false}>{planName}</Badge>;
+}
+
 const paymentColors: Record<PaymentStatus, BadgeVariant> = {
   PENDING:   'warning',
   COLLECTED: 'info',
@@ -83,4 +97,19 @@ const paymentColors: Record<PaymentStatus, BadgeVariant> = {
 
 export function PaymentStatusBadge({ status }: { status: PaymentStatus }) {
   return <Badge variant={paymentColors[status]}>{status}</Badge>;
+}
+
+const roleColors: Record<UserRole, BadgeVariant> = {
+  SUPER_ADMIN: 'purple',
+  ADMIN: 'teal',
+  MANAGER: 'success',
+};
+
+export function RoleBadge({ role, className }: { role: UserRole; className?: string }) {
+  const roleLabels: Record<UserRole, string> = {
+    SUPER_ADMIN: 'Super Admin',
+    ADMIN: 'Admin',
+    MANAGER: 'Manager',
+  };
+  return <Badge variant={roleColors[role]} showDot={false} className={className}>{roleLabels[role]}</Badge>;
 }
