@@ -104,28 +104,53 @@ export function Topbar({ title, onMenuClick, isCollapsed, onToggleCollapse }: To
     refetchInterval: 30_000,
   });
   const unreadCount = notifications.filter(n => !n.read).length;
+  const unreadNotifications = notifications.filter(n => !n.read);
 
   const markReadMutation = useMutation({
     mutationFn: (id: string) => api.patch(`/mobile/notifications/${id}/read`),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['notifications'] }),
+    onSuccess: (res, id) => {
+      qc.setQueryData<AppNotification[]>(
+        ['notifications'],
+        (prev) => prev ? prev.map(n => n.id === id ? { ...n, read: true } : n) : []
+      );
+    },
+    onError: (err) => {
+      toast.error('Failed to mark notification as read');
+    },
   });
+
   const markAllReadMutation = useMutation({
     mutationFn: () => api.patch('/mobile/notifications/read-all'),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['notifications'] }),
+    onSuccess: () => {
+      qc.setQueryData<AppNotification[]>(
+        ['notifications'],
+        (prev) => prev ? prev.map(n => ({ ...n, read: true })) : []
+      );
+    },
+    onError: (err) => {
+      toast.error('Failed to mark all notifications as read');
+    },
   });
 
   useEffect(() => {
     if (!showNotifications) return;
     const onClickOutside = (e: MouseEvent) => {
+      if (e.target && !document.body.contains(e.target as Node)) return;
       if (notifRef.current && !notifRef.current.contains(e.target as Node)) setShowNotifications(false);
     };
     document.addEventListener('mousedown', onClickOutside);
     return () => document.removeEventListener('mousedown', onClickOutside);
   }, [showNotifications]);
 
-  const handleNotificationClick = (n: AppNotification) => {
-    if (!n.read) markReadMutation.mutate(n.id);
-    if (n.ticketId) {
+  const handleNotificationClick = (e: React.SyntheticEvent, n: AppNotification) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (!n.read) {
+      markReadMutation.mutate(n.id);
+    }
+    
+    if (n.ticketId && user?.role !== 'SUPER_ADMIN') {
       router.push(`/${ticketsPrefix}/tickets/${n.ticketId}`);
       setShowNotifications(false);
     }
@@ -210,9 +235,21 @@ export function Topbar({ title, onMenuClick, isCollapsed, onToggleCollapse }: To
 
         {/* Notification Bell */}
         <div className="relative" ref={notifRef}>
-          <button
-            onClick={() => setShowNotifications(v => !v)}
-            className="flex h-8 w-8 items-center justify-center rounded-lg text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-text-primary)] transition-colors relative"
+          <div
+            role="button"
+            tabIndex={0}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              setShowNotifications(v => !v);
+            }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                setShowNotifications(v => !v);
+              }
+            }}
+            className="flex h-8 w-8 items-center justify-center rounded-lg text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-text-primary)] transition-colors relative cursor-pointer"
             aria-label="Notifications"
           >
             <Bell size={16} />
@@ -221,19 +258,31 @@ export function Topbar({ title, onMenuClick, isCollapsed, onToggleCollapse }: To
                 {unreadCount > 9 ? '9+' : unreadCount}
               </span>
             )}
-          </button>
+          </div>
 
           {showNotifications && (
             <div className="absolute right-0 mt-2 w-80 max-h-96 overflow-y-auto rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-lg z-20">
               <div className="flex items-center justify-between px-3 py-2.5 border-b border-[var(--color-border)]">
                 <span className="text-xs font-semibold text-[var(--color-text-primary)]">Notifications</span>
                 {unreadCount > 0 && (
-                  <button
-                    onClick={() => markAllReadMutation.mutate()}
-                    className="text-[11px] font-medium text-[var(--color-primary)] hover:underline"
+                  <div
+                    role="button"
+                    tabIndex={0}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      markAllReadMutation.mutate();
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        markAllReadMutation.mutate();
+                      }
+                    }}
+                    className="text-[11px] font-medium text-[var(--color-primary)] hover:underline cursor-pointer"
                   >
                     Mark all as read
-                  </button>
+                  </div>
                 )}
               </div>
               {notifications.length === 0 ? (
@@ -241,18 +290,33 @@ export function Topbar({ title, onMenuClick, isCollapsed, onToggleCollapse }: To
               ) : (
                 <div className="divide-y divide-[var(--color-border)]">
                   {notifications.slice(0, 20).map(n => (
-                    <button
+                    <div
                       key={n.id}
-                      onClick={() => handleNotificationClick(n)}
-                      className={cn(
-                        'w-full text-left px-3 py-2.5 hover:bg-[var(--color-surface-hover)] transition-colors',
-                        !n.read && 'bg-[var(--color-primary-light)]/40',
-                      )}
+                      role="button"
+                      tabIndex={0}
+                      onClick={(e) => handleNotificationClick(e, n)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          handleNotificationClick(e, n);
+                        }
+                      }}
+                      className="w-full text-left px-4 py-3 hover:bg-[var(--color-surface-hover)] transition-all flex gap-3 items-start group cursor-pointer"
                     >
-                      <p className="text-xs font-semibold text-[var(--color-text-primary)]">{n.title}</p>
-                      <p className="text-xs text-[var(--color-text-secondary)] mt-0.5 line-clamp-2">{n.body}</p>
-                      <p className="text-[10px] text-[var(--color-text-muted)] mt-1">{dayjs(n.createdAt).fromNow()}</p>
-                    </button>
+                      {/* Unread indicator green dot */}
+                      <span className={cn(
+                        "h-2 w-2 rounded-full mt-1.5 shrink-0 transition-colors",
+                        n.read ? "bg-transparent" : "bg-emerald-500"
+                      )} />
+                      <div className="flex-1 min-w-0">
+                        <p className={cn(
+                          "text-xs transition-colors",
+                          n.read ? "font-normal text-[var(--color-text-secondary)]" : "font-semibold text-[var(--color-text-primary)] group-hover:text-[var(--color-primary)]"
+                        )}>{n.title}</p>
+                        <p className="text-[11px] text-[var(--color-text-secondary)] mt-0.5 line-clamp-2 leading-relaxed">{n.body}</p>
+                        <p className="text-[9px] text-[var(--color-text-muted)] mt-1 font-medium">{dayjs(n.createdAt).fromNow()}</p>
+                      </div>
+                    </div>
                   ))}
                 </div>
               )}

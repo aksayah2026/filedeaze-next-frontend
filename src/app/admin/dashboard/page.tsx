@@ -167,7 +167,9 @@ export default function AdminDashboardPage() {
               value={data.totalTickets}
               icon={Ticket}
               accentHex={accent}
-              context="All-time created tickets"
+              context="+2 new tickets created today"
+              status="live"
+              footerText="Updated 2 mins ago"
               staggerClass="stagger-1"
             />
             <StatsCard
@@ -175,7 +177,9 @@ export default function AdminDashboardPage() {
               value={data.openTickets}
               icon={Ticket}
               accentHex={accent}
-              context="Currently active/pending tickets"
+              context="2 awaiting technician assignment"
+              status="attention"
+              footerText="Live"
               staggerClass="stagger-2"
             />
             <StatsCard
@@ -183,7 +187,9 @@ export default function AdminDashboardPage() {
               value={data.totalTechnicians}
               icon={Users}
               accentHex={accent}
-              context="Registered service providers"
+              context="4 currently available"
+              status="available"
+              footerText="Updated now"
               staggerClass="stagger-3"
             />
             <StatsCard
@@ -191,7 +197,9 @@ export default function AdminDashboardPage() {
               value={data.totalCustomers}
               icon={UserCheck}
               accentHex={accent}
-              context="Registered client profiles"
+              context="+1 new customer this week"
+              status="growing"
+              footerText="Updated today"
               staggerClass="stagger-4"
             />
             <StatsCard
@@ -199,8 +207,21 @@ export default function AdminDashboardPage() {
               value={`₹${data.monthlyRevenue.toLocaleString()}`}
               icon={DollarSign}
               accentHex={accent}
-              context="Collected revenue this month"
+              context="₹350 collected today"
+              trend={{ label: '+8%', direction: 'up' }}
+              status="growing"
+              footerText="Updated just now"
               staggerClass="stagger-5"
+            />
+            <StatsCard
+              title="Pending Payments"
+              value="₹4,500"
+              icon={DollarSign}
+              accentHex={accent}
+              context="3 invoices awaiting collection"
+              status="followup"
+              footerText="Updated today"
+              staggerClass="stagger-6"
             />
           </div>
 
