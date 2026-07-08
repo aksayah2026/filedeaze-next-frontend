@@ -24,8 +24,7 @@ import type { NavItemDef } from './SidebarNavItem';
 const adminOnlyNav: NavItemDef[] = [
   { href: '/admin/dashboard', label: 'Dashboard', icon: DashboardIcon },
   { href: '/admin/managers', label: 'Managers', icon: UsersIcon },
-  { href: '/admin/company-settings', label: 'Company Settings', icon: SettingsIcon },
-  { href: '/admin/tenant-settings', label: 'Tenant Settings', icon: SettingsIcon },
+  { href: '/admin/business-settings', label: 'Business Settings', icon: SettingsIcon },
   { href: '/admin/profile', label: 'My Profile', icon: UserCheckIcon },
 ];
 
@@ -37,7 +36,6 @@ const reportsNav: NavItemDef[] = [
 
 const adminMiscNav: NavItemDef[] = [
   { href: '/admin/audit-logs', label: 'Audit Logs', icon: ClipboardIcon },
-  { href: '/admin/platform-settings', label: 'Platform Settings', icon: SettingsIcon },
   { href: '/admin/subscription', label: 'Subscription', icon: CreditCardIcon },
 ];
 
@@ -45,8 +43,7 @@ const operationsNav: NavItemDef[] = [
   { href: '/admin/tickets', label: 'Tickets', icon: ClipboardIcon },
   { href: '/admin/technicians', label: 'Technicians', icon: WalletIcon },
   { href: '/admin/skills', label: 'Skills', icon: StarIcon },
-  { href: '/admin/service-categories', label: 'Categories', icon: SparklesIcon },
-  { href: '/admin/service-sub-categories', label: 'Sub-Categories', icon: SparklesIcon },
+  { href: '/admin/service-catalog', label: 'Categories', icon: SparklesIcon },
   { href: '/admin/customers', label: 'Customers', icon: UsersIcon },
   { href: '/admin/attendance', label: 'Attendance', icon: UserCheckIcon },
   { href: '/admin/feedback', label: 'Feedback', icon: StarIcon },

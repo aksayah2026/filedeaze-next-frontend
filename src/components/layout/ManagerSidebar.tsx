@@ -32,8 +32,7 @@ const operationsNav: NavItemDef[] = [
 ];
 
 const catalogNav: NavItemDef[] = [
-    { href: '/manager/service-categories', label: 'Categories', icon: SparklesIcon },
-    { href: '/manager/service-sub-categories', label: 'Sub Categories', icon: SparklesIcon },
+    { href: '/manager/service-catalog', label: 'Categories and Sub-Categories', icon: SparklesIcon },
 ];
 
 const reportsNav: NavItemDef[] = [

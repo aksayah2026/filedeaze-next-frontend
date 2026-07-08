@@ -6,11 +6,10 @@ import api from '@/lib/axios';
 import { SuperAdminDashboard } from '@/types';
 import { StatsCard } from '@/components/ui/StatsCard';
 import { SkeletonCard } from '@/components/ui/Spinner';
-
-// Super Admin role accent
-const ACCENT = '#2563EB';
+import { useRoleAccent } from '@/lib/useRoleAccent';
 
 export default function SuperAdminDashboardPage() {
+  const ACCENT = useRoleAccent();
   const { data, isLoading } = useQuery<SuperAdminDashboard>({
     queryKey: ['super-admin-dashboard'],
     queryFn: async () => (await api.get('/web/super-admin/dashboard')).data.data,

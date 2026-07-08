@@ -13,6 +13,7 @@ import { ProgressBar } from '@/components/ui/ProgressBar';
 import { SkeletonCard, SkeletonLine } from '@/components/ui/Spinner';
 import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
+import { useRoleAccent } from '@/lib/useRoleAccent';
 
 /* ── Greeting helper ──────────────────────────────────── */
 function getGreeting() {
@@ -65,6 +66,7 @@ const QUICK_ACTIONS = [
 ];
 
 export default function AdminDashboardPage() {
+  const accent = useRoleAccent();
   const { data, isLoading } = useQuery<AdminDashboard>({
     queryKey: ['admin-dashboard'],
     queryFn: async () => (await api.get('/web/admin/dashboard')).data.data,
@@ -164,50 +166,40 @@ export default function AdminDashboardPage() {
               title="Total Tickets"
               value={data.totalTickets}
               icon={Ticket}
-              iconBg="bg-[var(--color-primary-light)]"
-              iconColor="text-[var(--color-primary)]"
-              accentColor="bg-[var(--color-primary)]"
-              subtitle="All-time created tickets"
+              accentHex={accent}
+              context="All-time created tickets"
               staggerClass="stagger-1"
             />
             <StatsCard
               title="Open Tickets"
               value={data.openTickets}
               icon={Ticket}
-              iconBg="bg-[var(--color-warning-light)] dark:bg-[var(--color-warning)]/10"
-              iconColor="text-[var(--color-warning)]"
-              accentColor="bg-[var(--color-warning)]"
-              subtitle="Currently active/pending tickets"
+              accentHex={accent}
+              context="Currently active/pending tickets"
               staggerClass="stagger-2"
             />
             <StatsCard
               title="Total Technicians"
               value={data.totalTechnicians}
               icon={Users}
-              iconBg="bg-[var(--color-success-light)] dark:bg-[var(--color-success)]/10"
-              iconColor="text-[var(--color-success)]"
-              accentColor="bg-[var(--color-success)]"
-              subtitle="Registered service providers"
+              accentHex={accent}
+              context="Registered service providers"
               staggerClass="stagger-3"
             />
             <StatsCard
               title="Total Customers"
               value={data.totalCustomers}
               icon={UserCheck}
-              iconBg="bg-[var(--color-accent-purple)]/10"
-              iconColor="text-[var(--color-accent-purple)]"
-              accentColor="bg-[var(--color-accent-purple)]"
-              subtitle="Registered client profiles"
+              accentHex={accent}
+              context="Registered client profiles"
               staggerClass="stagger-4"
             />
             <StatsCard
               title="Monthly Revenue"
               value={`₹${data.monthlyRevenue.toLocaleString()}`}
               icon={DollarSign}
-              iconBg="bg-[var(--color-info-light)] dark:bg-[var(--color-info)]/10"
-              iconColor="text-[var(--color-info)]"
-              accentColor="bg-[var(--color-info)]"
-              subtitle="Collected revenue this month"
+              accentHex={accent}
+              context="Collected revenue this month"
               staggerClass="stagger-5"
             />
           </div>
