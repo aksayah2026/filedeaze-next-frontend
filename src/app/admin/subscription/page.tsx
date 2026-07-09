@@ -11,7 +11,7 @@ import { Badge } from '@/components/ui/Badge';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import { QRCodeCanvas } from 'qrcode.react';
-import { CheckCircle, Clock, QrCode, CreditCard, AlertCircle, Send, FileText } from 'lucide-react';
+import { CheckCircle, Clock, QrCode, CreditCard, AlertCircle, Send, FileText, Gift } from 'lucide-react';
 import dayjs from 'dayjs';
 
 interface SubscriptionInfo {
@@ -92,6 +92,15 @@ export default function SubscriptionPage() {
     },
   });
 
+  const activateFree = useMutation({
+    mutationFn: () => api.post('/web/subscription/activate-free'),
+    onSuccess: (res) => {
+      toast.success(res.data.message ?? 'Plan activated');
+      qc.invalidateQueries({ queryKey: ['my-subscription'] });
+    },
+    onError: (err: any) => toast.error(err?.response?.data?.message ?? 'Failed to activate plan'),
+  });
+
   if (isLoading) return <PageSpinner />;
 
   const {
@@ -109,8 +118,10 @@ export default function SubscriptionPage() {
 
   // Allow resubmit if: trial/expired (first-time), or payment_pending after a rejection
   const isRejected = latestPaymentRequest?.status === 'REJECTED';
+  const needsActivation = isTrial || isExpired || (isPaymentPending && isRejected);
+  const isFreePlan = !!currentPlan && Number(currentPlan.price) === 0;
   const canSubmitProof =
-    (isTrial || isExpired || (isPaymentPending && isRejected)) &&
+    needsActivation && !isFreePlan &&
     latestPaymentRequest?.status !== 'PENDING_REVIEW';
 
   return (
@@ -126,7 +137,10 @@ export default function SubscriptionPage() {
           <div className="grid grid-cols-2 gap-4">
             <div>
               <p className="text-2xl font-bold text-[var(--color-text-primary)]">{currentPlan.name}</p>
-              <p className="text-sm text-[var(--color-text-muted)] mt-0.5">₹{Number(currentPlan.price).toLocaleString()} / year</p>
+              <p className="text-sm text-[var(--color-text-muted)] mt-0.5">
+                ₹{Number(currentPlan.price).toLocaleString()}
+                {currentPlan.durationDays ? ` / ${currentPlan.durationDays} days` : ''}
+              </p>
               <div className="mt-3 flex items-center gap-2 flex-wrap">
                 {isTrial && (
                   <Badge variant="warning">
@@ -140,14 +154,21 @@ export default function SubscriptionPage() {
                 {isActive && isExpiringSoon && <Badge variant="warning">Expires in {subDaysLeft}d</Badge>}
                 {isActive && !isExpiringSoon && subscription && <Badge variant="success">Active</Badge>}
               </div>
-              {subscription && (
+              {currentPlan.durationDays != null && (
                 <p className="text-xs text-[var(--color-text-muted)] mt-2">
+                  Duration: {currentPlan.durationDays} day{currentPlan.durationDays !== 1 ? 's' : ''}
+                </p>
+              )}
+              {subscription && (
+                <p className="text-xs text-[var(--color-text-muted)] mt-1">
                   {dayjs(subscription.startDate).format('DD MMM YYYY')} → {dayjs(subscription.endDate).format('DD MMM YYYY')}
+                  {isActive && subDaysLeft != null && ` · ${Math.max(0, subDaysLeft)} day${subDaysLeft !== 1 ? 's' : ''} remaining`}
                 </p>
               )}
               {isTrial && trialEndsAt && (
-                <p className="text-xs text-[var(--color-text-muted)] mt-2">
+                <p className="text-xs text-[var(--color-text-muted)] mt-1">
                   Trial ends {dayjs(trialEndsAt).format('DD MMM YYYY')}
+                  {trialDaysLeft != null && ` · ${trialDaysLeft} day${trialDaysLeft !== 1 ? 's' : ''} remaining`}
                 </p>
               )}
             </div>
@@ -198,8 +219,26 @@ export default function SubscriptionPage() {
         </div>
       )}
 
+      {/* Free Plan — self-activate, no payment needed */}
+      {needsActivation && isFreePlan && (
+        <div className="bg-[var(--color-surface)] rounded-xl p-5 border border-[var(--color-border)] shadow-sm">
+          <div className="flex items-start gap-3">
+            <Gift size={20} className="text-emerald-500 mt-0.5 shrink-0" />
+            <div className="flex-1">
+              <h3 className="font-medium text-[var(--color-text-secondary)]">This plan is free</h3>
+              <p className="text-sm text-[var(--color-text-muted)] mt-1">
+                {currentPlan?.name} costs ₹0 — no payment needed. Activate it directly to continue using FieldEaze.
+              </p>
+              <Button className="mt-3" size="sm" loading={activateFree.isPending} onClick={() => activateFree.mutate()}>
+                Activate {currentPlan?.name}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* UPI Payment Info */}
-      {(isTrial || isExpired || (isPaymentPending && isRejected)) && (
+      {needsActivation && !isFreePlan && (
         <div className="bg-[var(--color-surface)] rounded-xl p-5 border border-[var(--color-border)] shadow-sm">
           <h3 className="font-medium text-[var(--color-text-secondary)] mb-4 flex items-center gap-2">
             <QrCode size={16} className="text-blue-500" /> Pay to Activate

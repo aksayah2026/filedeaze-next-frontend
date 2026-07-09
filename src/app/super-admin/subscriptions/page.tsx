@@ -15,8 +15,8 @@ import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
 import { Modal } from '@/components/ui/Modal';
 import {
-  Search, Plus, RefreshCw, Eye, ArrowUpDown, Ban, CheckCircle,
-  XCircle, AlertTriangle, Clock, ChevronLeft, ChevronRight,
+  Search, RefreshCw, Eye, ArrowUpDown, Ban, CheckCircle,
+  XCircle, Clock, ChevronLeft, ChevronRight,
 } from 'lucide-react';
 import { FilterCard } from '@/components/ui/FilterCard';
 import dayjs from 'dayjs';
@@ -73,7 +73,7 @@ function PlanPreview({ plan }: { plan: Plan }) {
       <div className="flex items-start justify-between mb-3">
         <div>
           <p className="font-bold text-indigo-900 text-base">{plan.name}</p>
-          <p className="text-indigo-600 text-xs">₹{Number(plan.price).toLocaleString()} / month</p>
+          <p className="text-indigo-600 text-xs">₹{Number(plan.price).toLocaleString()}</p>
         </div>
         <div className="text-right">
           <p className="text-xs text-indigo-500">Duration</p>
@@ -111,103 +111,6 @@ function Btn({ children, title, onClick, loading, danger }: {
     >
       {children}
     </button>
-  );
-}
-
-// ── Create Modal ───────────────────────────────────────────────────────────────
-
-function CreateModal({ onClose, plans, tenants, defaultTenantId }: { onClose: () => void; plans: Plan[]; tenants: Tenant[]; defaultTenantId?: string }) {
-  const qc = useQueryClient();
-  const { register, handleSubmit, watch, reset, formState: { errors, isSubmitting } } = useForm({
-    defaultValues: { tenantId: defaultTenantId ?? '', planId: '', paymentStatus: 'PAID', paymentMethod: 'UPI', notes: '', isTrial: false },
-  });
-
-  const watchedTenantId = watch('tenantId');
-  const watchedPlanId   = watch('planId');
-
-  const selectedTenant  = tenants.find(t => t.id === watchedTenantId);
-  const selectedPlan    = plans.find(p => p.id === watchedPlanId);
-  const hasActiveSub    = selectedTenant?.subscription?.status === 'ACTIVE';
-  const hasQueuedSub    = (selectedTenant?.subscription?.status as string) === 'QUEUED';
-  const planHasDuration = !!(selectedPlan as any)?.durationDays;
-
-  const mutation = useMutation({
-    mutationFn: (d: object) => api.post('/web/super-admin/subscriptions', d),
-    onSuccess: (res) => {
-      toast.success(res.data.message ?? 'Subscription created');
-      qc.invalidateQueries({ queryKey: ['subscriptions'] });
-      qc.invalidateQueries({ queryKey: ['subscription-dashboard'] });
-      qc.invalidateQueries({ queryKey: ['tenants'] });
-      reset(); onClose();
-    },
-    onError: (err: any) => toast.error(err?.response?.data?.message ?? 'Failed to create subscription'),
-  });
-
-  return (
-    <Modal open onClose={onClose} title="Create Subscription" size="sm">
-      <form onSubmit={handleSubmit(d => mutation.mutate(d))} className="space-y-4">
-        <Select
-          label="Tenant *"
-          options={[{ value: '', label: 'Select Tenant...' }, ...tenants.map(t => ({ value: t.id, label: `${t.companyName} (${t.tenantCode})` }))]}
-          {...register('tenantId', { required: 'Select a tenant' })}
-          error={errors.tenantId?.message as string}
-        />
-
-        {hasActiveSub && (
-          <div className="flex items-start gap-2 rounded-lg border border-blue-200 bg-blue-50 p-3 text-xs text-blue-800">
-            <AlertTriangle size={13} className="mt-0.5 shrink-0 text-blue-500" />
-            <span>This tenant has an active subscription. The new subscription will be <strong>queued</strong> and activate automatically when the current one expires.</span>
-          </div>
-        )}
-
-        {hasQueuedSub && (
-          <div className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800">
-            <AlertTriangle size={13} className="mt-0.5 shrink-0 text-amber-500" />
-            <span>This tenant already has a queued subscription. Cancel the queued subscription before adding a new one.</span>
-          </div>
-        )}
-
-        <Select
-          label="Plan *"
-          options={[{ value: '', label: 'Select Plan...' }, ...plans.filter(p => p.isActive).map(p => ({ value: p.id, label: `${p.name} — ₹${Number(p.price).toLocaleString()}/mo · ${planDuration(p)} days` }))]}
-          {...register('planId', { required: 'Select a plan' })}
-          error={errors.planId?.message as string}
-        />
-
-        {planHasDuration && (
-          <label className="flex items-center gap-2.5 cursor-pointer select-none">
-            <input type="checkbox" {...register('isTrial')} className="w-4 h-4 rounded accent-[var(--color-primary)]" />
-            <span className="text-sm text-[var(--color-text-secondary)]">
-              Mark as trial subscription <strong>({(selectedPlan as any).durationDays} days)</strong>
-            </span>
-          </label>
-        )}
-
-        {selectedPlan && <PlanPreview plan={selectedPlan} />}
-
-        <div className="grid grid-cols-2 gap-3">
-          <Select
-            label="Payment Status *"
-            options={[{ value: 'PAID', label: 'Paid' }, { value: 'PENDING', label: 'Pending' }]}
-            {...register('paymentStatus', { required: true })}
-          />
-          <Select
-            label="Payment Method"
-            options={[{ value: '', label: 'None' }, ...PAYMENT_METHODS.map(m => ({ value: m, label: m.replace('_', ' ') }))]}
-            {...register('paymentMethod')}
-          />
-        </div>
-
-        <Input label="Notes (optional)" placeholder="e.g. Annual deal, paid via bank transfer" {...register('notes')} />
-
-        <div className="flex justify-end gap-3 pt-1">
-          <Button variant="secondary" type="button" onClick={onClose}>Cancel</Button>
-          <Button type="submit" loading={isSubmitting || mutation.isPending} disabled={hasQueuedSub}>
-            <Plus size={14} /> {hasActiveSub ? 'Queue Subscription' : 'Create Subscription'}
-          </Button>
-        </div>
-      </form>
-    </Modal>
   );
 }
 
@@ -258,7 +161,7 @@ function RenewModal({ onClose, tenants, plans, defaultTenantId }: { onClose: () 
 
         {watchedTenantId && !existingSub && (
           <p className="text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
-            This tenant has no subscription to renew. Use <strong>Create Subscription</strong> instead.
+            This tenant has no subscription on record. This shouldn't normally happen — every tenant gets a subscription automatically when created. Contact engineering if you see this.
           </p>
         )}
 
@@ -282,7 +185,7 @@ function RenewModal({ onClose, tenants, plans, defaultTenantId }: { onClose: () 
                     {isExpired ? 'Expired' : `${remainingDays}d`}
                   </p>
                 </div>
-                <div><p className="text-indigo-400">Amount</p><p className="font-semibold">₹{Number(selectedPlan?.price ?? existingSub.plan?.price ?? 0).toLocaleString()}/mo</p></div>
+                <div><p className="text-indigo-400">Amount</p><p className="font-semibold">₹{Number(selectedPlan?.price ?? existingSub.plan?.price ?? 0).toLocaleString()}</p></div>
                 <div>
                   <p className="text-indigo-400">New Expiry</p>
                   <p className="font-semibold text-emerald-700">{newExpiry?.format('DD MMM YYYY') ?? '—'}</p>
@@ -300,7 +203,7 @@ function RenewModal({ onClose, tenants, plans, defaultTenantId }: { onClose: () 
                 { value: '', label: `Keep current: ${existingSub.plan?.name ?? '—'}` },
                 ...plans.filter(p => p.isActive && p.id !== currentPlanId).map(p => ({
                   value: p.id,
-                  label: `${p.name} — ₹${Number(p.price).toLocaleString()}/mo`,
+                  label: `${p.name} — ₹${Number(p.price).toLocaleString()} · ${planDuration(p)} days`,
                 })),
               ]}
               {...register('planId')}
@@ -340,15 +243,23 @@ function RenewModal({ onClose, tenants, plans, defaultTenantId }: { onClose: () 
   );
 }
 
-// ── Change Plan Modal ──────────────────────────────────────────────────────────
+// ── Upgrade / Downgrade Modal ──────────────────────────────────────────────────
+// Direction (upgrade vs downgrade) is auto-detected from price and routed to the
+// matching backend endpoint — there is no generic "change plan" action anymore.
 
-function ChangePlanModal({ sub, plans, onClose }: { sub: SubscriptionWithMeta; plans: Plan[]; onClose: () => void }) {
+function UpgradeDowngradeModal({ sub, plans, onClose }: { sub: SubscriptionWithMeta; plans: Plan[]; onClose: () => void }) {
   const qc = useQueryClient();
   const [planId, setPlanId] = useState('');
+  const [paymentStatus, setPaymentStatus] = useState('PAID');
+  const [paymentMethod, setPaymentMethod] = useState('UPI');
   const selectedPlan = plans.find(p => p.id === planId);
+  const currentPrice = Number(sub.plan.price);
+  const newPrice = selectedPlan ? Number(selectedPlan.price) : null;
+  const direction: 'upgrade' | 'downgrade' | 'same' | null =
+    newPrice == null ? null : newPrice > currentPrice ? 'upgrade' : newPrice < currentPrice ? 'downgrade' : 'same';
 
   const mutation = useMutation({
-    mutationFn: () => api.patch(`/web/super-admin/subscriptions/${sub.id}/change-plan`, { planId }),
+    mutationFn: () => api.patch(`/web/super-admin/subscriptions/${sub.id}/${direction === 'upgrade' ? 'upgrade' : 'downgrade'}`, { planId, paymentStatus, paymentMethod }),
     onSuccess: (res) => {
       toast.success(res.data.message ?? 'Plan changed');
       qc.invalidateQueries({ queryKey: ['subscriptions'] });
@@ -360,36 +271,47 @@ function ChangePlanModal({ sub, plans, onClose }: { sub: SubscriptionWithMeta; p
   });
 
   return (
-    <Modal open onClose={onClose} title="Change Plan" size="sm">
+    <Modal open onClose={onClose} title="Upgrade / Downgrade Plan" size="sm">
       <div className="space-y-4">
         <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-elevated)] p-3 text-sm">
           <p className="text-xs text-[var(--color-text-muted)]">Current Plan</p>
           <p className="font-bold text-[var(--color-text-primary)] mt-0.5">{sub.plan.name}</p>
-          <p className="text-xs text-[var(--color-text-muted)]">₹{Number(sub.plan.price).toLocaleString()}/mo · Ends {dayjs(sub.endDate).format('DD MMM YYYY')}</p>
+          <p className="text-xs text-[var(--color-text-muted)]">₹{currentPrice.toLocaleString()} · {planDuration(sub.plan)} days · Ends {dayjs(sub.endDate).format('DD MMM YYYY')}</p>
         </div>
 
         <Select
           label="New Plan *"
           options={[
             { value: '', label: 'Select new plan...' },
-            ...plans.filter(p => p.isActive && p.id !== sub.planId).map(p => ({ value: p.id, label: `${p.name} — ₹${Number(p.price).toLocaleString()}/mo` })),
+            ...plans.filter(p => p.isActive && p.id !== sub.planId).map(p => ({ value: p.id, label: `${p.name} — ₹${Number(p.price).toLocaleString()} · ${planDuration(p)} days` })),
           ]}
           value={planId}
           onChange={e => setPlanId(e.target.value)}
         />
 
-        {selectedPlan && <PlanPreview plan={selectedPlan} />}
-
-        {selectedPlan && (
-          <p className="text-xs text-[var(--color-text-muted)] bg-[var(--color-surface-elevated)] rounded-lg px-3 py-2 border border-[var(--color-border)]">
-            Limits update immediately. Subscription end date is unchanged.
+        {direction === 'same' && (
+          <p className="text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+            This plan is priced the same as the current plan — upgrade requires a higher-priced plan, downgrade a lower-priced one.
           </p>
+        )}
+
+        {selectedPlan && direction !== 'same' && (
+          <>
+            <div className={`text-xs font-semibold rounded-lg px-3 py-2 border ${direction === 'upgrade' ? 'bg-emerald-50 border-emerald-200 text-emerald-700' : 'bg-amber-50 border-amber-200 text-amber-700'}`}>
+              This is a{direction === 'upgrade' ? 'n upgrade' : ' downgrade'} — plan limits update immediately and the subscription's new duration ({planDuration(selectedPlan)} days) extends from its current end date.
+            </div>
+            <PlanPreview plan={selectedPlan} />
+            <div className="grid grid-cols-2 gap-3">
+              <Select label="Payment Status *" options={[{ value: 'PAID', label: 'Paid' }, { value: 'PENDING', label: 'Pending' }]} value={paymentStatus} onChange={e => setPaymentStatus(e.target.value)} />
+              <Select label="Payment Method" options={[{ value: '', label: 'None' }, ...PAYMENT_METHODS.map(m => ({ value: m, label: m.replace('_', ' ') }))]} value={paymentMethod} onChange={e => setPaymentMethod(e.target.value)} />
+            </div>
+          </>
         )}
 
         <div className="flex justify-end gap-3 pt-1">
           <Button variant="secondary" type="button" onClick={onClose}>Cancel</Button>
-          <Button loading={mutation.isPending} disabled={!planId} onClick={() => mutation.mutate()}>
-            <ArrowUpDown size={14} /> Change Plan
+          <Button loading={mutation.isPending} disabled={!planId || direction === 'same'} onClick={() => mutation.mutate()}>
+            <ArrowUpDown size={14} /> {direction === 'downgrade' ? 'Downgrade' : 'Upgrade'} Plan
           </Button>
         </div>
       </div>
@@ -543,7 +465,7 @@ function DetailModal({ sub, onClose }: { sub: SubscriptionWithMeta; onClose: () 
                   <div className="text-xs text-amber-900">
                     <span className="font-semibold">{q.plan?.name ?? '—'}</span>
                     {q.plan && <span className="text-amber-700"> · {planDuration(q.plan)} days</span>}
-                    <span className="text-amber-600"> · ₹{Number(q.plan?.price ?? 0).toLocaleString()}/mo</span>
+                    <span className="text-amber-600"> · ₹{Number(q.plan?.price ?? 0).toLocaleString()}</span>
                   </div>
                   <p className="text-xs text-amber-700">
                     {dayjs(q.startDate).format('DD MMM YYYY')} → <strong>{dayjs(q.endDate).format('DD MMM YYYY')}</strong>
@@ -557,10 +479,12 @@ function DetailModal({ sub, onClose }: { sub: SubscriptionWithMeta; onClose: () 
               <p className="text-sm text-center py-8 text-[var(--color-text-muted)]">No history yet</p>
             ) : (detail?.subscriptionHistory ?? []).map((h: any) => {
               const actionColor: Record<string, string> = {
-                CREATED: 'bg-emerald-100 text-emerald-700',
+  CREATED: 'bg-emerald-100 text-emerald-700',
                 RENEWED: 'bg-blue-100 text-blue-700',
                 UPGRADED: 'bg-purple-100 text-purple-700',
                 DOWNGRADED: 'bg-amber-100 text-amber-700',
+                SUSPENDED: 'bg-orange-100 text-orange-700',
+                RESUMED: 'bg-teal-100 text-teal-700',
                 CANCELLED: 'bg-red-100 text-red-700',
               };
               return (
@@ -615,13 +539,11 @@ export default function SubscriptionsPage() {
   const [planFilter, setPlan]         = useState('');
   const [params, setParams]           = useState({ search: '', status: '', planId: '', page: 1 });
 
-  const [showCreate,           setShowCreate]           = useState(false);
   const [showRenew,            setShowRenew]            = useState(false);
-  const [showChangePlan,       setShowChangePlan]       = useState(false);
+  const [showUpgradeDowngrade, setShowUpgradeDowngrade] = useState(false);
   const [showDetail,           setShowDetail]           = useState(false);
   const [activeSub,            setActiveSub]            = useState<SubscriptionWithMeta | null>(null);
   const [renewTenantId,        setRenewTenantId]        = useState<string | undefined>();
-  const [createDefaultTenantId, setCreateDefaultTenantId] = useState<string | undefined>();
 
   const { data: dashboard, isLoading: dashLoading } = useQuery<SubscriptionDashboard>({
     queryKey: ['subscription-dashboard'],
@@ -641,18 +563,18 @@ export default function SubscriptionsPage() {
 
   const cancelMutation = useMutation({
     mutationFn: (id: string) => api.patch(`/web/super-admin/subscriptions/${id}/cancel`),
-    onSuccess: () => { toast.success('Subscription cancelled'); qc.invalidateQueries({ queryKey: ['subscriptions'] }); qc.invalidateQueries({ queryKey: ['subscription-dashboard'] }); },
+    onSuccess: () => { toast.success('Subscription cancelled'); qc.invalidateQueries({ queryKey: ['subscriptions'] }); qc.invalidateQueries({ queryKey: ['subscription-dashboard'] }); qc.invalidateQueries({ queryKey: ['tenants'] }); },
     onError: (err: any) => toast.error(err?.response?.data?.message ?? 'Failed'),
   });
   const suspendMutation = useMutation({
-    mutationFn: (tid: string) => api.patch(`/web/super-admin/tenants/${tid}/status`, { status: 'SUSPENDED' }),
-    onSuccess: () => { toast.success('Tenant suspended'); qc.invalidateQueries({ queryKey: ['subscriptions'] }); },
-    onError: () => toast.error('Failed to suspend'),
+    mutationFn: (id: string) => api.patch(`/web/super-admin/subscriptions/${id}/suspend`),
+    onSuccess: () => { toast.success('Subscription suspended'); qc.invalidateQueries({ queryKey: ['subscriptions'] }); qc.invalidateQueries({ queryKey: ['tenants'] }); },
+    onError: (err: any) => toast.error(err?.response?.data?.message ?? 'Failed to suspend'),
   });
-  const activateMutation = useMutation({
-    mutationFn: (tid: string) => api.patch(`/web/super-admin/tenants/${tid}/status`, { status: 'ACTIVE' }),
-    onSuccess: () => { toast.success('Tenant activated'); qc.invalidateQueries({ queryKey: ['subscriptions'] }); },
-    onError: () => toast.error('Failed to activate'),
+  const resumeMutation = useMutation({
+    mutationFn: (id: string) => api.patch(`/web/super-admin/subscriptions/${id}/resume`),
+    onSuccess: (res) => { toast.success(res.data.message ?? 'Subscription resumed'); qc.invalidateQueries({ queryKey: ['subscriptions'] }); qc.invalidateQueries({ queryKey: ['tenants'] }); },
+    onError: (err: any) => toast.error(err?.response?.data?.message ?? 'Failed to resume'),
   });
 
   const subs = listData?.subscriptions ?? [];
@@ -663,7 +585,7 @@ export default function SubscriptionsPage() {
     setParams({ search, status: statusFilter, planId: planFilter, page });
   }
 
-  function openRenew(sub?: SubscriptionWithMeta) {
+  function openRenew(sub?: { tenantId?: string }) {
     setRenewTenantId(sub?.tenantId);
     setShowRenew(true);
   }
@@ -679,9 +601,6 @@ export default function SubscriptionsPage() {
         <div className="flex gap-2">
           <Button variant="secondary" size="sm" onClick={() => openRenew()}>
             <RefreshCw size={13} /> Renew
-          </Button>
-          <Button size="sm" onClick={() => setShowCreate(true)}>
-            <Plus size={13} /> Create Subscription
           </Button>
         </div>
       </div>
@@ -724,7 +643,7 @@ export default function SubscriptionsPage() {
               <div className="flex items-center gap-2">
                 <Clock size={14} className="text-blue-600" />
                 <span className="text-sm font-semibold text-blue-800">Trial Tenants ({trialTenants.length})</span>
-                <span className="text-xs text-blue-600">— activate to convert to a paid subscription</span>
+                <span className="text-xs text-blue-600">— renew onto a paid plan to convert</span>
               </div>
             </div>
             <div className="divide-y divide-blue-100">
@@ -752,8 +671,8 @@ export default function SubscriptionsPage() {
                           <p className="text-xs text-blue-500">{trialEnd.format('DD MMM YYYY')}</p>
                         </div>
                       )}
-                      <Button size="sm" onClick={() => { setCreateDefaultTenantId(t.id); setShowCreate(true); }}>
-                        <CheckCircle size={12} /> Activate
+                      <Button size="sm" onClick={() => openRenew({ tenantId: t.id })}>
+                        <RefreshCw size={12} /> Renew
                       </Button>
                     </div>
                   </div>
@@ -789,7 +708,7 @@ export default function SubscriptionsPage() {
             />
           </div>
         </div>
-        <Select label="Status" options={[{ value: '', label: 'All Status' }, { value: 'ACTIVE', label: 'Active' }, { value: 'EXPIRING_SOON', label: 'Expiring Soon' }, { value: 'EXPIRED', label: 'Expired' }, { value: 'CANCELLED', label: 'Cancelled' }]} value={statusFilter} onChange={e => setStatus(e.target.value)} className="w-40" />
+        <Select label="Status" options={[{ value: '', label: 'All Status' }, { value: 'TRIAL', label: 'Trial' }, { value: 'ACTIVE', label: 'Active' }, { value: 'EXPIRING_SOON', label: 'Expiring Soon' }, { value: 'SUSPENDED', label: 'Suspended' }, { value: 'EXPIRED', label: 'Expired' }, { value: 'CANCELLED', label: 'Cancelled' }]} value={statusFilter} onChange={e => setStatus(e.target.value)} className="w-40" />
         <Select label="Plan" options={[{ value: '', label: 'All Plans' }, ...plans.map(p => ({ value: p.id, label: p.name }))]} value={planFilter} onChange={e => setPlan(e.target.value)} className="w-36" />
       </FilterCard>
 
@@ -810,7 +729,7 @@ export default function SubscriptionsPage() {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-[var(--color-border)] bg-[var(--color-surface-elevated)]">
-                    {['Tenant', 'Plan', 'Duration', 'Status', 'Start', 'Expires', 'Days', 'Price/mo', 'Actions'].map(h => (
+                    {['Tenant', 'Plan', 'Duration', 'Status', 'Start', 'Expires', 'Days', 'Price', 'Actions'].map(h => (
                       <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wide whitespace-nowrap">{h}</th>
                     ))}
                   </tr>
@@ -857,15 +776,13 @@ export default function SubscriptionsPage() {
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-0.5">
                           <Btn title="View Detail" onClick={() => { setActiveSub(sub); setShowDetail(true); }}><Eye size={13} /></Btn>
-                          {sub.status === 'ACTIVE' && <>
+                          {['ACTIVE', 'TRIAL'].includes(sub.status) && <>
                             <Btn title="Renew" onClick={() => openRenew(sub)}><RefreshCw size={13} /></Btn>
-                            <Btn title="Change Plan" onClick={() => { setActiveSub(sub); setShowChangePlan(true); }}><ArrowUpDown size={13} /></Btn>
+                            <Btn title="Upgrade / Downgrade" onClick={() => { setActiveSub(sub); setShowUpgradeDowngrade(true); }}><ArrowUpDown size={13} /></Btn>
+                            <Btn title="Suspend Subscription" onClick={() => suspendMutation.mutate(sub.id)} loading={suspendMutation.isPending} danger><Ban size={13} /></Btn>
                           </>}
-                          {sub.tenant.status === 'ACTIVE' && sub.status === 'ACTIVE' && (
-                            <Btn title="Suspend Tenant" onClick={() => suspendMutation.mutate(sub.tenantId)} loading={suspendMutation.isPending} danger><Ban size={13} /></Btn>
-                          )}
-                          {sub.tenant.status === 'SUSPENDED' && (
-                            <Btn title="Activate Tenant" onClick={() => activateMutation.mutate(sub.tenantId)} loading={activateMutation.isPending}><CheckCircle size={13} /></Btn>
+                          {sub.status === 'SUSPENDED' && (
+                            <Btn title="Resume Subscription" onClick={() => resumeMutation.mutate(sub.id)} loading={resumeMutation.isPending}><CheckCircle size={13} /></Btn>
                           )}
                           {sub.status !== 'CANCELLED' && (
                             <Btn title="Cancel Subscription" onClick={() => { if (window.confirm('Cancel this subscription? The tenant will lose access.')) cancelMutation.mutate(sub.id); }} loading={cancelMutation.isPending} danger>
@@ -896,10 +813,9 @@ export default function SubscriptionsPage() {
       )}
 
       {/* Modals */}
-      {showCreate && <CreateModal onClose={() => { setShowCreate(false); setCreateDefaultTenantId(undefined); }} plans={plans} tenants={tenants} defaultTenantId={createDefaultTenantId} />}
       {showRenew  && <RenewModal  onClose={() => { setShowRenew(false); setRenewTenantId(undefined); }} tenants={tenants} plans={plans} defaultTenantId={renewTenantId} />}
-      {showChangePlan && activeSub && <ChangePlanModal sub={activeSub} plans={plans} onClose={() => { setShowChangePlan(false); setActiveSub(null); }} />}
-      {showDetail     && activeSub && <DetailModal     sub={activeSub}               onClose={() => { setShowDetail(false);     setActiveSub(null); }} />}
+      {showUpgradeDowngrade && activeSub && <UpgradeDowngradeModal sub={activeSub} plans={plans} onClose={() => { setShowUpgradeDowngrade(false); setActiveSub(null); }} />}
+      {showDetail           && activeSub && <DetailModal           sub={activeSub}               onClose={() => { setShowDetail(false);           setActiveSub(null); }} />}
     </div>
   );
 }

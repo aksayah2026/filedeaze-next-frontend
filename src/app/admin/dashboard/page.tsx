@@ -167,7 +167,7 @@ export default function AdminDashboardPage() {
               value={data.totalTickets}
               icon={Ticket}
               accentHex={accent}
-              context="+2 new tickets created today"
+              context={`+${data.newTicketsToday} new ticket${data.newTicketsToday !== 1 ? 's' : ''} created today`}
               status="live"
               footerText="Updated 2 mins ago"
               staggerClass="stagger-1"
@@ -177,7 +177,7 @@ export default function AdminDashboardPage() {
               value={data.openTickets}
               icon={Ticket}
               accentHex={accent}
-              context="2 awaiting technician assignment"
+              context={`${data.unassignedTickets} awaiting technician assignment`}
               status="attention"
               footerText="Live"
               staggerClass="stagger-2"
@@ -187,7 +187,7 @@ export default function AdminDashboardPage() {
               value={data.totalTechnicians}
               icon={Users}
               accentHex={accent}
-              context="4 currently available"
+              context={`${data.availableTechnicians} currently available`}
               status="available"
               footerText="Updated now"
               staggerClass="stagger-3"
@@ -197,7 +197,7 @@ export default function AdminDashboardPage() {
               value={data.totalCustomers}
               icon={UserCheck}
               accentHex={accent}
-              context="+1 new customer this week"
+              context={`+${data.newCustomersThisWeek} new customer${data.newCustomersThisWeek !== 1 ? 's' : ''} this week`}
               status="growing"
               footerText="Updated today"
               staggerClass="stagger-4"
@@ -207,18 +207,18 @@ export default function AdminDashboardPage() {
               value={`₹${data.monthlyRevenue.toLocaleString()}`}
               icon={DollarSign}
               accentHex={accent}
-              context="₹350 collected today"
-              trend={{ label: '+8%', direction: 'up' }}
+              context={`₹${data.revenueToday.toLocaleString()} collected today`}
+              trend={{ label: `${data.revenueTrendPercent >= 0 ? '+' : ''}${data.revenueTrendPercent}%`, direction: data.revenueTrendPercent >= 0 ? 'up' : 'down' }}
               status="growing"
               footerText="Updated just now"
               staggerClass="stagger-5"
             />
             <StatsCard
               title="Pending Payments"
-              value="₹4,500"
+              value={`₹${data.pendingPaymentsAmount.toLocaleString()}`}
               icon={DollarSign}
               accentHex={accent}
-              context="3 invoices awaiting collection"
+              context={`${data.pendingPaymentsCount} invoice${data.pendingPaymentsCount !== 1 ? 's' : ''} awaiting collection`}
               status="followup"
               footerText="Updated today"
               staggerClass="stagger-6"

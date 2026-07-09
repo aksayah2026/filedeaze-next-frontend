@@ -117,7 +117,7 @@ export default function PlansPage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-[var(--color-border)] bg-[var(--color-surface-elevated)]">
-                {['Plan', 'Price / mo', 'Managers', 'Technicians', 'Tickets', 'Customers', 'Storage', 'Active', 'Actions'].map(h => (
+                {['Plan', 'Price', 'Duration', 'Managers', 'Technicians', 'Tickets', 'Customers', 'Storage', 'Active', 'Actions'].map(h => (
                   <th key={h} className="px-5 py-3 text-left text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wide whitespace-nowrap">{h}</th>
                 ))}
               </tr>
@@ -125,12 +125,12 @@ export default function PlansPage() {
             <tbody className="divide-y divide-[var(--color-border)]">
               {isLoading ? (
                 Array.from({ length: 4 }).map((_, i) => (
-                  <tr key={i}>{Array.from({ length: 9 }).map((__, j) => (
+                  <tr key={i}>{Array.from({ length: 10 }).map((__, j) => (
                     <td key={j} className="px-5 py-4"><div className="h-4 bg-[var(--color-surface-elevated)] rounded animate-pulse" /></td>
                   ))}</tr>
                 ))
               ) : plans.length === 0 ? (
-                <tr><td colSpan={9} className="px-5 py-14 text-center text-sm text-[var(--color-text-muted)]">No plans yet. Create one to get started.</td></tr>
+                <tr><td colSpan={10} className="px-5 py-14 text-center text-sm text-[var(--color-text-muted)]">No plans yet. Create one to get started.</td></tr>
               ) : plans.map(plan => (
                 <tr key={plan.id} className="hover:bg-[var(--color-surface-elevated)] transition-colors">
                   {/* Plan name */}
@@ -146,6 +146,11 @@ export default function PlansPage() {
                   {/* Price */}
                   <td className="px-5 py-4 font-semibold text-[var(--color-text-primary)] whitespace-nowrap">
                     ₹{Number(plan.price).toLocaleString()}
+                  </td>
+
+                  {/* Duration */}
+                  <td className="px-5 py-4 text-[var(--color-text-secondary)] whitespace-nowrap">
+                    {(plan as any).durationDays ? `${(plan as any).durationDays} days` : '—'}
                   </td>
 
                   {/* Managers */}
@@ -259,7 +264,7 @@ export default function PlansPage() {
           )}
 
           <div className="grid grid-cols-2 gap-4">
-            <Input label="Price (₹ / month) *" type="number" {...register('price', { valueAsNumber: true, required: 'Price is required', min: { value: 1, message: 'Price must be greater than 0' } })} error={errors.price?.message} />
+            <Input label="Price (₹) *" type="number" {...register('price', { valueAsNumber: true, required: 'Price is required', min: { value: 0, message: 'Price cannot be negative' } })} error={errors.price?.message} />
             <Input label="Manager Limit *" type="number" {...register('managerLimit', { valueAsNumber: true, required: 'Manager limit is required', min: { value: 1, message: 'Manager limit must be greater than 0' } })} error={errors.managerLimit?.message} />
             <Input label="Technician Limit *" type="number" {...register('technicianLimit', { valueAsNumber: true, required: 'Technician limit is required', min: { value: 1, message: 'Technician limit must be greater than 0' } })} error={errors.technicianLimit?.message} />
             <Input label="Ticket Limit *" type="number" {...register('ticketLimit', { valueAsNumber: true, required: 'Ticket limit is required', min: { value: 1, message: 'Ticket limit must be greater than 0' } })} error={errors.ticketLimit?.message} />

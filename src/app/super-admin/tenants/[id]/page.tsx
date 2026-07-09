@@ -7,7 +7,7 @@ import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { QRCodeCanvas } from 'qrcode.react';
 import api from '@/lib/axios';
-import { Tenant, TenantStatus, Plan, Billing, PlatformUpi } from '@/types';
+import { Tenant, Plan, Billing, PlatformUpi } from '@/types';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import { Select } from '@/components/ui/Select';
@@ -16,7 +16,7 @@ import { PageSpinner } from '@/components/ui/Spinner';
 import { ColumnDef } from '@tanstack/react-table';
 import { DataTable } from '@/components/ui/DataTable';
 import dayjs from 'dayjs';
-import { Users, CreditCard, Calendar, Download, QrCode, Building2, ChevronLeft } from 'lucide-react';
+import { Users, CreditCard, Calendar, Download, QrCode, Building2, ChevronLeft, Clock } from 'lucide-react';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
 
@@ -70,20 +70,48 @@ export default function TenantDetailPage() {
     onError: () => toast.error('Update failed'),
   });
 
-  const statusMutation = useMutation({
-    mutationFn: (status: TenantStatus) => api.patch(`/web/super-admin/tenants/${id}/status`, { status }),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['tenant', id] }); toast.success('Status updated'); },
-    onError: () => toast.error('Failed'),
+  const currentSub = tenant?.subscription ?? null;
+  const [newPlanId, setNewPlanId] = useState('');
+  const [udPaymentStatus, setUdPaymentStatus] = useState('PAID');
+
+  const invalidateAll = () => {
+    qc.invalidateQueries({ queryKey: ['tenant', id] });
+    qc.invalidateQueries({ queryKey: ['tenant-subscriptions', id] });
+    qc.invalidateQueries({ queryKey: ['tenants'] });
+  };
+
+  const renewMutation = useMutation({
+    mutationFn: () => api.post('/web/super-admin/subscriptions/renew', { tenantId: id, paymentStatus: 'PENDING' }),
+    onSuccess: (res) => { toast.success(res.data.message ?? 'Subscription renewed'); invalidateAll(); },
+    onError: (err: any) => toast.error(err?.response?.data?.message ?? 'Failed to renew'),
   });
 
-  const changePlanMutation = useMutation({
-    mutationFn: (planId: string) => api.patch(`/web/super-admin/tenants/${id}/plan`, { planId }),
-    onSuccess: (_, planId) => {
-      qc.invalidateQueries({ queryKey: ['tenant', id] });
-      const planName = plans.find(p => p.id === planId)?.name ?? 'plan';
-      toast.success(`Plan changed to ${planName}`);
+  const upgradeDowngradeMutation = useMutation({
+    mutationFn: () => {
+      const newPlan = plans.find(p => p.id === newPlanId);
+      const direction = Number(newPlan?.price) > Number(currentPlan?.price ?? 0) ? 'upgrade' : 'downgrade';
+      return api.patch(`/web/super-admin/subscriptions/${currentSub!.id}/${direction}`, { planId: newPlanId, paymentStatus: udPaymentStatus });
     },
+    onSuccess: (res) => { toast.success(res.data.message ?? 'Plan changed'); setNewPlanId(''); invalidateAll(); },
     onError: (err: any) => toast.error(err?.response?.data?.message ?? 'Failed to change plan'),
+  });
+
+  const suspendSubMutation = useMutation({
+    mutationFn: () => api.patch(`/web/super-admin/subscriptions/${currentSub!.id}/suspend`),
+    onSuccess: () => { toast.success('Subscription suspended'); invalidateAll(); },
+    onError: (err: any) => toast.error(err?.response?.data?.message ?? 'Failed to suspend'),
+  });
+
+  const resumeSubMutation = useMutation({
+    mutationFn: () => api.patch(`/web/super-admin/subscriptions/${currentSub!.id}/resume`),
+    onSuccess: (res) => { toast.success(res.data.message ?? 'Subscription resumed'); invalidateAll(); },
+    onError: (err: any) => toast.error(err?.response?.data?.message ?? 'Failed to resume'),
+  });
+
+  const cancelSubMutation = useMutation({
+    mutationFn: () => api.patch(`/web/super-admin/subscriptions/${currentSub!.id}/cancel`),
+    onSuccess: () => { toast.success('Subscription cancelled'); invalidateAll(); },
+    onError: (err: any) => toast.error(err?.response?.data?.message ?? 'Failed to cancel'),
   });
 
   const billingColumns: ColumnDef<Billing, unknown>[] = [
@@ -115,7 +143,6 @@ export default function TenantDetailPage() {
 
   if (isLoading || !tenant) return <PageSpinner />;
 
-  const planOptions = plans.map(p => ({ value: p.id, label: `${p.name} — ₹${p.price}` }));
   const currentPlan = tenant.subscription?.plan ?? tenant.selectedPlan ?? null;
   const currentPlanId = tenant.subscription?.planId ?? tenant.selectedPlanId ?? '';
 
@@ -133,13 +160,6 @@ export default function TenantDetailPage() {
   }
 
   const initials = tenant.companyName.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase();
-
-  const statusButtons: { status: TenantStatus; label: string; activeColor: string }[] = [
-    { status: 'ACTIVE',    label: 'Active',    activeColor: 'bg-emerald-600 text-white border-emerald-600' },
-    { status: 'SUSPENDED', label: 'Suspended', activeColor: 'bg-red-600 text-white border-red-600' },
-    { status: 'EXPIRED',   label: 'Expired',   activeColor: 'bg-amber-500 text-white border-amber-500' },
-    { status: 'TRIAL',     label: 'Trial',     activeColor: 'bg-blue-600 text-white border-blue-600' },
-  ];
 
   return (
     <div className="max-w-3xl space-y-5">
@@ -181,8 +201,8 @@ export default function TenantDetailPage() {
           </div>
         </div>
 
-        {/* Stats Row */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mt-5 pt-5 border-t border-[var(--color-border)]">
+        {/* Stats Row — always sourced from the linked subscription, never a separate tenant-level copy */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mt-5 pt-5 border-t border-[var(--color-border)]">
           <div className="flex items-center gap-3">
             <div className="h-9 w-9 rounded-lg bg-[var(--color-surface-elevated)] flex items-center justify-center shrink-0">
               <CreditCard size={15} className="text-blue-600" />
@@ -191,9 +211,7 @@ export default function TenantDetailPage() {
               <p className="text-[10px] font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">Current Plan</p>
               <p className="text-sm font-semibold text-[var(--color-text-primary)]">
                 {currentPlan?.name ?? '—'}
-                {!tenant.subscription && tenant.selectedPlan && (
-                  <span className="ml-1.5 text-xs font-normal text-amber-500">(trial)</span>
-                )}
+                {tenant.durationDays != null && <span className="text-xs font-normal text-[var(--color-text-muted)]"> · {tenant.durationDays}d</span>}
               </p>
             </div>
           </div>
@@ -202,9 +220,31 @@ export default function TenantDetailPage() {
               <Calendar size={15} className="text-emerald-600" />
             </div>
             <div>
-              <p className="text-[10px] font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">Sub. End</p>
+              <p className="text-[10px] font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">Start Date</p>
+              <p className="text-sm font-semibold text-[var(--color-text-primary)]">
+                {tenant.subscription?.startDate ? dayjs(tenant.subscription.startDate).format('DD MMM YYYY') : '—'}
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
+            <div className="h-9 w-9 rounded-lg bg-[var(--color-surface-elevated)] flex items-center justify-center shrink-0">
+              <Calendar size={15} className="text-amber-600" />
+            </div>
+            <div>
+              <p className="text-[10px] font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">End Date</p>
               <p className="text-sm font-semibold text-[var(--color-text-primary)]">
                 {tenant.subscription?.endDate ? dayjs(tenant.subscription.endDate).format('DD MMM YYYY') : '—'}
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
+            <div className="h-9 w-9 rounded-lg bg-[var(--color-surface-elevated)] flex items-center justify-center shrink-0">
+              <Clock size={15} className="text-red-600" />
+            </div>
+            <div>
+              <p className="text-[10px] font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">Days Remaining</p>
+              <p className="text-sm font-semibold text-[var(--color-text-primary)]">
+                {tenant.daysRemaining != null ? `${tenant.daysRemaining}d` : '—'}
               </p>
             </div>
           </div>
@@ -239,56 +279,66 @@ export default function TenantDetailPage() {
         </div>
       </div>
 
-      {/* Change Status */}
+      {/* Subscription Actions — everything here operates on the tenant's linked subscription,
+          never on the Tenant row directly, so subscription and tenant status can never drift apart. */}
       <div className="bg-[var(--color-surface)] rounded-xl border border-[var(--color-border)] overflow-hidden shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
         <div className="px-6 py-4 border-b border-[var(--color-border)] bg-[var(--color-surface-elevated)]/50 flex items-center gap-2">
           <div className="h-1 w-4 rounded-full bg-amber-500" />
-          <h3 className="text-sm font-semibold text-[var(--color-text-primary)]">Change Status</h3>
+          <h3 className="text-sm font-semibold text-[var(--color-text-primary)]">Subscription Actions</h3>
         </div>
-        <div className="p-6">
-          <div className="flex flex-wrap gap-2">
-            {statusButtons.map(({ status, label, activeColor }) => (
-              <button
-                key={status}
-                onClick={() => statusMutation.mutate(status)}
-                disabled={statusMutation.isPending}
-                className={cn(
-                  'px-4 py-2 rounded-lg border text-xs font-semibold transition-all duration-150',
-                  tenant.status === status
-                    ? activeColor
-                    : 'border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text-secondary)] hover:border-[var(--color-border-strong)] hover:bg-[var(--color-surface-elevated)]'
-                )}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* Change Plan */}
-      <div className="bg-[var(--color-surface)] rounded-xl border border-[var(--color-border)] overflow-hidden shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
-        <div className="px-6 py-4 border-b border-[var(--color-border)] bg-[var(--color-surface-elevated)]/50 flex items-center gap-2">
-          <div className="h-1 w-4 rounded-full bg-violet-500" />
-          <h3 className="text-sm font-semibold text-[var(--color-text-primary)]">Change Plan</h3>
-        </div>
-        <div className="p-6">
-          <div className="flex gap-3 items-end flex-wrap">
-            <Select
-              label="Select Plan"
-              options={planOptions}
-              value={currentPlanId}
-              onChange={e => changePlanMutation.mutate(e.target.value)}
-              className="w-64"
-            />
-            {changePlanMutation.isPending && (
-              <p className="text-xs text-[var(--color-text-muted)] pb-2">Updating…</p>
-            )}
-          </div>
-          {!tenant.subscription && (
-            <p className="mt-3 text-xs text-amber-600 bg-[var(--color-surface-elevated)] border border-amber-100 rounded-lg px-3 py-2">
-              This tenant is on a trial. Changing the plan updates what they will pay when they subscribe.
+        <div className="p-6 space-y-4">
+          {!currentSub ? (
+            <p className="text-xs text-amber-600 bg-amber-50 border border-amber-100 rounded-lg px-3 py-2">
+              This tenant has no linked subscription on record — contact engineering.
             </p>
+          ) : (
+            <>
+              <div className="flex flex-wrap gap-2">
+                {['ACTIVE', 'TRIAL'].includes(currentSub.status) && (
+                  <>
+                    <Button size="sm" variant="secondary" loading={renewMutation.isPending} onClick={() => renewMutation.mutate()}>Renew</Button>
+                    <Button size="sm" variant="outline" className="border-red-200 text-red-600 hover:bg-red-50" loading={suspendSubMutation.isPending} onClick={() => suspendSubMutation.mutate()}>Suspend</Button>
+                  </>
+                )}
+                {currentSub.status === 'SUSPENDED' && (
+                  <Button size="sm" loading={resumeSubMutation.isPending} onClick={() => resumeSubMutation.mutate()}>Resume</Button>
+                )}
+                {currentSub.status !== 'CANCELLED' && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="border-red-200 text-red-600 hover:bg-red-50"
+                    loading={cancelSubMutation.isPending}
+                    onClick={() => { if (window.confirm('Cancel this subscription? The tenant will lose access.')) cancelSubMutation.mutate(); }}
+                  >
+                    Cancel
+                  </Button>
+                )}
+              </div>
+
+              {['ACTIVE', 'TRIAL'].includes(currentSub.status) && (
+                <div className="pt-3 border-t border-[var(--color-border)]">
+                  <p className="text-xs font-semibold text-[var(--color-text-secondary)] mb-3">Upgrade / Downgrade Plan</p>
+                  <div className="flex gap-3 items-end flex-wrap">
+                    <Select
+                      label="New Plan"
+                      options={[{ value: '', label: 'Select plan...' }, ...plans.filter(p => p.isActive && p.id !== currentPlanId).map(p => ({ value: p.id, label: `${p.name} — ₹${p.price}` }))]}
+                      value={newPlanId}
+                      onChange={e => setNewPlanId(e.target.value)}
+                      className="w-56"
+                    />
+                    <Select
+                      label="Payment Status"
+                      options={[{ value: 'PAID', label: 'Paid' }, { value: 'PENDING', label: 'Pending' }]}
+                      value={udPaymentStatus}
+                      onChange={e => setUdPaymentStatus(e.target.value)}
+                      className="w-32"
+                    />
+                    <Button size="sm" disabled={!newPlanId} loading={upgradeDowngradeMutation.isPending} onClick={() => upgradeDowngradeMutation.mutate()}>Apply</Button>
+                  </div>
+                </div>
+              )}
+            </>
           )}
         </div>
       </div>
@@ -392,7 +442,7 @@ export default function TenantDetailPage() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-[var(--color-border)] bg-[var(--color-surface-elevated)]">
-                  {['Plan Name', 'Duration', 'Start Date', 'End Date', 'Status'].map(h => (
+                  {['Plan Name', 'Duration', 'Start Date', 'End Date', 'Days Remaining', 'Status'].map(h => (
                     <th key={h} className="px-5 py-3 text-left text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wide whitespace-nowrap">{h}</th>
                   ))}
                 </tr>
@@ -422,6 +472,11 @@ export default function TenantDetailPage() {
                       <td className="px-5 py-3 whitespace-nowrap">
                         <span className={isActive && daysLeft <= 30 ? 'text-amber-600 font-medium' : 'text-[var(--color-text-secondary)]'}>
                           {dayjs(s.endDate).format('DD MMM YYYY')}
+                        </span>
+                      </td>
+                      <td className="px-5 py-3 whitespace-nowrap">
+                        <span className={isActive && daysLeft <= 7 ? 'text-red-600 font-medium' : 'text-[var(--color-text-secondary)]'}>
+                          {isActive || s.status === 'TRIAL' ? `${daysLeft} day${daysLeft !== 1 ? 's' : ''}` : '—'}
                         </span>
                       </td>
                       <td className="px-5 py-3">

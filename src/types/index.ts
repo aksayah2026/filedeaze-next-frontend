@@ -79,7 +79,7 @@ export interface Plan {
   updatedAt: string;
 }
 
-export type SubscriptionStatus = 'ACTIVE' | 'EXPIRED' | 'CANCELLED';
+export type SubscriptionStatus = 'TRIAL' | 'ACTIVE' | 'SUSPENDED' | 'EXPIRED' | 'CANCELLED' | 'QUEUED';
 export type ComputedSubStatus = 'ACTIVE' | 'EXPIRING_SOON' | 'EXPIRED' | 'TRIAL' | 'SUSPENDED' | 'CANCELLED';
 
 export interface Subscription {
@@ -144,6 +144,10 @@ export interface Tenant {
   selectedPlan?: Plan | null;
   plan?: Plan;
   subscription?: Subscription;
+  planName?: string | null;
+  durationDays?: number | null;
+  daysRemaining?: number | null;
+  subscriptionStatus?: SubscriptionStatus | null;
   createdAt: string;
   updatedAt: string;
   deletedAt?: string;
@@ -495,10 +499,18 @@ export interface PlanUsage {
 
 export interface AdminDashboard {
   totalTickets: number;
+  newTicketsToday: number;
   openTickets: number;
+  unassignedTickets: number;
   totalTechnicians: number;
+  availableTechnicians: number;
   totalCustomers: number;
+  newCustomersThisWeek: number;
   monthlyRevenue: number;
+  revenueTrendPercent: number;
+  revenueToday: number;
+  pendingPaymentsAmount: number;
+  pendingPaymentsCount: number;
   planUsage: PlanUsage | null;
   subscription: {
     tenantStatus: TenantStatus | null;
