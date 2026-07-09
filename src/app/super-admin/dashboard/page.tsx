@@ -38,9 +38,9 @@ export default function SuperAdminDashboardPage() {
             value={data.totalTenants}
             icon={Building2}
             accentHex={ACCENT}
-            context="+1 tenant onboarded this month"
-            status="growing"
-            footerText="Updated 2 mins ago"
+            context="Total onboarded companies"
+            status="stable"
+            footerText="Platform Total"
           />
 
           {/* ── Standard: Active Tenants ── */}
@@ -50,8 +50,8 @@ export default function SuperAdminDashboardPage() {
             value={data.activeTenants}
             icon={CheckCircle}
             accentHex={ACCENT}
-            context="All subscriptions are active"
-            status="healthy"
+            context={`${((data.activeTenants / (data.totalTenants || 1)) * 100).toFixed(0)}% of tenants active`}
+            status={data.activeTenants > 0 ? 'healthy' : 'offline'}
             footerText="Live"
           />
 
@@ -62,10 +62,9 @@ export default function SuperAdminDashboardPage() {
             value={`₹${data.totalRevenue.toLocaleString()}`}
             icon={DollarSign}
             accentHex={ACCENT}
-            context="₹250 collected today"
-            trend={{ label: '+12%', direction: 'up' }}
+            context="Accumulated platform earnings"
             status="healthy"
-            footerText="Updated just now"
+            footerText="Platform Total"
           />
 
           {/* ── Status: Expired Tenants ── */}
@@ -75,9 +74,9 @@ export default function SuperAdminDashboardPage() {
             value={data.expiredTenants}
             icon={AlertCircle}
             accentHex={ACCENT}
-            context="No renewals currently pending"
-            status="healthy"
-            footerText="Synced just now"
+            context={data.expiredTenants > 0 ? `${data.expiredTenants} expired subscriptions` : "No pending renewals"}
+            status={data.expiredTenants > 0 ? 'critical' : 'healthy'}
+            footerText="Sync Status"
           />
 
           {/* ── Status: Suspended Tenants ── */}
@@ -87,9 +86,9 @@ export default function SuperAdminDashboardPage() {
             value={data.suspendedTenants}
             icon={XCircle}
             accentHex={ACCENT}
-            context="No suspended accounts"
-            status="stable"
-            footerText="Live Data"
+            context={data.suspendedTenants > 0 ? `${data.suspendedTenants} suspended accounts` : "All accounts in good standing"}
+            status={data.suspendedTenants > 0 ? 'attention' : 'stable'}
+            footerText="Live Status"
           />
 
           {/* ── Standard: Active Users ── */}
@@ -99,11 +98,10 @@ export default function SuperAdminDashboardPage() {
             value={data.activeUsers}
             icon={Users}
             accentHex={ACCENT}
-            context="12 users currently online"
-            status="live"
-            footerText="Live"
+            context={`${data.activeUsers} users currently active`}
+            status={data.activeUsers > 0 ? 'active' : 'inactive'}
+            footerText="Real-time"
           />
-
         </div>
       )}
     </div>

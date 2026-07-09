@@ -7,7 +7,7 @@ import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { QRCodeCanvas } from 'qrcode.react';
 import api from '@/lib/axios';
-import { Tenant, TenantStatus, Plan, Billing } from '@/types';
+import { Tenant, TenantStatus, Plan, Billing, PlatformUpi } from '@/types';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import { Select } from '@/components/ui/Select';
@@ -51,6 +51,11 @@ export default function TenantDetailPage() {
       return res.data.data?.subscriptions ?? [];
     },
     enabled: !!id,
+  });
+
+  const { data: platformUpi } = useQuery<PlatformUpi>({
+    queryKey: ['platform-upi'],
+    queryFn: async () => (await api.get('/web/super-admin/platform-upi')).data.data,
   });
 
   const { register, handleSubmit, reset, formState: { isSubmitting } } = useForm<Partial<Tenant>>();
@@ -114,8 +119,8 @@ export default function TenantDetailPage() {
   const currentPlan = tenant.subscription?.plan ?? tenant.selectedPlan ?? null;
   const currentPlanId = tenant.subscription?.planId ?? tenant.selectedPlanId ?? '';
 
-  const upiQrString = currentPlan
-    ? `upi://pay?pa=fieldeaze@upi&pn=FieldEaze&am=${currentPlan.price}&tn=${tenant.tenantCode}-subscription&cu=INR`
+  const upiQrString = currentPlan && platformUpi?.upiId
+    ? `upi://pay?pa=${platformUpi.upiId}&pn=${encodeURIComponent(platformUpi.upiAccountName || 'FieldEaze')}&am=${currentPlan.price}&tn=${tenant.tenantCode}-subscription&cu=INR`
     : '';
 
   function downloadQr() {
@@ -298,48 +303,71 @@ export default function TenantDetailPage() {
                 <QrCode size={15} className="text-violet-500" /> Payment QR
               </h3>
             </div>
-            <div className="flex gap-2">
-              <Button size="sm" variant="outline" onClick={() => setShowQr(v => !v)}>
-                {showQr ? 'Hide QR' : 'Generate QR'}
-              </Button>
-              {showQr && (
-                <Button size="sm" variant="secondary" onClick={downloadQr}>
-                  <Download size={13} /> Download
+            {platformUpi?.upiId && (
+              <div className="flex gap-2">
+                <Button size="sm" variant="outline" onClick={() => setShowQr(v => !v)}>
+                  {showQr ? 'Hide QR' : 'Generate QR'}
                 </Button>
-              )}
-            </div>
+                {showQr && (
+                  <Button size="sm" variant="secondary" onClick={downloadQr}>
+                    <Download size={13} /> Download
+                  </Button>
+                )}
+              </div>
+            )}
           </div>
-          {showQr && (
-            <div className="p-6 flex flex-col sm:flex-row gap-6 items-start animate-fe-fade-in">
-              <div className="flex flex-col items-center gap-2">
-                <div className="p-3 bg-[var(--color-surface)] rounded-xl border border-[var(--color-border)] shadow-sm">
-                  <QRCodeCanvas
-                    id="tenant-qr-canvas"
-                    value={upiQrString}
-                    size={150}
-                    level="M"
-                    marginSize={2}
-                  />
+          {!platformUpi?.upiId ? (
+            <div className="p-6">
+              <div className="flex items-start gap-3 bg-amber-500/10 border border-amber-500/20 rounded-xl p-4">
+                <div className="w-9 h-9 rounded-full bg-amber-100 flex items-center justify-center shrink-0">
+                  <QrCode size={17} className="text-amber-600" />
                 </div>
-                <p className="text-xs text-[var(--color-text-muted)]">Scan to pay via UPI</p>
-              </div>
-              <div className="space-y-3 text-sm">
-                {[
-                  { label: 'Plan', value: currentPlan.name },
-                  { label: 'Amount', value: `₹${Number(currentPlan.price).toLocaleString()}`, bold: true },
-                  { label: 'Tenant', value: tenant.companyName },
-                ].map(({ label, value, bold }) => (
-                  <div key={label}>
-                    <p className="text-[10px] font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">{label}</p>
-                    <p className={cn('text-[var(--color-text-primary)]', bold ? 'text-xl font-bold' : 'font-semibold')}>{value}</p>
-                  </div>
-                ))}
-                <div>
-                  <p className="text-[10px] font-semibold uppercase tracking-wide text-[var(--color-text-muted)] mb-1">UPI String</p>
-                  <p className="font-mono text-xs text-[var(--color-text-muted)] break-all max-w-xs bg-[var(--color-surface-elevated)] p-2 rounded-lg">{upiQrString}</p>
+                <div className="space-y-2">
+                  <p className="text-sm font-semibold text-amber-800">Platform UPI Settings Missing</p>
+                  <p className="text-xs text-amber-600 leading-relaxed max-w-xl">
+                    You must configure the platform receiving UPI account details in Settings before you can generate payment QR codes for subscriptions.
+                  </p>
+                  <Link href="/super-admin/platform-settings" className="inline-block mt-1">
+                    <Button size="sm" className="bg-amber-600 hover:bg-amber-700 text-white border-none text-xs">
+                      Go to Platform Settings
+                    </Button>
+                  </Link>
                 </div>
               </div>
             </div>
+          ) : (
+            showQr && (
+              <div className="p-6 flex flex-col sm:flex-row gap-6 items-start animate-fe-fade-in">
+                <div className="flex flex-col items-center gap-2">
+                  <div className="p-3 bg-[var(--color-surface)] rounded-xl border border-[var(--color-border)] shadow-sm">
+                    <QRCodeCanvas
+                      id="tenant-qr-canvas"
+                      value={upiQrString}
+                      size={150}
+                      level="M"
+                      marginSize={2}
+                    />
+                  </div>
+                  <p className="text-xs text-[var(--color-text-muted)]">Scan to pay via UPI</p>
+                </div>
+                <div className="space-y-3 text-sm">
+                  {[
+                    { label: 'Plan', value: currentPlan.name },
+                    { label: 'Amount', value: `₹${Number(currentPlan.price).toLocaleString()}`, bold: true },
+                    { label: 'Tenant', value: tenant.companyName },
+                  ].map(({ label, value, bold }) => (
+                    <div key={label}>
+                      <p className="text-[10px] font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">{label}</p>
+                      <p className={cn('text-[var(--color-text-primary)]', bold ? 'text-xl font-bold' : 'font-semibold')}>{value}</p>
+                    </div>
+                  ))}
+                  <div>
+                    <p className="text-[10px] font-semibold uppercase tracking-wide text-[var(--color-text-muted)] mb-1">UPI String</p>
+                    <p className="font-mono text-xs text-[var(--color-text-muted)] break-all max-w-xs bg-[var(--color-surface-elevated)] p-2 rounded-lg">{upiQrString}</p>
+                  </div>
+                </div>
+              </div>
+            )
           )}
         </div>
       )}
