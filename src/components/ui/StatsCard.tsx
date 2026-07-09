@@ -31,14 +31,21 @@ interface StatsCardProps {
   /** Role hex accent — applied to icon, border, hover glow only */
   accentHex?: string;
   /** Short business context below the value */
-  context: string;
+  context?: string;
   /** Optional trend e.g. "+12%" or "▲ 3" */
-  trend?: { label: string; direction: 'up' | 'down' | 'flat' };
+  trend?:
+    | { label: string; direction: 'up' | 'down' | 'flat' }
+    | { label: string; value: number };
   /** Semantic status chip */
   status?: StatusChip;
   /** Footer timestamp */
   footerText?: string;
   staggerClass?: string;
+
+  // Legacy compatibility props
+  iconColor?: string;
+  iconBg?: string;
+  accentColor?: string;
 }
 
 // ─── Status chip config ───────────────────────────────────────────────────────
@@ -359,9 +366,11 @@ function PrimaryCard({
       </p>
 
       {/* Context */}
-      <p className="text-[11px] text-[var(--color-text-secondary)] mb-4 leading-relaxed">
-        {context}
-      </p>
+      {context && (
+        <p className="text-[11px] text-[var(--color-text-secondary)] mb-4 leading-relaxed">
+          {context}
+        </p>
+      )}
 
       {/* Bottom row */}
       <div className="flex items-center justify-between mt-auto">
@@ -400,7 +409,7 @@ function StandardCard({
       </p>
 
       {/* Context */}
-      <p className="text-[11px] text-[var(--color-text-secondary)] mb-3">{context}</p>
+      {context && <p className="text-[11px] text-[var(--color-text-secondary)] mb-3">{context}</p>}
 
       {/* Footer */}
       <div className="flex items-center justify-between mt-auto">
@@ -443,8 +452,8 @@ function StatusCard({
         {status && <StatusPill status={status} />}
       </div>
 
-      {/* Context is the supporting text */}
-      <p className="text-[11px] text-[var(--color-text-secondary)] mb-2">{context}</p>
+      {/* Context */}
+      {context && <p className="text-[11px] text-[var(--color-text-secondary)] mb-2">{context}</p>}
 
       {/* Footer */}
       <p className="text-[10px] text-[var(--color-text-muted)] mt-auto">{footerText}</p>
@@ -454,9 +463,37 @@ function StatusCard({
 
 // â”€â”€â”€ Public export â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
+const tailwindHexMap: Record<string, string> = {
+  'bg-emerald-500': '#10b981',
+  'bg-blue-500': '#3b82f6',
+  'bg-violet-500': '#8b5cf6',
+  'bg-teal-500': '#14b8a6',
+  'bg-amber-500': '#f59e0b',
+  'bg-indigo-500': '#6366f1',
+  'bg-red-500': '#ef4444',
+};
+
 export function StatsCard(props: StatsCardProps) {
-  const { variant = 'standard' } = props;
-  if (variant === 'primary') return <PrimaryCard {...props} />;
-  if (variant === 'status')  return <StatusCard {...props} />;
-  return <StandardCard {...props} />;
+  const { variant = 'standard', accentHex, accentColor, trend, ...rest } = props;
+
+  const resolvedAccentHex = accentHex ?? (accentColor ? tailwindHexMap[accentColor] : undefined) ?? '#2563EB';
+
+  const resolvedTrend = trend
+    ? ('direction' in trend
+      ? trend
+      : {
+          label: trend.label,
+          direction: trend.value > 0 ? 'up' : trend.value < 0 ? 'down' : 'flat',
+        })
+    : undefined;
+
+  const normalizedProps = {
+    ...rest,
+    accentHex: resolvedAccentHex,
+    trend: resolvedTrend,
+  };
+
+  if (variant === 'primary') return <PrimaryCard {...normalizedProps} />;
+  if (variant === 'status')  return <StatusCard {...normalizedProps} />;
+  return <StandardCard {...normalizedProps} />;
 }
