@@ -229,7 +229,7 @@ function StatusPill({ status }: { status: StatusChip }) {
 
 // â”€â”€â”€ Trend badge â€” semantic gradient pill â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
-function TrendBadge({ trend }: { trend: NonNullable<StatsCardProps['trend']> }) {
+function TrendBadge({ trend }: { trend: { label: string; direction: 'up' | 'down' | 'flat' } }) {
   const up   = trend.direction === 'up';
   const flat = trend.direction === 'flat';
 
