@@ -24,7 +24,6 @@ export default function TechnicianDetailPage() {
   const techniciansBase = pathname.startsWith('/admin/') ? '/admin/technicians' : '/manager/technicians';
   const qc = useQueryClient();
   const [showResetPw, setShowResetPw] = useState(false);
-  const [showAddSkill, setShowAddSkill] = useState(false);
   const [removeSkillId, setRemoveSkillId] = useState<string | null>(null);
   const [routeDate, setRouteDate] = useState(dayjs().format('YYYY-MM-DD'));
 
@@ -38,21 +37,18 @@ export default function TechnicianDetailPage() {
 
   const { register: ri, handleSubmit: hi, reset: resetI, formState: { isSubmitting: si } } = useForm<Pick<Technician, 'name' | 'phone' | 'isActive'>>();
   const { register: rp, handleSubmit: hp, reset: resetP, formState: { isSubmitting: sp } } = useForm<{ newPassword: string }>();
-  const { register: rs, handleSubmit: hs, reset: resetS, formState: { isSubmitting: ss } } = useForm<{ skillId: string; experienceLevel: string; certificationNumber: string; certificationExpiryDate: string }>();
+  const { register: rs, handleSubmit: hs, reset: resetS, formState: { isSubmitting: ss } } = useForm<{ skillId: string }>();
 
   useEffect(() => { if (tech) resetI({ name: tech.name, phone: tech.phone, isActive: tech.isActive }); }, [tech, resetI]);
 
   const updateMutation = useMutation({ mutationFn: (d: Pick<Technician, 'name' | 'phone' | 'isActive'>) => api.patch(`/web/manager/technicians/${id}`, d), onSuccess: () => { qc.invalidateQueries({ queryKey: ['technician', id] }); toast.success('Updated'); }, onError: () => toast.error('Failed') });
   const resetPwMutation = useMutation({ mutationFn: (d: { newPassword: string }) => api.patch(`/web/manager/technicians/${id}/reset-password`, d), onSuccess: () => { toast.success('Password reset'); setShowResetPw(false); resetP(); }, onError: () => toast.error('Failed') });
   const addSkillMutation = useMutation({
-    mutationFn: (d: { skillId: string; experienceLevel: string; certificationNumber: string; certificationExpiryDate: string }) =>
+    mutationFn: (d: { skillId: string }) =>
       api.post(`/web/manager/technicians/${id}/skills`, {
         skillId: d.skillId,
-        ...(d.experienceLevel && { experienceLevel: d.experienceLevel }),
-        ...(d.certificationNumber && { certificationNumber: d.certificationNumber }),
-        ...(d.certificationExpiryDate && { certificationExpiryDate: d.certificationExpiryDate }),
       }),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['tech-skills', id] }); toast.success('Skill added'); setShowAddSkill(false); resetS(); },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['tech-skills', id] }); toast.success('Skill added'); resetS(); },
     onError: (err: any) => toast.error(err?.response?.data?.message ?? 'Failed to add skill'),
   });
   const removeSkillMutation = useMutation({ mutationFn: (skillId: string) => api.delete(`/web/manager/technicians/${id}/skills/${skillId}`), onSuccess: () => { qc.invalidateQueries({ queryKey: ['tech-skills', id] }); toast.success('Skill removed'); setRemoveSkillId(null); }, onError: () => toast.error('Failed') });
@@ -99,41 +95,24 @@ export default function TechnicianDetailPage() {
         </form>
       </div>
 
-      <div className="bg-[var(--color-surface)] rounded-xl p-5 border border-[var(--color-border)] shadow-sm">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="font-medium text-[var(--color-text-secondary)] flex items-center gap-2"><MapPin size={15} /> Live Location</h3>
-        </div>
-        {location ? (
-          <div className="grid grid-cols-2 gap-3 text-sm">
-            <div><span className="text-[var(--color-text-muted)]">Latitude:</span> <span className="font-mono">{location.lat}</span></div>
-            <div><span className="text-[var(--color-text-muted)]">Longitude:</span> <span className="font-mono">{location.lng}</span></div>
-          </div>
-        ) : <p className="text-sm text-[var(--color-text-muted)]">Location not available</p>}
-      </div>
 
-      <div className="bg-[var(--color-surface)] rounded-xl p-5 border border-[var(--color-border)] shadow-sm">
-        <div className="flex items-center gap-2 mb-4">
-          <Route size={15} className="text-[var(--color-text-secondary)]" />
-          <h3 className="font-medium text-[var(--color-text-secondary)]">Route History</h3>
-          <Input type="date" value={routeDate} onChange={e => setRouteDate(e.target.value)} className="ml-auto w-40" />
-        </div>
-        {Array.isArray(route) && route.length > 0 ? (
-          <pre className="text-xs bg-[var(--color-surface-elevated)] rounded-lg p-3 overflow-auto max-h-40">{JSON.stringify(route, null, 2)}</pre>
-        ) : <p className="text-sm text-[var(--color-text-muted)]">No route data for this date</p>}
-      </div>
 
       <div className="bg-[var(--color-surface)] rounded-xl p-5 border border-[var(--color-border)] shadow-sm">
         <div className="flex items-center justify-between mb-4">
           <h3 className="font-medium text-[var(--color-text-secondary)]">Skills</h3>
-          <Button variant="outline" size="sm" onClick={() => setShowAddSkill(true)}><Plus size={13} /> Add Skill</Button>
         </div>
+        <form onSubmit={hs(d => addSkillMutation.mutate(d))} className="flex items-start gap-3 mb-6">
+          <div className="flex-1">
+            <Select options={skillOptions} placeholder="Select skill to add..." {...rs('skillId', { required: true })} />
+          </div>
+          <Button type="submit" loading={ss}>Add Skill</Button>
+        </form>
         {skills.length === 0 ? <p className="text-sm text-[var(--color-text-muted)]">No skills assigned</p> : (
           <div className="space-y-2">
             {skills.map(ts => (
               <div key={ts.skillId} className="flex items-center justify-between rounded-lg bg-[var(--color-surface-elevated)] px-3 py-2 text-sm">
                 <div>
                   <span className="font-medium">{ts.skill.name}</span>
-                  <span className="ml-2 text-[var(--color-text-muted)]">• {ts.experienceLevel}</span>
                   {ts.certificationNumber && <span className="ml-2 text-[var(--color-text-muted)] text-xs">{ts.certificationNumber}</span>}
                 </div>
                 <Button variant="ghost" size="sm" onClick={() => setRemoveSkillId(ts.skillId)} className="text-red-400"><Trash2 size={13} /></Button>
@@ -150,15 +129,6 @@ export default function TechnicianDetailPage() {
         </form>
       </Modal>
 
-      <Modal open={showAddSkill} onClose={() => { setShowAddSkill(false); resetS(); }} title="Add Skill" size="sm">
-        <form onSubmit={hs(d => addSkillMutation.mutate(d))} className="space-y-4">
-          <Select label="Skill" options={skillOptions} placeholder="Select skill" {...rs('skillId', { required: true })} />
-          <Select label="Experience Level" options={[{ value: 'BEGINNER', label: 'Beginner' }, { value: 'INTERMEDIATE', label: 'Intermediate' }, { value: 'EXPERT', label: 'Expert' }]} placeholder="Select level" {...rs('experienceLevel')} />
-          <Input label="Certification Number" placeholder="CERT-2024-001" {...rs('certificationNumber')} />
-          <Input label="Certification Expiry Date" type="date" {...rs('certificationExpiryDate')} />
-          <div className="flex justify-end gap-3"><Button variant="secondary" type="button" onClick={() => { setShowAddSkill(false); resetS(); }}>Cancel</Button><Button type="submit" loading={ss}>Add</Button></div>
-        </form>
-      </Modal>
 
       <ConfirmDialog open={!!removeSkillId} onClose={() => setRemoveSkillId(null)} onConfirm={() => removeSkillId && removeSkillMutation.mutate(removeSkillId)} message="Remove this skill?" loading={removeSkillMutation.isPending} confirmLabel="Remove" />
     </div>
