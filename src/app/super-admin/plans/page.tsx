@@ -32,8 +32,8 @@ const lim = (v: number) => (v >= 99999 ? 'Unlimited' : v.toLocaleString());
 
 export default function PlansPage() {
   const qc = useQueryClient();
-  const [editing, setEditing]         = useState<Plan | null>(null);
-  const [showCreate, setShowCreate]   = useState(false);
+  const [editing, setEditing] = useState<Plan | null>(null);
+  const [showCreate, setShowCreate] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<Plan | null>(null);
 
   const { data: plans = [], isLoading } = useQuery<Plan[]>({
@@ -44,7 +44,7 @@ export default function PlansPage() {
   const { register, handleSubmit, reset, watch, formState: { errors, isSubmitting } } = useForm<Form>({
     defaultValues: { isTrial: false, isActive: true, durationDays: null },
   });
-  const watchIsTrial  = watch('isTrial');
+  const watchIsTrial = watch('isTrial');
   const watchIsActive = watch('isActive');
 
   const openEdit = (plan: Plan) => {
@@ -259,12 +259,12 @@ export default function PlansPage() {
           )}
 
           <div className="grid grid-cols-2 gap-4">
-            <Input label="Price (₹ / month) *" type="number" {...register('price', { valueAsNumber: true })} error={errors.price?.message} />
-            <Input label="Manager Limit *" type="number" {...register('managerLimit', { valueAsNumber: true })} error={errors.managerLimit?.message} />
-            <Input label="Technician Limit *" type="number" {...register('technicianLimit', { valueAsNumber: true })} error={errors.technicianLimit?.message} />
-            <Input label="Ticket Limit *" type="number" {...register('ticketLimit', { valueAsNumber: true })} error={errors.ticketLimit?.message} />
-            <Input label="Customer Limit *" type="number" placeholder="99999 = unlimited" {...register('customerLimit', { valueAsNumber: true })} error={errors.customerLimit?.message} />
-            <Input label="Storage (GB) *" type="number" {...register('storageLimitGb', { valueAsNumber: true })} error={errors.storageLimitGb?.message} />
+            <Input label="Price (₹ / month) *" type="number" {...register('price', { valueAsNumber: true, required: 'Price is required', min: { value: 1, message: 'Price must be greater than 0' } })} error={errors.price?.message} />
+            <Input label="Manager Limit *" type="number" {...register('managerLimit', { valueAsNumber: true, required: 'Manager limit is required', min: { value: 1, message: 'Manager limit must be greater than 0' } })} error={errors.managerLimit?.message} />
+            <Input label="Technician Limit *" type="number" {...register('technicianLimit', { valueAsNumber: true, required: 'Technician limit is required', min: { value: 1, message: 'Technician limit must be greater than 0' } })} error={errors.technicianLimit?.message} />
+            <Input label="Ticket Limit *" type="number" {...register('ticketLimit', { valueAsNumber: true, required: 'Ticket limit is required', min: { value: 1, message: 'Ticket limit must be greater than 0' } })} error={errors.ticketLimit?.message} />
+            <Input label="Customer Limit *" type="number" {...register('customerLimit', { valueAsNumber: true, required: 'Customer limit is required', min: { value: 1, message: 'Customer limit must be greater than 0' } })} error={errors.customerLimit?.message} />
+            <Input label="Storage (GB) *" type="number" {...register('storageLimitGb', { valueAsNumber: true, required: 'Storage limit is required', min: { value: 1, message: 'Storage limit must be greater than 0' } })} error={errors.storageLimitGb?.message} />
           </div>
 
           {/* Make Active + Free Trial toggles — side by side */}
