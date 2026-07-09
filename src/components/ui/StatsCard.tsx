@@ -19,6 +19,8 @@ export type StatusChip =
   | 'ontrack'
   | 'completed'
   | 'online'
+  | 'active'
+  | 'inactive'
   | 'review'
   | 'action';
 
@@ -144,6 +146,20 @@ const statusConfig: Record<StatusChip, {
     gradientTo:   'rgba(16,185,129,0.04)',
     text:    'text-emerald-700 dark:text-emerald-400',
     dotColor: '#10b981',
+  },
+  active: {
+    label: 'Active',
+    gradientFrom: 'rgba(16,185,129,0.10)',
+    gradientTo:   'rgba(16,185,129,0.04)',
+    text:    'text-emerald-700 dark:text-emerald-400',
+    dotColor: '#10b981',
+  },
+  inactive: {
+    label: 'Inactive',
+    gradientFrom: 'rgba(107,114,128,0.10)',
+    gradientTo:   'rgba(107,114,128,0.04)',
+    text:    'text-gray-700 dark:text-gray-400',
+    dotColor: '#6b7280',
   },
   review: {
     label: 'Review Required',

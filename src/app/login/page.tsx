@@ -79,9 +79,13 @@ export default function LoginPage() {
   // Show "already signed in" panel instead of silently redirecting
   useEffect(() => {
     if (isAuthenticated && role && dashboardPath) {
-      setShowAlreadyIn(true);
+      if (role === 'SUPER_ADMIN') {
+        router.push(dashboardPath);
+      } else {
+        setShowAlreadyIn(true);
+      }
     }
-  }, [isAuthenticated, role, dashboardPath]);
+  }, [isAuthenticated, role, dashboardPath, router]);
 
   // Detect hostname and (for tenant portals) load branding
   useEffect(() => {

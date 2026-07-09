@@ -71,6 +71,22 @@ export default function TenantsPage() {
     })).data.data,
   });
 
+  const filteredTenants = tenants.filter(t => {
+    const s = params.search.toLowerCase().trim();
+    const matchesSearch = !s || 
+      t.companyName.toLowerCase().includes(s) || 
+      t.tenantCode.toLowerCase().includes(s) ||
+      t.email.toLowerCase().includes(s) ||
+      t.phone.toLowerCase().includes(s);
+
+    const matchesStatus = !params.status || t.status === params.status;
+
+    const planName = ((t as any).subscription?.plan ?? t.plan ?? (t as any).selectedPlan)?.name;
+    const matchesPlan = !params.plan || planName === params.plan;
+
+    return matchesSearch && matchesStatus && matchesPlan;
+  });
+
   const { data: plans = [] } = useQuery<{ id: string; name: string; isActive: boolean }[]>({
     queryKey: ['plans'],
     queryFn: async () => (await api.get('/web/super-admin/plans')).data.data,
@@ -181,9 +197,9 @@ export default function TenantsPage() {
                     <td key={j} className="px-4 py-3"><div className="h-4 bg-[var(--color-surface-elevated)] rounded animate-pulse" /></td>
                   ))}</tr>
                 ))
-              ) : tenants.length === 0 ? (
+              ) : filteredTenants.length === 0 ? (
                 <tr><td colSpan={10} className="px-4 py-14 text-center text-sm text-[var(--color-text-muted)]">No tenants found.</td></tr>
-              ) : tenants.map(t => {
+              ) : filteredTenants.map(t => {
                 const sub = (t as any).subscription;
                 const loginUrl = `${process.env.NEXT_PUBLIC_APP_URL ?? (typeof window !== 'undefined' ? window.location.origin : '')}/admin/${t.tenantCode}/login`;
                 return (
@@ -266,9 +282,9 @@ export default function TenantsPage() {
             </tbody>
           </table>
         </div>
-        {!isLoading && tenants.length > 0 && (
+        {!isLoading && filteredTenants.length > 0 && (
           <div className="px-5 py-3 border-t border-[var(--color-border)] text-xs text-[var(--color-text-muted)]">
-            {tenants.length} tenant{tenants.length !== 1 ? 's' : ''}
+            {filteredTenants.length} tenant{filteredTenants.length !== 1 ? 's' : ''}
           </div>
         )}
       </div>
