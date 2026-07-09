@@ -15,10 +15,11 @@ import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
 import { Modal } from '@/components/ui/Modal';
 import {
-  Search, RefreshCw, Eye, ArrowUpDown, Ban, CheckCircle,
-  XCircle, Clock, ChevronLeft, ChevronRight,
+  Search, RefreshCw, Eye, ArrowUpDown, Ban, CheckCircle, XCircle
 } from 'lucide-react';
 import { FilterCard } from '@/components/ui/FilterCard';
+import { DataTable } from '@/components/ui/DataTable';
+import { ColumnDef } from '@tanstack/react-table';
 import dayjs from 'dayjs';
 
 // ── Constants ──────────────────────────────────────────────────────────────────
@@ -43,13 +44,13 @@ function addDaysFromNow(days: number): Date {
 type ComputedStatus = 'ACTIVE' | 'EXPIRING_SOON' | 'EXPIRED' | 'TRIAL' | 'SUSPENDED' | 'CANCELLED' | 'QUEUED';
 
 const STATUS_CFG: Record<ComputedStatus, { label: string; variant: string }> = {
-  ACTIVE:        { label: 'Active',         variant: 'success' },
-  EXPIRING_SOON: { label: 'Expiring Soon',  variant: 'warning' },
-  EXPIRED:       { label: 'Expired',        variant: 'danger' },
-  TRIAL:         { label: 'Trial',          variant: 'info' },
-  SUSPENDED:     { label: 'Suspended',      variant: 'default' },
-  CANCELLED:     { label: 'Cancelled',      variant: 'danger' },
-  QUEUED:        { label: 'Queued',         variant: 'purple' },
+  ACTIVE: { label: 'Active', variant: 'success' },
+  EXPIRING_SOON: { label: 'Expiring Soon', variant: 'warning' },
+  EXPIRED: { label: 'Expired', variant: 'danger' },
+  TRIAL: { label: 'Trial', variant: 'info' },
+  SUSPENDED: { label: 'Suspended', variant: 'default' },
+  CANCELLED: { label: 'Cancelled', variant: 'danger' },
+  QUEUED: { label: 'Queued', variant: 'purple' },
 };
 
 function SubStatusBadge({ status }: { status: ComputedStatus }) {
@@ -82,12 +83,12 @@ function PlanPreview({ plan }: { plan: Plan }) {
       </div>
       <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs text-indigo-800">
         {[
-          ['Managers',    plan.managerLimit   >= 99999 ? 'Unlimited' : plan.managerLimit],
+          ['Managers', plan.managerLimit >= 99999 ? 'Unlimited' : plan.managerLimit],
           ['Technicians', plan.technicianLimit >= 99999 ? 'Unlimited' : plan.technicianLimit],
-          ['Customers',   plan.customerLimit   >= 99999 ? 'Unlimited' : plan.customerLimit],
-          ['Tickets',     plan.ticketLimit     >= 99999 ? 'Unlimited' : plan.ticketLimit],
-          ['Storage',     `${plan.storageLimitGb} GB`],
-          ['Ends',        dayjs(endDate).format('DD MMM YYYY')],
+          ['Customers', plan.customerLimit >= 99999 ? 'Unlimited' : plan.customerLimit],
+          ['Tickets', plan.ticketLimit >= 99999 ? 'Unlimited' : plan.ticketLimit],
+          ['Storage', `${plan.storageLimitGb} GB`],
+          ['Ends', dayjs(endDate).format('DD MMM YYYY')],
         ].map(([k, v]) => (
           <span key={String(k)}>{k}: <strong>{String(v)}</strong></span>
         ))}
@@ -107,7 +108,7 @@ function Btn({ children, title, onClick, loading, danger }: {
       className={`p-1.5 rounded-lg transition-colors disabled:opacity-40 ${danger
         ? 'text-red-400 hover:bg-red-50 hover:text-red-600'
         : 'text-[var(--color-text-muted)] hover:bg-[var(--color-surface-elevated)] hover:text-[var(--color-text-secondary)]'
-      }`}
+        }`}
     >
       {children}
     </button>
@@ -123,19 +124,19 @@ function RenewModal({ onClose, tenants, plans, defaultTenantId }: { onClose: () 
   });
 
   const watchedTenantId = watch('tenantId');
-  const watchedPlanId   = watch('planId');
+  const watchedPlanId = watch('planId');
 
-  const selectedTenant  = tenants.find(t => t.id === watchedTenantId);
-  const existingSub     = selectedTenant?.subscription;
-  const isExpired       = existingSub?.status === 'EXPIRED' || (existingSub?.endDate ? new Date(existingSub.endDate) < new Date() : false);
-  const currentPlanId   = existingSub?.planId ?? '';
-  const selectedPlan    = plans.find(p => p.id === (watchedPlanId || currentPlanId));
-  const currentExpiry   = existingSub?.endDate ? dayjs(existingSub.endDate) : null;
-  const renewBase       = isExpired ? dayjs() : currentExpiry;
+  const selectedTenant = tenants.find(t => t.id === watchedTenantId);
+  const existingSub = selectedTenant?.subscription;
+  const isExpired = existingSub?.status === 'EXPIRED' || (existingSub?.endDate ? new Date(existingSub.endDate) < new Date() : false);
+  const currentPlanId = existingSub?.planId ?? '';
+  const selectedPlan = plans.find(p => p.id === (watchedPlanId || currentPlanId));
+  const currentExpiry = existingSub?.endDate ? dayjs(existingSub.endDate) : null;
+  const renewBase = isExpired ? dayjs() : currentExpiry;
   // Renewal always extends by the (possibly new) plan's own durationDays.
-  const renewDays       = planDuration(selectedPlan);
-  const newExpiry       = renewBase ? renewBase.add(renewDays, 'day') : null;
-  const remainingDays   = currentExpiry ? Math.max(0, currentExpiry.diff(dayjs(), 'day')) : 0;
+  const renewDays = planDuration(selectedPlan);
+  const newExpiry = renewBase ? renewBase.add(renewDays, 'day') : null;
+  const remainingDays = currentExpiry ? Math.max(0, currentExpiry.diff(dayjs(), 'day')) : 0;
 
   const mutation = useMutation({
     mutationFn: (d: object) => api.post('/web/super-admin/subscriptions/renew', d),
@@ -413,12 +414,12 @@ function DetailModal({ sub, onClose }: { sub: SubscriptionWithMeta; onClose: () 
             {/* Plan limits */}
             <div className="grid grid-cols-3 gap-2">
               {[
-                ['Managers',    plan.managerLimit   >= 99999 ? 'Unlimited' : plan.managerLimit],
+                ['Managers', plan.managerLimit >= 99999 ? 'Unlimited' : plan.managerLimit],
                 ['Technicians', plan.technicianLimit >= 99999 ? 'Unlimited' : plan.technicianLimit],
-                ['Customers',   plan.customerLimit   >= 99999 ? 'Unlimited' : plan.customerLimit],
-                ['Tickets',     plan.ticketLimit     >= 99999 ? 'Unlimited' : plan.ticketLimit],
-                ['Storage',     `${plan.storageLimitGb} GB`],
-                ['Pay Method',  sub.paymentMethod ?? '—'],
+                ['Customers', plan.customerLimit >= 99999 ? 'Unlimited' : plan.customerLimit],
+                ['Tickets', plan.ticketLimit >= 99999 ? 'Unlimited' : plan.ticketLimit],
+                ['Storage', `${plan.storageLimitGb} GB`],
+                ['Pay Method', sub.paymentMethod ?? '—'],
               ].map(([k, v]) => (
                 <div key={String(k)} className="rounded-lg bg-[var(--color-surface-elevated)] px-3 py-2">
                   <p className="text-[10px] text-[var(--color-text-muted)] mb-0.5">{k}</p>
@@ -479,7 +480,7 @@ function DetailModal({ sub, onClose }: { sub: SubscriptionWithMeta; onClose: () 
               <p className="text-sm text-center py-8 text-[var(--color-text-muted)]">No history yet</p>
             ) : (detail?.subscriptionHistory ?? []).map((h: any) => {
               const actionColor: Record<string, string> = {
-  CREATED: 'bg-emerald-100 text-emerald-700',
+                CREATED: 'bg-emerald-100 text-emerald-700',
                 RENEWED: 'bg-blue-100 text-blue-700',
                 UPGRADED: 'bg-purple-100 text-purple-700',
                 DOWNGRADED: 'bg-amber-100 text-amber-700',
@@ -534,16 +535,16 @@ function DetailModal({ sub, onClose }: { sub: SubscriptionWithMeta; onClose: () 
 export default function SubscriptionsPage() {
   const qc = useQueryClient();
 
-  const [search, setSearch]           = useState('');
-  const [statusFilter, setStatus]     = useState('');
-  const [planFilter, setPlan]         = useState('');
-  const [params, setParams]           = useState({ search: '', status: '', planId: '', page: 1 });
+  const [search, setSearch] = useState('');
+  const [statusFilter, setStatus] = useState('');
+  const [planFilter, setPlan] = useState('');
+  const [params, setParams] = useState({ search: '', status: '', planId: '', page: 1 });
 
-  const [showRenew,            setShowRenew]            = useState(false);
+  const [showRenew, setShowRenew] = useState(false);
   const [showUpgradeDowngrade, setShowUpgradeDowngrade] = useState(false);
-  const [showDetail,           setShowDetail]           = useState(false);
-  const [activeSub,            setActiveSub]            = useState<SubscriptionWithMeta | null>(null);
-  const [renewTenantId,        setRenewTenantId]        = useState<string | undefined>();
+  const [showDetail, setShowDetail] = useState(false);
+  const [activeSub, setActiveSub] = useState<SubscriptionWithMeta | null>(null);
+  const [renewTenantId, setRenewTenantId] = useState<string | undefined>();
 
   const { data: dashboard, isLoading: dashLoading } = useQuery<SubscriptionDashboard>({
     queryKey: ['subscription-dashboard'],
@@ -558,7 +559,7 @@ export default function SubscriptionsPage() {
     })).data.data,
   });
 
-  const { data: plans = [] }   = useQuery<Plan[]>({   queryKey: ['plans'],   queryFn: async () => (await api.get('/web/super-admin/plans')).data.data,   staleTime: 60_000 });
+  const { data: plans = [] } = useQuery<Plan[]>({ queryKey: ['plans'], queryFn: async () => (await api.get('/web/super-admin/plans')).data.data, staleTime: 60_000 });
   const { data: tenants = [] } = useQuery<Tenant[]>({ queryKey: ['tenants'], queryFn: async () => (await api.get('/web/super-admin/tenants')).data.data, staleTime: 60_000 });
 
   const cancelMutation = useMutation({
@@ -581,9 +582,105 @@ export default function SubscriptionsPage() {
   const totalPages = listData?.totalPages ?? 1;
   const totalCount = listData?.total ?? 0;
 
-  function apply(page = 1) {
-    setParams({ search, status: statusFilter, planId: planFilter, page });
-  }
+  const apply = (pageOverride?: number) => {
+    setParams({ search, status: statusFilter, planId: planFilter, page: pageOverride ?? 1 });
+  };
+
+  const columns: ColumnDef<SubscriptionWithMeta>[] = [
+    {
+      accessorKey: 'tenant',
+      header: 'Tenant',
+      sortingFn: (rowA, rowB) => rowA.original.tenant.companyName.localeCompare(rowB.original.tenant.companyName),
+      cell: ({ row }) => (
+        <div className="flex items-center gap-2.5">
+          <div className="h-8 w-8 rounded-lg bg-indigo-100 flex items-center justify-center text-xs font-bold text-indigo-700 shrink-0">
+            {row.original.tenant.companyName.charAt(0).toUpperCase()}
+          </div>
+          <div>
+            <p className="font-medium leading-tight">{row.original.tenant.companyName}</p>
+            <p className="text-xs text-[var(--color-text-muted)]">{row.original.tenant.tenantCode}</p>
+          </div>
+        </div>
+      )
+    },
+    {
+      accessorKey: 'plan',
+      header: 'Plan',
+      sortingFn: (rowA, rowB) => rowA.original.plan.name.localeCompare(rowB.original.plan.name),
+      cell: ({ row }) => <PlanBadge planName={row.original.plan.name} />
+    },
+    {
+      id: 'duration',
+      header: 'Duration',
+      accessorFn: (row) => planDuration(row.plan),
+      cell: ({ row }) => <span className="text-xs text-[var(--color-text-secondary)] whitespace-nowrap">{planDuration(row.original.plan)} days</span>
+    },
+    {
+      accessorKey: 'computedStatus',
+      header: 'Status',
+      cell: ({ row }) => <SubStatusBadge status={row.original.computedStatus as ComputedStatus} />
+    },
+    {
+      accessorKey: 'startDate',
+      header: 'Start',
+      cell: ({ row }) => <span className="text-xs text-[var(--color-text-secondary)] whitespace-nowrap">{dayjs(row.original.startDate).format('DD MMM YYYY')}</span>
+    },
+    {
+      accessorKey: 'endDate',
+      header: 'Expires',
+      cell: ({ row }) => {
+        const sub = row.original;
+        return (
+          <span className={sub.daysLeft <= 7 ? 'text-red-600 font-medium' : sub.daysLeft <= 30 ? 'text-amber-600 font-medium' : 'text-[var(--color-text-secondary)]'}>
+            {dayjs(sub.endDate).format('DD MMM YYYY')}
+          </span>
+        );
+      }
+    },
+    {
+      accessorKey: 'daysLeft',
+      header: 'Days',
+      cell: ({ row }) => {
+        const sub = row.original;
+        return (
+          <span className={`font-semibold tabular-nums ${sub.daysLeft <= 7 ? 'text-red-600' : sub.daysLeft <= 30 ? 'text-amber-600' : 'text-[var(--color-text-secondary)]'}`}>
+            {sub.computedStatus === 'EXPIRED' || sub.computedStatus === 'CANCELLED' ? '—' : `${sub.daysLeft}d`}
+          </span>
+        );
+      }
+    },
+    {
+      id: 'price',
+      header: 'Price',
+      accessorFn: (row) => Number(row.plan.price),
+      cell: ({ row }) => <span className="text-xs font-semibold tabular-nums text-[var(--color-text-secondary)] whitespace-nowrap">₹{Number(row.original.plan.price).toLocaleString()}</span>
+    },
+    {
+      id: 'actions',
+      header: 'Actions',
+      cell: ({ row }) => {
+        const sub = row.original;
+        return (
+          <div className="flex items-center gap-0.5">
+            <Btn title="View Detail" onClick={() => { setActiveSub(sub); setShowDetail(true); }}><Eye size={13} /></Btn>
+            {['ACTIVE', 'TRIAL'].includes(sub.status) && <>
+              <Btn title="Renew" onClick={() => openRenew(sub)}><RefreshCw size={13} /></Btn>
+              <Btn title="Upgrade / Downgrade" onClick={() => { setActiveSub(sub); setShowUpgradeDowngrade(true); }}><ArrowUpDown size={13} /></Btn>
+              <Btn title="Suspend Subscription" onClick={() => suspendMutation.mutate(sub.id)} loading={suspendMutation.isPending} danger><Ban size={13} /></Btn>
+            </>}
+            {sub.status === 'SUSPENDED' && (
+              <Btn title="Resume Subscription" onClick={() => resumeMutation.mutate(sub.id)} loading={resumeMutation.isPending}><CheckCircle size={13} /></Btn>
+            )}
+            {sub.status !== 'CANCELLED' && (
+              <Btn title="Cancel Subscription" onClick={() => { if (window.confirm('Cancel this subscription? The tenant will lose access.')) cancelMutation.mutate(sub.id); }} loading={cancelMutation.isPending} danger>
+                <XCircle size={13} />
+              </Btn>
+            )}
+          </div>
+        );
+      }
+    }
+  ];
 
   function openRenew(sub?: { tenantId?: string }) {
     setRenewTenantId(sub?.tenantId);
@@ -615,13 +712,13 @@ export default function SubscriptionsPage() {
             </div>
           ))
         ) : dashboard ? [
-          { label: 'Active',           value: dashboard.activeSubscriptions,                      dot: 'bg-emerald-500' },
-          { label: 'Trial',            value: dashboard.trialSubscriptions,                       dot: 'bg-blue-500' },
-          { label: 'Expiring Soon',    value: dashboard.expiringSoon,                             dot: 'bg-amber-500' },
-          { label: 'Expired',          value: dashboard.expiredSubscriptions,                     dot: 'bg-red-500' },
-          { label: 'Monthly Revenue',  value: `₹${dashboard.monthlyRevenue.toLocaleString()}`,   dot: 'bg-indigo-500' },
-          { label: 'Annual Revenue',   value: `₹${dashboard.annualRevenue.toLocaleString()}`,    dot: 'bg-purple-500' },
-          { label: 'Pending Renewals', value: dashboard.pendingRenewals,                          dot: 'bg-gray-400' },
+          { label: 'Active', value: dashboard.activeSubscriptions, dot: 'bg-emerald-500' },
+          { label: 'Trial', value: dashboard.trialSubscriptions, dot: 'bg-blue-500' },
+          { label: 'Expiring Soon', value: dashboard.expiringSoon, dot: 'bg-amber-500' },
+          { label: 'Expired', value: dashboard.expiredSubscriptions, dot: 'bg-red-500' },
+          { label: 'Monthly Revenue', value: `₹${dashboard.monthlyRevenue.toLocaleString()}`, dot: 'bg-indigo-500' },
+          { label: 'Annual Revenue', value: `₹${dashboard.annualRevenue.toLocaleString()}`, dot: 'bg-purple-500' },
+          { label: 'Pending Renewals', value: dashboard.pendingRenewals, dot: 'bg-gray-400' },
         ].map(s => (
           <div key={s.label} className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4 shadow-sm">
             <div className="flex items-center gap-1.5 mb-1">
@@ -724,78 +821,8 @@ export default function SubscriptionsPage() {
             </div>
           )}
 
-          <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-sm overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-[var(--color-border)] bg-[var(--color-surface-elevated)]">
-                    {['Tenant', 'Plan', 'Duration', 'Status', 'Start', 'Expires', 'Days', 'Price', 'Actions'].map(h => (
-                      <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wide whitespace-nowrap">{h}</th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-[var(--color-border)]">
-                  {listLoading ? (
-                    Array.from({ length: 5 }).map((_, i) => (
-                      <tr key={i}>{Array.from({ length: 9 }).map((__, j) => <td key={j} className="px-4 py-3"><div className="h-4 bg-[var(--color-surface-elevated)] rounded animate-pulse" /></td>)}</tr>
-                    ))
-                  ) : subs.length === 0 ? (
-                    <tr><td colSpan={9} className="px-4 py-14 text-center text-[var(--color-text-muted)] text-sm">No subscriptions found. Create one to get started.</td></tr>
-                  ) : subs.map(sub => (
-                    <tr key={sub.id} className="hover:bg-[var(--color-surface-elevated)] transition-colors">
-                      <td className="px-4 py-3">
-                        <div className="flex items-center gap-2.5">
-                          <div className="h-8 w-8 rounded-lg bg-indigo-100 flex items-center justify-center text-xs font-bold text-indigo-700 shrink-0">
-                            {sub.tenant.companyName.charAt(0).toUpperCase()}
-                          </div>
-                          <div>
-                            <p className="font-medium leading-tight">{sub.tenant.companyName}</p>
-                            <p className="text-xs text-[var(--color-text-muted)]">{sub.tenant.tenantCode}</p>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-4 py-3">
-                        <PlanBadge planName={sub.plan.name} />
-                      </td>
-                      <td className="px-4 py-3 text-xs text-[var(--color-text-secondary)] whitespace-nowrap">{planDuration(sub.plan)} days</td>
-                      <td className="px-4 py-3"><SubStatusBadge status={sub.computedStatus as ComputedStatus} /></td>
-                      <td className="px-4 py-3 text-xs text-[var(--color-text-secondary)] whitespace-nowrap">{dayjs(sub.startDate).format('DD MMM YYYY')}</td>
-                      <td className="px-4 py-3 text-xs whitespace-nowrap">
-                        <span className={sub.daysLeft <= 7 ? 'text-red-600 font-medium' : sub.daysLeft <= 30 ? 'text-amber-600 font-medium' : 'text-[var(--color-text-secondary)]'}>
-                          {dayjs(sub.endDate).format('DD MMM YYYY')}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3 text-xs whitespace-nowrap">
-                        <span className={`font-semibold tabular-nums ${sub.daysLeft <= 7 ? 'text-red-600' : sub.daysLeft <= 30 ? 'text-amber-600' : 'text-[var(--color-text-secondary)]'}`}>
-                          {sub.computedStatus === 'EXPIRED' || sub.computedStatus === 'CANCELLED' ? '—' : `${sub.daysLeft}d`}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3 text-xs font-semibold tabular-nums text-[var(--color-text-secondary)] whitespace-nowrap">
-                        ₹{Number(sub.plan.price).toLocaleString()}
-                      </td>
-                      <td className="px-4 py-3">
-                        <div className="flex items-center gap-0.5">
-                          <Btn title="View Detail" onClick={() => { setActiveSub(sub); setShowDetail(true); }}><Eye size={13} /></Btn>
-                          {['ACTIVE', 'TRIAL'].includes(sub.status) && <>
-                            <Btn title="Renew" onClick={() => openRenew(sub)}><RefreshCw size={13} /></Btn>
-                            <Btn title="Upgrade / Downgrade" onClick={() => { setActiveSub(sub); setShowUpgradeDowngrade(true); }}><ArrowUpDown size={13} /></Btn>
-                            <Btn title="Suspend Subscription" onClick={() => suspendMutation.mutate(sub.id)} loading={suspendMutation.isPending} danger><Ban size={13} /></Btn>
-                          </>}
-                          {sub.status === 'SUSPENDED' && (
-                            <Btn title="Resume Subscription" onClick={() => resumeMutation.mutate(sub.id)} loading={resumeMutation.isPending}><CheckCircle size={13} /></Btn>
-                          )}
-                          {sub.status !== 'CANCELLED' && (
-                            <Btn title="Cancel Subscription" onClick={() => { if (window.confirm('Cancel this subscription? The tenant will lose access.')) cancelMutation.mutate(sub.id); }} loading={cancelMutation.isPending} danger>
-                              <XCircle size={13} />
-                            </Btn>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+          <div className="mb-3">
+            <DataTable data={subs} columns={columns} isLoading={listLoading} />
           </div>
 
           {!listLoading && totalPages > 1 && (
@@ -813,9 +840,9 @@ export default function SubscriptionsPage() {
       )}
 
       {/* Modals */}
-      {showRenew  && <RenewModal  onClose={() => { setShowRenew(false); setRenewTenantId(undefined); }} tenants={tenants} plans={plans} defaultTenantId={renewTenantId} />}
+      {showRenew && <RenewModal onClose={() => { setShowRenew(false); setRenewTenantId(undefined); }} tenants={tenants} plans={plans} defaultTenantId={renewTenantId} />}
       {showUpgradeDowngrade && activeSub && <UpgradeDowngradeModal sub={activeSub} plans={plans} onClose={() => { setShowUpgradeDowngrade(false); setActiveSub(null); }} />}
-      {showDetail           && activeSub && <DetailModal           sub={activeSub}               onClose={() => { setShowDetail(false);           setActiveSub(null); }} />}
+      {showDetail && activeSub && <DetailModal sub={activeSub} onClose={() => { setShowDetail(false); setActiveSub(null); }} />}
     </div>
   );
 }

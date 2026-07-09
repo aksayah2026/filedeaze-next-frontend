@@ -4,11 +4,24 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
 import { toast } from 'sonner';
 import { QRCodeCanvas } from 'qrcode.react';
 import api from '@/lib/axios';
 import { Tenant, Plan, Billing, PlatformUpi } from '@/types';
 import { Input } from '@/components/ui/Input';
+import { Textarea } from '@/components/ui/Textarea';
+import { emailSchema, phoneSchema, requiredString } from '@/lib/validations';
+
+const schema = z.object({
+  companyName: requiredString('Company name is required'),
+  email: emailSchema,
+  phone: phoneSchema,
+  address: requiredString('Address is required'),
+});
+
+type Form = z.infer<typeof schema>;
 import { Button } from '@/components/ui/Button';
 import { Select } from '@/components/ui/Select';
 import { Badge, TenantStatusBadge } from '@/components/ui/Badge';
@@ -58,7 +71,10 @@ export default function TenantDetailPage() {
     queryFn: async () => (await api.get('/web/super-admin/platform-upi')).data.data,
   });
 
-  const { register, handleSubmit, reset, formState: { isSubmitting } } = useForm<Partial<Tenant>>();
+  const { register, handleSubmit, reset, formState: { errors, isSubmitting, isValid, isDirty } } = useForm<Form>({
+    resolver: zodResolver(schema),
+    mode: 'onChange'
+  });
 
   useEffect(() => {
     if (tenant) reset({ companyName: tenant.companyName, email: tenant.email, phone: tenant.phone, address: tenant.address });
@@ -268,12 +284,12 @@ export default function TenantDetailPage() {
         </div>
         <div className="p-6">
           <form onSubmit={handleSubmit(d => updateMutation.mutate(d))} className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <Input label="Company Name" {...register('companyName')} />
-            <Input label="Email" type="email" {...register('email')} />
-            <Input label="Phone" {...register('phone')} />
-            <Input label="Address" {...register('address')} />
+            <Input label="Company Name *" {...register('companyName')} error={errors.companyName?.message} />
+            <Input label="Email *" type="email" {...register('email')} error={errors.email?.message} />
+            <Input label="Phone *" {...register('phone')} error={errors.phone?.message} />
+            <Textarea label="Address *" {...register('address')} error={errors.address?.message} />
             <div className="sm:col-span-2 flex justify-end">
-              <Button type="submit" loading={isSubmitting}>Save Changes</Button>
+              <Button type="submit" loading={isSubmitting} disabled={!isValid || !isDirty}>Save Changes</Button>
             </div>
           </form>
         </div>

@@ -33,7 +33,7 @@ export function AppShell({ sidebar, children }: AppShellProps) {
           'fixed inset-y-0 left-0 z-30 transition-all duration-300 ease-in-out h-full border-r border-[var(--color-border)]',
           'lg:static lg:inset-auto lg:z-auto lg:translate-x-0',
           open ? 'translate-x-0' : '-translate-x-full lg:translate-x-0',
-          isCollapsed ? 'lg:w-[72px]' : 'lg:w-[240px]'
+          isCollapsed ? 'lg:w-20' : 'lg:w-64'
         )}
       >
         {sidebar(close, isCollapsed)}

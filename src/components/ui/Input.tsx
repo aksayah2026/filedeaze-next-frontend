@@ -7,6 +7,7 @@ interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
   label?: string;
   error?: string;
   hint?: string;
+  suffix?: React.ReactNode;
 }
 
 export const Input = forwardRef<HTMLInputElement, InputProps>(
@@ -23,22 +24,30 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
             {label}
           </label>
         )}
-        <input
-          ref={ref}
-          id={inputId}
-          className={cn(
-            'w-full rounded-[10px] border bg-[var(--color-input-bg)] px-3 py-2 text-sm text-[var(--color-text-primary)]',
-            'placeholder:text-[var(--color-text-muted)]',
-            'transition-all duration-200',
-            'border-[var(--color-border-input)]',
-            'focus:border-[var(--color-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-ring)]',
-            'hover:border-[var(--color-border-strong)]',
-            'disabled:bg-[var(--color-surface-elevated)] disabled:cursor-not-allowed disabled:text-[var(--color-text-muted)]',
-            error && 'border-[var(--color-danger)] focus:border-[var(--color-danger)] focus:ring-[var(--color-danger-light)]',
-            className
+        <div className="relative">
+          <input
+            ref={ref}
+            id={inputId}
+            className={cn(
+              'w-full rounded-[10px] border bg-[var(--color-input-bg)] px-3 py-2 text-sm text-[var(--color-text-primary)]',
+              'placeholder:text-[var(--color-text-muted)]',
+              'transition-all duration-200',
+              'border-[var(--color-border-input)]',
+              'focus:border-[var(--color-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-ring)]',
+              'hover:border-[var(--color-border-strong)]',
+              'disabled:bg-[var(--color-surface-elevated)] disabled:cursor-not-allowed disabled:text-[var(--color-text-muted)]',
+              error && 'border-[var(--color-danger)] focus:border-[var(--color-danger)] focus:ring-[var(--color-danger-light)]',
+              props.suffix && 'pr-10',
+              className
+            )}
+            {...props}
+          />
+          {props.suffix && (
+            <div className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--color-text-muted)] flex items-center justify-center">
+              {props.suffix}
+            </div>
           )}
-          {...props}
-        />
+        </div>
         {error && (
           <p className="flex items-center gap-1 text-xs text-[var(--color-danger)] font-medium">
             <span className="inline-block h-1 w-1 rounded-full bg-[var(--color-danger)]" />

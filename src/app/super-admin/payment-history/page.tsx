@@ -410,7 +410,7 @@ export default function PaymentHistoryPage() {
               {totalPages > 1 && <span>Page {params.page} of {totalPages}</span>}
             </div>
           )}
-          <DataTable data={billings} columns={columns} isLoading={isLoading} />
+          <DataTable data={billings} columns={columns} isLoading={isLoading} emptyMessage="No payment records found" />
           {!isLoading && totalPages > 1 && (
             <div className="flex items-center justify-center gap-2 pt-2">
               <Button variant="secondary" size="sm" disabled={params.page <= 1} onClick={() => applyFilters(params.page - 1)}>

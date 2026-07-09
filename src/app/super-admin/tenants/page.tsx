@@ -6,28 +6,32 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { toast } from 'sonner';
-import { Plus, Eye, Trash2, Search, Copy, CheckCheck, Link2 } from 'lucide-react';
+import { Plus, Eye, EyeOff, Trash2, Search, Copy, CheckCheck, Link2 } from 'lucide-react';
 import Link from 'next/link';
 import api from '@/lib/axios';
 import { Tenant, TenantStatus } from '@/types';
 import { TenantStatusBadge, PlanBadge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
+import { Textarea } from '@/components/ui/Textarea';
 import { Select } from '@/components/ui/Select';
+import { emailSchema, phoneSchema, requiredString, passwordSchema } from '@/lib/validations';
 import { Modal } from '@/components/ui/Modal';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { FilterCard } from '@/components/ui/FilterCard';
+import { DataTable } from '@/components/ui/DataTable';
+import { ColumnDef } from '@tanstack/react-table';
 import dayjs from 'dayjs';
 
 const schema = z.object({
-  companyName: z.string().min(1, 'Company name is required'),
-  tenantCode: z.string().min(1, 'Tenant code is required'),
-  email: z.string().min(1, 'Email is required').refine(v => v.includes('@') && v.includes('.'), 'Enter a valid email'),
-  phone: z.string().min(10, 'Enter a valid phone number').max(15),
-  address: z.string().min(1, 'Address is required'),
-  adminName: z.string().min(1, 'Admin name is required'),
-  adminEmail: z.string().min(1, 'Admin email is required').refine(v => v.includes('@') && v.includes('.'), 'Enter a valid email'),
-  adminPassword: z.string().min(6, 'Password must be at least 6 characters'),
+  companyName: requiredString('Company name is required'),
+  tenantCode: requiredString('Tenant code is required'),
+  email: emailSchema,
+  phone: phoneSchema,
+  address: requiredString('Address is required'),
+  adminName: requiredString('Admin name is required'),
+  adminEmail: emailSchema,
+  adminPassword: passwordSchema,
   plan: z.string().optional(),
 });
 
@@ -63,6 +67,7 @@ export default function TenantsPage() {
   const [showCreate, setShowCreate] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [togglingId, setTogglingId] = useState<string | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
 
   const { data: tenants = [], isLoading } = useQuery<Tenant[]>({
     queryKey: ['tenants', params],
@@ -92,7 +97,10 @@ export default function TenantsPage() {
     queryFn: async () => (await api.get('/web/super-admin/plans')).data.data,
   });
 
-  const { register, handleSubmit, reset, setValue, watch, formState: { errors, isSubmitting } } = useForm<Form>({ resolver: zodResolver(schema) });
+  const { register, handleSubmit, reset, setValue, watch, formState: { errors, isSubmitting, isValid } } = useForm<Form>({ 
+    resolver: zodResolver(schema),
+    mode: 'onChange'
+  });
   const [manualCode, setManualCode] = useState(false);
   const watchedCompany = watch('companyName');
 
@@ -137,6 +145,86 @@ export default function TenantsPage() {
     statusMutation.mutate({ id, status: next });
   }
 
+  const columns: ColumnDef<Tenant>[] = [
+    {
+      accessorKey: 'companyName',
+      header: 'Company',
+      cell: ({ row }) => (
+        <div className="flex items-center gap-2.5">
+          <div className="h-8 w-8 rounded-lg bg-indigo-100 flex items-center justify-center text-xs font-bold text-indigo-700 shrink-0">
+            {row.original.companyName.charAt(0).toUpperCase()}
+          </div>
+          <p className="font-semibold text-[var(--color-text-primary)] leading-tight whitespace-nowrap">{row.original.companyName}</p>
+        </div>
+      )
+    },
+    {
+      accessorKey: 'tenantCode',
+      header: 'Code',
+      cell: ({ row }) => (
+        <code className="text-xs bg-[var(--color-surface-elevated)] text-[var(--color-text-muted)] px-2 py-0.5 rounded-md border border-[var(--color-border)] font-mono">
+          {row.original.tenantCode}
+        </code>
+      )
+    },
+    { accessorKey: 'email', header: 'Email', cell: ({ row }) => <span className="text-xs text-[var(--color-text-secondary)] whitespace-nowrap">{row.original.email}</span> },
+    { accessorKey: 'phone', header: 'Phone', cell: ({ row }) => <span className="text-xs text-[var(--color-text-secondary)] whitespace-nowrap">{row.original.phone}</span> },
+    { accessorKey: 'status', header: 'Status', cell: ({ row }) => <TenantStatusBadge status={row.original.status} /> },
+    {
+      id: 'plan',
+      header: 'Plan',
+      accessorFn: row => ((row as any).subscription?.plan ?? row.plan ?? (row as any).selectedPlan)?.name,
+      cell: ({ row }) => <PlanBadge planName={((row.original as any).subscription?.plan ?? row.original.plan ?? (row.original as any).selectedPlan)?.name} />
+    },
+    {
+      accessorKey: 'createdAt',
+      header: 'Created',
+      cell: ({ row }) => <span className="text-xs text-[var(--color-text-muted)] whitespace-nowrap">{dayjs(row.original.createdAt).format('DD MMM YYYY')}</span>
+    },
+    {
+      id: 'loginUrl',
+      header: 'Login URL',
+      cell: ({ row }) => {
+        const t = row.original;
+        const loginUrl = `${process.env.NEXT_PUBLIC_APP_URL ?? (typeof window !== 'undefined' ? window.location.origin : '')}/admin/${t.tenantCode}/login`;
+        return (
+          <button
+            onClick={() => { navigator.clipboard.writeText(loginUrl); toast.success('Copied!'); }}
+            className="flex items-center gap-1 text-xs text-blue-500 hover:text-blue-700 font-mono transition-colors whitespace-nowrap"
+            title="Copy login URL"
+          >
+            /admin/{t.tenantCode}/login <Copy size={11} />
+          </button>
+        );
+      }
+    },
+    {
+      id: 'active',
+      header: 'Active',
+      cell: ({ row }) => <ActiveToggle tenant={row.original} onToggle={handleToggle} loading={togglingId === row.original.id} />
+    },
+    {
+      id: 'actions',
+      header: 'Actions',
+      cell: ({ row }) => (
+        <div className="flex items-center gap-1">
+          <Link href={`/super-admin/tenants/${row.original.id}`}>
+            <button className="h-8 w-8 rounded-lg border border-[var(--color-border)] flex items-center justify-center text-[var(--color-text-muted)] hover:border-[var(--color-primary)] hover:text-[var(--color-primary)] transition-colors" title="View detail">
+              <Eye size={14} />
+            </button>
+          </Link>
+          <button
+            className="h-8 w-8 rounded-lg border border-[var(--color-border)] flex items-center justify-center text-[var(--color-text-muted)] hover:border-red-300 hover:text-red-500 transition-colors"
+            onClick={() => setDeleteId(row.original.id)}
+            title="Delete tenant"
+          >
+            <Trash2 size={14} />
+          </button>
+        </div>
+      )
+    }
+  ];
+
   return (
     <div className="space-y-5">
       {/* Header */}
@@ -180,142 +268,46 @@ export default function TenantsPage() {
       </FilterCard>
 
       {/* Table */}
-      <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-sm overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-[var(--colx`or-border)] bg-[var(--color-surface-elevated)]">
-                {['Company', 'Code', 'Email', 'Phone', 'Status', 'Plan', 'Created', 'Login URL', 'Active', 'Actions'].map(h => (
-                  <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wide whitespace-nowrap">{h}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-[var(--color-border)]">
-              {isLoading ? (
-                Array.from({ length: 5 }).map((_, i) => (
-                  <tr key={i}>{Array.from({ length: 10 }).map((__, j) => (
-                    <td key={j} className="px-4 py-3"><div className="h-4 bg-[var(--color-surface-elevated)] rounded animate-pulse" /></td>
-                  ))}</tr>
-                ))
-              ) : filteredTenants.length === 0 ? (
-                <tr><td colSpan={10} className="px-4 py-14 text-center text-sm text-[var(--color-text-muted)]">No tenants found.</td></tr>
-              ) : filteredTenants.map(t => {
-                const sub = (t as any).subscription;
-                const loginUrl = `${process.env.NEXT_PUBLIC_APP_URL ?? (typeof window !== 'undefined' ? window.location.origin : '')}/admin/${t.tenantCode}/login`;
-                return (
-                  <tr key={t.id} className="hover:bg-[var(--color-surface-elevated)] transition-colors">
+      <DataTable data={filteredTenants} columns={columns} isLoading={isLoading} />
 
-                    {/* Company */}
-                    <td className="px-4 py-3">
-                      <div className="flex items-center gap-2.5">
-                        <div className="h-8 w-8 rounded-lg bg-indigo-100 flex items-center justify-center text-xs font-bold text-indigo-700 shrink-0">
-                          {t.companyName.charAt(0).toUpperCase()}
-                        </div>
-                        <p className="font-semibold text-[var(--color-text-primary)] leading-tight whitespace-nowrap">{t.companyName}</p>
-                      </div>
-                    </td>
-
-                    {/* Code */}
-                    <td className="px-4 py-3">
-                      <code className="text-xs bg-[var(--color-surface-elevated)] text-[var(--color-text-muted)] px-2 py-0.5 rounded-md border border-[var(--color-border)] font-mono">
-                        {t.tenantCode}
-                      </code>
-                    </td>
-
-                    {/* Email */}
-                    <td className="px-4 py-3 text-xs text-[var(--color-text-secondary)] whitespace-nowrap">{t.email}</td>
-
-                    {/* Phone */}
-                    <td className="px-4 py-3 text-xs text-[var(--color-text-secondary)] whitespace-nowrap">{t.phone}</td>
-
-                    {/* Status */}
-                    <td className="px-4 py-3">
-                      <TenantStatusBadge status={t.status} />
-                    </td>
-
-                    {/* Plan */}
-                    <td className="px-4 py-3">
-                      <PlanBadge planName={((t as any).subscription?.plan ?? t.plan ?? (t as any).selectedPlan)?.name} />
-                    </td>
-
-                    {/* Created */}
-                    <td className="px-4 py-3 text-xs text-[var(--color-text-muted)] whitespace-nowrap">
-                      {dayjs(t.createdAt).format('DD MMM YYYY')}
-                    </td>
-
-                    {/* Login URL */}
-                    <td className="px-4 py-3">
-                      <button
-                        onClick={() => { navigator.clipboard.writeText(loginUrl); toast.success('Copied!'); }}
-                        className="flex items-center gap-1 text-xs text-blue-500 hover:text-blue-700 font-mono transition-colors whitespace-nowrap"
-                        title="Copy login URL"
-                      >
-                        /admin/{t.tenantCode}/login <Copy size={11} />
-                      </button>
-                    </td>
-
-                    {/* Active toggle */}
-                    <td className="px-4 py-3">
-                      <ActiveToggle tenant={t} onToggle={handleToggle} loading={togglingId === t.id} />
-                    </td>
-
-                    {/* Actions */}
-                    <td className="px-4 py-3">
-                      <div className="flex items-center gap-1">
-                        <Link href={`/super-admin/tenants/${t.id}`}>
-                          <button className="h-8 w-8 rounded-lg border border-[var(--color-border)] flex items-center justify-center text-[var(--color-text-muted)] hover:border-[var(--color-primary)] hover:text-[var(--color-primary)] transition-colors" title="View detail">
-                            <Eye size={14} />
-                          </button>
-                        </Link>
-                        <button
-                          className="h-8 w-8 rounded-lg border border-[var(--color-border)] flex items-center justify-center text-[var(--color-text-muted)] hover:border-red-300 hover:text-red-500 transition-colors"
-                          onClick={() => setDeleteId(t.id)}
-                          title="Delete tenant"
-                        >
-                          <Trash2 size={14} />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-        {!isLoading && filteredTenants.length > 0 && (
-          <div className="px-5 py-3 border-t border-[var(--color-border)] text-xs text-[var(--color-text-muted)]">
-            {filteredTenants.length} tenant{filteredTenants.length !== 1 ? 's' : ''}
-          </div>
-        )}
-      </div>
 
       {/* Create Tenant Modal */}
       <Modal open={showCreate} onClose={() => { setShowCreate(false); reset(); }} title="Create New Tenant" size="lg">
         <form onSubmit={handleSubmit(d => createMutation.mutate(d))} className="space-y-5">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <Input label="Company Name" {...register('companyName')} error={errors.companyName?.message} />
+            <Input label="Company Name *" {...register('companyName')} error={errors.companyName?.message} />
             <div className="flex flex-col gap-1">
-              <Input label="Tenant Code" {...register('tenantCode')} error={errors.tenantCode?.message} onInput={() => setManualCode(true)} placeholder="e.g. acmecorp" />
+              <Input label="Tenant Code *" {...register('tenantCode')} error={errors.tenantCode?.message} onInput={() => setManualCode(true)} placeholder="e.g. acmecorp" />
               {!manualCode && watchedCompany && <p className="text-[10px] text-[var(--color-text-muted)]">Auto-generated — edit to customise</p>}
             </div>
-            <Input label="Email" type="email" {...register('email')} error={errors.email?.message} />
-            <Input label="Phone" {...register('phone')} error={errors.phone?.message} />
-            <Input label="Address" {...register('address')} error={errors.address?.message} className="sm:col-span-2" />
+            <Input label="Email *" type="email" {...register('email')} error={errors.email?.message} />
+            <Input label="Phone *" {...register('phone')} error={errors.phone?.message} />
+            <Textarea label="Address *" {...register('address')} error={errors.address?.message} className="sm:col-span-2" />
           </div>
 
           <div className="pt-1 border-t border-[var(--color-border)]">
             <p className="text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wide mb-3">Admin Account</p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <Input label="Admin Name" {...register('adminName')} error={errors.adminName?.message} />
-              <Input label="Admin Email" type="email" {...register('adminEmail')} error={errors.adminEmail?.message} />
-              <Input label="Admin Password" type="password" {...register('adminPassword')} error={errors.adminPassword?.message} />
+              <Input label="Admin Name *" {...register('adminName')} error={errors.adminName?.message} />
+              <Input label="Admin Email *" type="email" {...register('adminEmail')} error={errors.adminEmail?.message} />
+              <Input 
+                label="Admin Password *" 
+                type={showPassword ? 'text' : 'password'} 
+                {...register('adminPassword')} 
+                error={errors.adminPassword?.message} 
+                suffix={
+                  <button type="button" onClick={() => setShowPassword(!showPassword)} className="hover:text-gray-700 transition-colors">
+                    {showPassword ? <EyeOff size={15} /> : <Eye size={15} />}
+                  </button>
+                }
+              />
               <Select label="Plan" options={plans.filter(p => p.isActive).map(p => ({ value: p.name, label: p.name }))} placeholder="Select Plan" {...register('plan')} />
             </div>
           </div>
 
           <div className="flex justify-end gap-3 pt-1">
-            <Button variant="outline" type="button" onClick={() => { setShowCreate(false); reset(); setManualCode(false); }}>Cancel</Button>
-            <Button type="submit" loading={isSubmitting}>Create Tenant</Button>
+            <Button variant="outline" type="button" onClick={() => { setShowCreate(false); reset(); setManualCode(false); setShowPassword(false); }}>Cancel</Button>
+            <Button type="submit" loading={isSubmitting} disabled={!isValid}>Create Tenant</Button>
           </div>
         </form>
       </Modal>

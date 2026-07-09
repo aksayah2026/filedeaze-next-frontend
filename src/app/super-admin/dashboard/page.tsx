@@ -7,6 +7,18 @@ import { SuperAdminDashboard } from '@/types';
 import { StatsCard } from '@/components/ui/StatsCard';
 import { SkeletonCard } from '@/components/ui/Spinner';
 import { useRoleAccent } from '@/lib/useRoleAccent';
+import Link from 'next/link';
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+
+const mockTrendData = [
+  { name: 'Jan', revenue: 4000, tenants: 24 },
+  { name: 'Feb', revenue: 3000, tenants: 28 },
+  { name: 'Mar', revenue: 2000, tenants: 32 },
+  { name: 'Apr', revenue: 2780, tenants: 39 },
+  { name: 'May', revenue: 1890, tenants: 48 },
+  { name: 'Jun', revenue: 2390, tenants: 56 },
+  { name: 'Jul', revenue: 3490, tenants: 63 },
+];
 
 export default function SuperAdminDashboardPage() {
   const ACCENT = useRoleAccent();
@@ -29,79 +41,157 @@ export default function SuperAdminDashboardPage() {
           {Array.from({ length: 6 }).map((_, i) => <SkeletonCard key={i} />)}
         </div>
       ) : !data ? null : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="space-y-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
 
-          {/* ── Standard: Total Tenants ── */}
-          <StatsCard
-            variant="standard"
-            title="Total Tenants"
-            value={data.totalTenants}
-            icon={Building2}
-            accentHex={ACCENT}
-            context="Total onboarded companies"
-            status="stable"
-            footerText="Platform Total"
-          />
+            {/* ── Standard: Total Tenants ── */}
+            <Link href="/super-admin/tenants" className="block focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] rounded-2xl">
+              <StatsCard
+                variant="standard"
+                title="Total Tenants"
+                value={data.totalTenants}
+                icon={Building2}
+                accentHex={ACCENT}
+                context="Total onboarded companies"
+                status="stable"
+                footerText="Platform Total"
+              />
+            </Link>
 
-          {/* ── Standard: Active Tenants ── */}
-          <StatsCard
-            variant="standard"
-            title="Active Tenants"
-            value={data.activeTenants}
-            icon={CheckCircle}
-            accentHex={ACCENT}
-            context={`${((data.activeTenants / (data.totalTenants || 1)) * 100).toFixed(0)}% of tenants active`}
-            status={data.activeTenants > 0 ? 'healthy' : 'offline'}
-            footerText="Live"
-          />
+            {/* ── Standard: Active Tenants ── */}
+            <Link href="/super-admin/tenants" className="block focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] rounded-2xl">
+              <StatsCard
+                variant="standard"
+                title="Active Tenants"
+                value={data.activeTenants}
+                icon={CheckCircle}
+                accentHex={ACCENT}
+                context={`${((data.activeTenants / (data.totalTenants || 1)) * 100).toFixed(0)}% of tenants active`}
+                status={data.activeTenants > 0 ? 'healthy' : 'offline'}
+                footerText="Live"
+              />
+            </Link>
 
-          {/* ── Primary: Total Revenue ── */}
-          <StatsCard
-            variant="primary"
-            title="Total Revenue"
-            value={`₹${data.totalRevenue.toLocaleString()}`}
-            icon={DollarSign}
-            accentHex={ACCENT}
-            context="Accumulated platform earnings"
-            status="healthy"
-            footerText="Platform Total"
-          />
+            {/* ── Primary: Total Revenue ── */}
+            <Link href="/super-admin/revenue-reports" className="block focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] rounded-2xl">
+              <StatsCard
+                variant="primary"
+                title="Total Revenue"
+                value={`₹${data.totalRevenue.toLocaleString()}`}
+                icon={DollarSign}
+                accentHex={ACCENT}
+                context="Accumulated platform earnings"
+                status="healthy"
+                footerText="Platform Total"
+              />
+            </Link>
 
-          {/* ── Status: Expired Tenants ── */}
-          <StatsCard
-            variant="status"
-            title="Expired Tenants"
-            value={data.expiredTenants}
-            icon={AlertCircle}
-            accentHex={ACCENT}
-            context={data.expiredTenants > 0 ? `${data.expiredTenants} expired subscriptions` : "No pending renewals"}
-            status={data.expiredTenants > 0 ? 'critical' : 'healthy'}
-            footerText="Sync Status"
-          />
+            {/* ── Status: Expired Tenants ── */}
+            <Link href="/super-admin/tenants" className="block focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] rounded-2xl">
+              <StatsCard
+                variant="status"
+                title="Expired Tenants"
+                value={data.expiredTenants}
+                icon={AlertCircle}
+                accentHex={ACCENT}
+                context={data.expiredTenants > 0 ? `${data.expiredTenants} expired subscriptions` : "No pending renewals"}
+                status={data.expiredTenants > 0 ? 'critical' : 'healthy'}
+                footerText="Sync Status"
+              />
+            </Link>
 
-          {/* ── Status: Suspended Tenants ── */}
-          <StatsCard
-            variant="status"
-            title="Suspended Tenants"
-            value={data.suspendedTenants}
-            icon={XCircle}
-            accentHex={ACCENT}
-            context={data.suspendedTenants > 0 ? `${data.suspendedTenants} suspended accounts` : "All accounts in good standing"}
-            status={data.suspendedTenants > 0 ? 'attention' : 'stable'}
-            footerText="Live Status"
-          />
+            {/* ── Status: Suspended Tenants ── */}
+            <Link href="/super-admin/tenants" className="block focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] rounded-2xl">
+              <StatsCard
+                variant="status"
+                title="Suspended Tenants"
+                value={data.suspendedTenants}
+                icon={XCircle}
+                accentHex={ACCENT}
+                context={data.suspendedTenants > 0 ? `${data.suspendedTenants} suspended accounts` : "All accounts in good standing"}
+                status={data.suspendedTenants > 0 ? 'attention' : 'stable'}
+                footerText="Live Status"
+              />
+            </Link>
 
-          {/* ── Standard: Active Users ── */}
-          <StatsCard
-            variant="standard"
-            title="Active Users"
-            value={data.activeUsers}
-            icon={Users}
-            accentHex={ACCENT}
-            context={`${data.activeUsers} users currently active`}
-            status={data.activeUsers > 0 ? 'active' : 'inactive'}
-            footerText="Real-time"
-          />
+            {/* ── Standard: Active Users ── */}
+            <div className="relative group block focus:outline-none rounded-2xl cursor-default">
+              <StatsCard
+                variant="standard"
+                title="Active Users"
+                value={data.activeUsers}
+                icon={Users}
+                accentHex={ACCENT}
+                context={`${data.activeUsers} users currently active`}
+                status={data.activeUsers > 0 ? 'active' : 'inactive'}
+                footerText="Real-time"
+              />
+              <div className="absolute opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-10 bottom-full left-1/2 -translate-x-1/2 mb-2 w-64 bg-[var(--color-surface-elevated)] border border-[var(--color-border)] rounded-lg p-3 shadow-lg text-xs text-[var(--color-text-secondary)] pointer-events-none">
+                <p className="font-semibold text-[var(--color-text-primary)] mb-1">Active Users Metric</p>
+                Represents the total number of users across all tenants who have logged in or interacted with the platform in the last 30 days.
+                <div className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-3 h-3 bg-[var(--color-surface-elevated)] border-b border-r border-[var(--color-border)] transform rotate-45"></div>
+              </div>
+            </div>
+          </div>
+
+          {/* Trend Charts */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-8">
+            <div className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl p-5 shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
+              <div className="flex items-center gap-2 mb-6">
+                <div className="h-1.5 w-5 rounded-full bg-blue-500" />
+                <h3 className="text-[13px] font-bold tracking-wide uppercase text-[var(--color-text-muted)]">Revenue Trend</h3>
+              </div>
+              <div className="h-64">
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={mockTrendData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                    <defs>
+                      <linearGradient id="colorRev" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor={ACCENT} stopOpacity={0.3}/>
+                        <stop offset="95%" stopColor={ACCENT} stopOpacity={0}/>
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--color-border)" />
+                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: 'var(--color-text-muted)' }} dy={10} />
+                    <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: 'var(--color-text-muted)' }} dx={-10} tickFormatter={(val) => `₹${val/1000}k`} />
+                    <Tooltip
+                      contentStyle={{ backgroundColor: 'var(--color-surface-elevated)', borderRadius: '8px', border: '1px solid var(--color-border)', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)' }}
+                      itemStyle={{ color: 'var(--color-text-primary)', fontSize: '13px', fontWeight: 600 }}
+                      labelStyle={{ color: 'var(--color-text-muted)', fontSize: '12px', marginBottom: '4px' }}
+                    />
+                    <Area type="monotone" dataKey="revenue" stroke={ACCENT} strokeWidth={2} fillOpacity={1} fill="url(#colorRev)" />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+
+            <div className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl p-5 shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
+              <div className="flex items-center gap-2 mb-6">
+                <div className="h-1.5 w-5 rounded-full bg-emerald-500" />
+                <h3 className="text-[13px] font-bold tracking-wide uppercase text-[var(--color-text-muted)]">Tenant Growth</h3>
+              </div>
+              <div className="h-64">
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={mockTrendData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                    <defs>
+                      <linearGradient id="colorTenants" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#10b981" stopOpacity={0.3}/>
+                        <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--color-border)" />
+                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: 'var(--color-text-muted)' }} dy={10} />
+                    <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: 'var(--color-text-muted)' }} dx={-10} />
+                    <Tooltip
+                      contentStyle={{ backgroundColor: 'var(--color-surface-elevated)', borderRadius: '8px', border: '1px solid var(--color-border)', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)' }}
+                      itemStyle={{ color: 'var(--color-text-primary)', fontSize: '13px', fontWeight: 600 }}
+                      labelStyle={{ color: 'var(--color-text-muted)', fontSize: '12px', marginBottom: '4px' }}
+                    />
+                    <Area type="monotone" dataKey="tenants" stroke="#10b981" strokeWidth={2} fillOpacity={1} fill="url(#colorTenants)" />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+          </div>
         </div>
       )}
     </div>

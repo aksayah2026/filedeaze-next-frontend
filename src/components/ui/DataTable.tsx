@@ -14,9 +14,10 @@ interface DataTableProps<T> {
   data: T[];
   columns: ColumnDef<T, unknown>[];
   isLoading?: boolean;
+  emptyMessage?: string;
 }
 
-export function DataTable<T>({ data, columns, isLoading }: DataTableProps<T>) {
+export function DataTable<T>({ data, columns, isLoading, emptyMessage }: DataTableProps<T>) {
   const [sorting, setSorting] = useState<SortingState>([]);
 
   const table = useReactTable({
@@ -76,7 +77,7 @@ export function DataTable<T>({ data, columns, isLoading }: DataTableProps<T>) {
             {table.getRowModel()?.rows?.length === 0 ? (
               <tr>
                 <td colSpan={columns.length}>
-                  <EmptyState />
+                  <EmptyState message={emptyMessage} />
                 </td>
               </tr>
             ) : (

@@ -239,9 +239,10 @@ export default function RevenueReportsPage() {
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" vertical={false} />
-                  <XAxis dataKey="date" tick={{ fontSize: 11, fill: 'var(--color-text-muted)' }} axisLine={false} tickLine={false} />
-                  <YAxis tick={{ fontSize: 11, fill: 'var(--color-text-muted)' }} axisLine={false} tickLine={false} />
+                  <XAxis dataKey="date" tick={{ fontSize: 11, fill: 'var(--color-text-muted)' }} axisLine={false} tickLine={false} tickMargin={10} minTickGap={20} />
+                  <YAxis tick={{ fontSize: 11, fill: 'var(--color-text-muted)' }} tickFormatter={(v) => `₹${v.toLocaleString()}`} axisLine={false} tickLine={false} tickMargin={10} width={60} />
                   <Tooltip
+                    cursor={{ stroke: 'var(--color-border)', strokeWidth: 1, strokeDasharray: '4 4' }}
                     formatter={(v) => [`₹${Number(v).toLocaleString()}`, 'Revenue']}
                     contentStyle={{ borderRadius: '10px', border: '1px solid var(--color-border)', backgroundColor: 'var(--color-surface-elevated)', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', fontSize: '12px' }}
                     labelStyle={{ color: 'var(--color-text-primary)', fontWeight: 600, marginBottom: '4px' }}
@@ -270,13 +271,18 @@ export default function RevenueReportsPage() {
                         tick={{ fontSize: 11, fill: 'var(--color-text-muted)' }}
                         axisLine={false}
                         tickLine={false}
+                        tickMargin={10}
                       />
                       <YAxis
                         tick={{ fontSize: 11, fill: 'var(--color-text-muted)' }}
+                        tickFormatter={(v) => `₹${v.toLocaleString()}`}
                         axisLine={false}
                         tickLine={false}
+                        tickMargin={10}
+                        width={60}
                       />
                       <Tooltip
+                        cursor={{ fill: 'var(--color-surface-elevated)', opacity: 0.5 }}
                         formatter={(v) => [`₹${Number(v).toLocaleString()}`, 'Revenue']}
                         contentStyle={{
                           borderRadius: '10px',
@@ -306,18 +312,22 @@ export default function RevenueReportsPage() {
                       <XAxis
                         type="number"
                         tick={{ fontSize: 10, fill: 'var(--color-text-muted)' }}
+                        tickFormatter={(v) => `₹${v.toLocaleString()}`}
                         axisLine={false}
                         tickLine={false}
+                        tickMargin={10}
                       />
                       <YAxis
                         dataKey="tenantName"
                         type="category"
                         tick={{ fontSize: 10, fill: 'var(--color-text-secondary)' }}
-                        width={80}
+                        width={100}
                         axisLine={false}
                         tickLine={false}
+                        tickMargin={10}
                       />
                       <Tooltip
+                        cursor={{ fill: 'var(--color-surface-elevated)', opacity: 0.5 }}
                         formatter={(v) => [`₹${Number(v).toLocaleString()}`, 'Revenue']}
                         contentStyle={{
                           borderRadius: '10px',

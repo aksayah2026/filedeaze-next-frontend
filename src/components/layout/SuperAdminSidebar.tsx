@@ -25,6 +25,7 @@ const nav: (NavItemDef & { section: string })[] = [
   { href: '/super-admin/payment-history', label: 'Payment History', icon: HandCoinsIcon, section: 'Finance' },
   { href: '/super-admin/revenue-reports', label: 'Revenue Reports', icon: ChartBarIcon, section: 'Finance' },
   { href: '/super-admin/activity-logs', label: 'Activity Logs', icon: ActivityIcon, section: 'System' },
+  { href: '/super-admin/notifications', label: 'Notifications', icon: ClipboardIcon, section: 'System' },
   { href: '/super-admin/platform-settings', label: 'Platform Settings', icon: SettingsIcon, section: 'System' },
 ];
 
