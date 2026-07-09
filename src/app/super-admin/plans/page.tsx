@@ -306,13 +306,13 @@ export default function PlansPage() {
             </div>
           </div>
 
-          {/* Duration */}
+          {/* Duration — same field for trial and paid plans; the Free Trial toggle above only changes subscription status, not the duration math */}
           <Input
-            label={watchIsTrial ? 'Trial Duration (Days) *' : 'Active Duration (Days)'}
+            label="Duration (Days) *"
             type="number"
-            placeholder={watchIsTrial ? 'e.g. 30' : 'e.g. 365 (optional)'}
+            placeholder="e.g. 30"
             {...register('durationDays', {
-              required: watchIsTrial ? 'Trial duration is required' : false,
+              required: 'Duration is required',
               min: { value: 1, message: 'Must be at least 1 day' },
               setValueAs: v => (v === '' || v === null || v === undefined ? null : isNaN(Number(v)) ? null : Number(v)),
             })}
