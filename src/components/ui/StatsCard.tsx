@@ -48,6 +48,10 @@ interface StatsCardProps {
   accentColor?: string;
 }
 
+interface NormalizedStatsCardProps extends Omit<StatsCardProps, 'trend'> {
+  trend?: { label: string; direction: 'up' | 'down' | 'flat' };
+}
+
 // ─── Status chip config ───────────────────────────────────────────────────────
 
 const statusConfig: Record<StatusChip, {
@@ -343,7 +347,7 @@ function CardShell({
 function PrimaryCard({
   title, value, icon: Icon, accentHex = '#2563EB',
   context, trend, status, footerText, staggerClass,
-}: StatsCardProps) {
+}: NormalizedStatsCardProps) {
   return (
     <CardShell accentHex={accentHex} staggerClass={staggerClass} className="px-5 pt-5 pb-4">
       {/* Top row */}
@@ -386,7 +390,7 @@ function PrimaryCard({
 function StandardCard({
   title, value, icon: Icon, accentHex = '#2563EB',
   context, trend, status, footerText, staggerClass,
-}: StatsCardProps) {
+}: NormalizedStatsCardProps) {
   return (
     <CardShell accentHex={accentHex} staggerClass={staggerClass} className="px-4 pt-4 pb-3.5">
       {/* Top: icon row */}
@@ -425,7 +429,7 @@ function StandardCard({
 function StatusCard({
   title, value, icon: Icon, accentHex = '#2563EB',
   context, trend, status, footerText, staggerClass,
-}: StatsCardProps) {
+}: NormalizedStatsCardProps) {
   return (
     <CardShell accentHex={accentHex} staggerClass={staggerClass} className="px-4 pt-4 pb-3.5">
       {/* Top row */}
@@ -483,7 +487,7 @@ export function StatsCard(props: StatsCardProps) {
       ? trend
       : {
           label: trend.label,
-          direction: trend.value > 0 ? 'up' : trend.value < 0 ? 'down' : 'flat',
+          direction: (trend.value > 0 ? 'up' : trend.value < 0 ? 'down' : 'flat') as 'up' | 'down' | 'flat',
         })
     : undefined;
 
