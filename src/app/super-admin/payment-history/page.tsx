@@ -17,12 +17,10 @@ import dayjs from 'dayjs';
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
 
-function deriveBillingCycle(b: Billing): string {
+function deriveDuration(b: Billing): string {
   if (!b.subscription?.startDate || !b.subscription?.endDate) return '—';
   const days = dayjs(b.subscription.endDate).diff(dayjs(b.subscription.startDate), 'day');
-  if (days <= 35) return 'Monthly';
-  if (days <= 95) return 'Quarterly';
-  return 'Annual';
+  return `${days} days`;
 }
 
 function buildExportRows(billings: Billing[]) {
@@ -31,7 +29,7 @@ function buildExportRows(billings: Billing[]) {
     tenant: b.tenant?.companyName ?? '—',
     code: b.tenant?.tenantCode ?? '—',
     plan: b.subscription?.plan?.name ?? '—',
-    cycle: deriveBillingCycle(b),
+    duration: deriveDuration(b),
     amount: Number(b.amount),
     status: b.status,
     created: dayjs(b.createdAt).format('DD MMM YYYY'),
@@ -47,9 +45,9 @@ function triggerDownload(url: string, filename: string) {
 }
 
 function exportCsv(billings: Billing[]) {
-  const headers = ['Ref', 'Tenant', 'Code', 'Plan', 'Cycle', 'Amount (INR)', 'Status', 'Created', 'Paid At', 'Sub End'];
+  const headers = ['Ref', 'Tenant', 'Code', 'Plan', 'Duration', 'Amount (INR)', 'Status', 'Created', 'Paid At', 'Sub End'];
   const rows = buildExportRows(billings).map(r =>
-    [r.ref, r.tenant, r.code, r.plan, r.cycle, r.amount, r.status, r.created, r.paidAt, r.subEnd]
+    [r.ref, r.tenant, r.code, r.plan, r.duration, r.amount, r.status, r.created, r.paidAt, r.subEnd]
   );
   const csv = [headers, ...rows].map(r => r.map(c => `"${c}"`).join(',')).join('\n');
   triggerDownload(URL.createObjectURL(new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' })),
@@ -57,11 +55,11 @@ function exportCsv(billings: Billing[]) {
 }
 
 function exportExcel(billings: Billing[]) {
-  const headers = ['Ref', 'Tenant', 'Code', 'Plan', 'Cycle', 'Amount (INR)', 'Status', 'Created', 'Paid At', 'Sub End'];
+  const headers = ['Ref', 'Tenant', 'Code', 'Plan', 'Duration', 'Amount (INR)', 'Status', 'Created', 'Paid At', 'Sub End'];
   const rows = buildExportRows(billings);
   const trH = `<tr>${headers.map(h => `<th style="background:#eef2ff;font-weight:bold;border:1px solid #ccc;padding:6px">${h}</th>`).join('')}</tr>`;
   const trB = rows.map(r =>
-    `<tr>${[r.ref, r.tenant, r.code, r.plan, r.cycle, r.amount, r.status, r.created, r.paidAt, r.subEnd]
+    `<tr>${[r.ref, r.tenant, r.code, r.plan, r.duration, r.amount, r.status, r.created, r.paidAt, r.subEnd]
       .map(c => `<td style="border:1px solid #ddd;padding:5px">${c}</td>`).join('')}</tr>`
   ).join('');
   const html = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel">
@@ -72,9 +70,9 @@ function exportExcel(billings: Billing[]) {
 
 function exportPdf(billings: Billing[]) {
   const rows = buildExportRows(billings);
-  const headers = ['Ref', 'Tenant', 'Plan', 'Cycle', 'Amount', 'Status', 'Paid At'];
+  const headers = ['Ref', 'Tenant', 'Plan', 'Duration', 'Amount', 'Status', 'Paid At'];
   const body = rows.map(r =>
-    `<tr>${[r.ref, r.tenant, r.plan, r.cycle, `₹${r.amount.toLocaleString()}`, r.status, r.paidAt]
+    `<tr>${[r.ref, r.tenant, r.plan, r.duration, `₹${r.amount.toLocaleString()}`, r.status, r.paidAt]
       .map(c => `<td>${c}</td>`).join('')}</tr>`
   ).join('');
   const html = `<!DOCTYPE html><html><head><meta charset="UTF-8">
@@ -113,7 +111,7 @@ function StatCard({ label, value, sub, dotClass }: { label: string; value: strin
 // ── Detail Modal ───────────────────────────────────────────────────────────────
 
 function BillingDetailModal({ billing, onClose }: { billing: Billing; onClose: () => void }) {
-  const cycle = deriveBillingCycle(billing);
+  const duration = deriveDuration(billing);
   const row = (label: string, value: JSX.Element | string | null | false) => (
     <div key={label}>
       <p className="text-xs text-[var(--color-text-muted)]">{label}</p>
@@ -136,7 +134,7 @@ function BillingDetailModal({ billing, onClose }: { billing: Billing; onClose: (
           ))}
           {row('Plan', billing.subscription?.plan?.name ?? '—')}
           {row('Amount', <span className="text-base font-bold">₹{Number(billing.amount).toLocaleString()} INR</span>)}
-          {row('Billing Cycle', cycle)}
+          {row('Duration', duration)}
           {row('Subscription', billing.subscription?.status ?? '—')}
           {row('Created', dayjs(billing.createdAt).format('DD MMM YYYY, HH:mm'))}
           {row('Paid At', billing.paidAt ? dayjs(billing.paidAt).format('DD MMM YYYY, HH:mm') : '—')}
@@ -244,9 +242,9 @@ export default function PaymentHistoryPage() {
       },
     },
     {
-      id: 'cycle',
-      header: 'Cycle',
-      cell: ({ row }) => <span className="text-xs text-[var(--color-text-secondary)]">{deriveBillingCycle(row.original)}</span>,
+      id: 'duration',
+      header: 'Duration',
+      cell: ({ row }) => <span className="text-xs text-[var(--color-text-secondary)]">{deriveDuration(row.original)}</span>,
     },
     {
       accessorKey: 'amount',

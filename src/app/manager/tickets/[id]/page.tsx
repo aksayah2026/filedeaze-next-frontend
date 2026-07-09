@@ -19,16 +19,48 @@ import Link from 'next/link';
 
 const BUSY_STATUSES = ['ASSIGNED', 'ACCEPTED', 'TRAVELLING', 'REACHED_LOCATION', 'IN_PROGRESS', 'PENDING'];
 
-function TechnicianPicker({ techs, busyIds, value, onChange }: {
+interface SkillMatch { matchedSkillCount: number; matchedSkillNames: string[]; fullMatch: boolean }
+
+function TechnicianPicker({ techs, busyIds, value, onChange, skillMatches, requiredSkillCount }: {
   techs: Technician[];
   busyIds: Set<string>;
   value: string;
   onChange: (id: string) => void;
+  skillMatches: Map<string, SkillMatch>;
+  requiredSkillCount: number;
 }) {
-  const available = techs.filter(t => t.isActive && !busyIds.has(t.id));
-  const busy = techs.filter(t => t.isActive && busyIds.has(t.id));
+  // Skill-matched technicians float to the top of each availability group so the best fit
+  // for this ticket's service is the first thing a manager sees.
+  const byMatchThenName = (a: Technician, b: Technician) => {
+    const ma = skillMatches.get(a.id)?.matchedSkillCount ?? 0;
+    const mb = skillMatches.get(b.id)?.matchedSkillCount ?? 0;
+    if (ma !== mb) return mb - ma;
+    return a.name.localeCompare(b.name);
+  };
+
+  const available = techs.filter(t => t.isActive && !busyIds.has(t.id)).sort(byMatchThenName);
+  const busy = techs.filter(t => t.isActive && busyIds.has(t.id)).sort(byMatchThenName);
 
   if (techs.length === 0) return <p className="text-sm text-[var(--color-text-muted)] py-2">No active technicians found.</p>;
+
+  const renderTech = (tech: Technician, dotColor: string, statusLabel: string, statusClass: string) => {
+    const match = skillMatches.get(tech.id);
+    return (
+      <button key={tech.id} type="button" onClick={() => onChange(tech.id)}
+        className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg border text-sm transition-all ${value === tech.id ? 'border-blue-500 bg-blue-50 text-blue-900' : 'border-[var(--color-border)] hover:border-gray-300 hover:bg-gray-50 text-[var(--color-text-secondary)]'}`}>
+        <span className={`h-2 w-2 rounded-full ${dotColor} shrink-0`} />
+        <span className="flex-1 text-left min-w-0">
+          <span className="font-medium block truncate">{tech.name}</span>
+          {match && (
+            <span className={`text-[10px] block truncate ${match.fullMatch ? 'text-emerald-600' : 'text-amber-600'}`} title={match.matchedSkillNames.join(', ')}>
+              {match.fullMatch ? '★ Skill match' : `${match.matchedSkillCount}/${requiredSkillCount} skills matched`} — {match.matchedSkillNames.join(', ')}
+            </span>
+          )}
+        </span>
+        <span className={`text-[11px] font-medium px-2 py-0.5 rounded-full shrink-0 ${statusClass}`}>{statusLabel}</span>
+      </button>
+    );
+  };
 
   return (
     <div className="space-y-1.5 max-h-56 overflow-y-auto pr-0.5">
@@ -37,27 +69,13 @@ function TechnicianPicker({ techs, busyIds, value, onChange }: {
           Available ({available.length})
         </p>
       )}
-      {available.map(tech => (
-        <button key={tech.id} type="button" onClick={() => onChange(tech.id)}
-          className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg border text-sm transition-all ${value === tech.id ? 'border-blue-500 bg-blue-50 text-blue-900' : 'border-[var(--color-border)] hover:border-gray-300 hover:bg-gray-50 text-[var(--color-text-secondary)]'}`}>
-          <span className="h-2 w-2 rounded-full bg-emerald-500 shrink-0" />
-          <span className="flex-1 text-left font-medium">{tech.name}</span>
-          <span className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700">Available</span>
-        </button>
-      ))}
+      {available.map(tech => renderTech(tech, 'bg-emerald-500', 'Available', 'bg-emerald-100 text-emerald-700'))}
       {busy.length > 0 && (
         <p className="text-[10px] font-semibold uppercase tracking-wider text-[var(--color-text-muted)] px-1 pt-2">
           On Job ({busy.length})
         </p>
       )}
-      {busy.map(tech => (
-        <button key={tech.id} type="button" onClick={() => onChange(tech.id)}
-          className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg border text-sm transition-all ${value === tech.id ? 'border-blue-500 bg-blue-50 text-blue-900' : 'border-[var(--color-border)] hover:border-gray-300 hover:bg-gray-50 text-[var(--color-text-secondary)]'}`}>
-          <span className="h-2 w-2 rounded-full bg-amber-400 shrink-0" />
-          <span className="flex-1 text-left font-medium">{tech.name}</span>
-          <span className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-amber-100 text-amber-700">On Job</span>
-        </button>
-      ))}
+      {busy.map(tech => renderTech(tech, 'bg-amber-400', 'On Job', 'bg-amber-100 text-amber-700'))}
     </div>
   );
 }
@@ -82,6 +100,26 @@ export default function TicketDetailPage() {
     staleTime: 60_000,
   });
 
+  // Which technicians match this ticket's service — surfaced in the picker so the manager
+  // can prefer a skilled technician over an arbitrary available one.
+  const subCategoryId = ticket?.subCategory?.id;
+  const { data: recommended } = useQuery<{
+    requiredSkills: { id: string; name: string }[];
+    matchedTechnicians: { technicianId: string; matchedSkillCount: number; matchedSkillNames: string[]; fullMatch: boolean }[];
+  }>({
+    queryKey: ['sub-category-recommended-technicians', subCategoryId],
+    queryFn: async () => (await api.get(`/web/manager/service-sub-categories/${subCategoryId}/recommended-technicians`)).data.data,
+    enabled: showAssign && !!subCategoryId,
+  });
+  const skillMatches = useMemo(() => {
+    const map = new Map<string, SkillMatch>();
+    for (const m of recommended?.matchedTechnicians ?? []) {
+      map.set(m.technicianId, { matchedSkillCount: m.matchedSkillCount, matchedSkillNames: m.matchedSkillNames, fullMatch: m.fullMatch });
+    }
+    return map;
+  }, [recommended]);
+  const requiredSkillCount = recommended?.requiredSkills.length ?? 0;
+
   const busyTechIds = useMemo(() => new Set(
     allTickets
       .filter(t => BUSY_STATUSES.includes(t.status) && t.technician?.id)
@@ -90,6 +128,7 @@ export default function TicketDetailPage() {
 
   const { register: ra, handleSubmit: ha, reset: resetA, setValue: setAssignValue, watch: watchAssign, formState: { isSubmitting: sa } } = useForm<{ technicianId: string; scheduledAt: string }>();
   const selectedTechId = watchAssign('technicianId') ?? '';
+  const selectedSchedule = watchAssign('scheduledAt') ?? '';
   const { register: rc, handleSubmit: hc, reset: resetC, formState: { isSubmitting: sc } } = useForm<{ notes: string }>();
   const { register: rx, handleSubmit: hx, reset: resetX, formState: { isSubmitting: sx } } = useForm<{ reason: string }>();
 
@@ -330,18 +369,39 @@ export default function TicketDetailPage() {
 
       <Modal open={showAssign} onClose={() => { setShowAssign(false); resetA(); }} title={assignMode === 'reassign' ? 'Reassign Ticket' : assignMode === 'reschedule' ? 'Reschedule Ticket' : 'Assign Ticket'} size="sm">
         <form onSubmit={ha(d => assignMutation.mutate(d))} className="space-y-4">
+          <Input
+            label="Scheduled At"
+            type="datetime-local"
+            {...ra('scheduledAt', { required: 'Pick a date & time first' })}
+          />
+
           <div>
             <label className="text-sm font-medium text-[var(--color-text-secondary)] block mb-2">Technician</label>
-            <TechnicianPicker
-              techs={techs.filter(t => t.isActive)}
-              busyIds={busyTechIds}
-              value={selectedTechId}
-              onChange={id => setAssignValue('technicianId', id, { shouldValidate: true })}
-            />
+            {!selectedSchedule ? (
+              <p className="text-sm text-[var(--color-text-muted)] py-2 px-3 rounded-lg bg-[var(--color-surface-elevated)]">
+                Pick a scheduled date &amp; time above to choose a technician.
+              </p>
+            ) : (
+              <>
+                {subCategoryId && requiredSkillCount === 0 && (
+                  <p className="text-xs text-[var(--color-text-muted)] mb-2">
+                    No skills are mapped to this service yet — set them from the Categories page to get skill-based suggestions here.
+                  </p>
+                )}
+                <TechnicianPicker
+                  techs={techs.filter(t => t.isActive)}
+                  busyIds={busyTechIds}
+                  value={selectedTechId}
+                  onChange={id => setAssignValue('technicianId', id, { shouldValidate: true })}
+                  skillMatches={skillMatches}
+                  requiredSkillCount={requiredSkillCount}
+                />
+                {!selectedTechId && <p className="text-red-400 text-xs mt-1.5">Please select a technician</p>}
+              </>
+            )}
             <input type="hidden" {...ra('technicianId', { required: true })} />
-            {!selectedTechId && <p className="text-red-400 text-xs mt-1.5">Please select a technician</p>}
           </div>
-          <Input label="Scheduled At" type="datetime-local" {...ra('scheduledAt')} />
+
           <div className="flex justify-end gap-3"><Button variant="secondary" type="button" onClick={() => { setShowAssign(false); resetA(); }}>Cancel</Button><Button type="submit" loading={sa}>{assignMode === 'reassign' ? 'Reassign' : assignMode === 'reschedule' ? 'Reschedule' : 'Assign'}</Button></div>
         </form>
       </Modal>

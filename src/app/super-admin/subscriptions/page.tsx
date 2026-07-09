@@ -7,7 +7,7 @@ import { toast } from 'sonner';
 import api from '@/lib/axios';
 import {
   Plan, Tenant, SubscriptionWithMeta, SubscriptionDetail,
-  SubscriptionDashboard, SubscriptionListResponse, BillingCycle, Billing,
+  SubscriptionDashboard, SubscriptionListResponse, Billing,
 } from '@/types';
 import { Button } from '@/components/ui/Button';
 import { Badge, PlanBadge } from '@/components/ui/Badge';
@@ -23,21 +23,18 @@ import dayjs from 'dayjs';
 
 // ── Constants ──────────────────────────────────────────────────────────────────
 
-const BILLING_CYCLES: { value: BillingCycle; label: string; months: number }[] = [
-  { value: 'MONTHLY',     label: 'Monthly',     months: 1  },
-  { value: 'QUARTERLY',   label: 'Quarterly',   months: 3  },
-  { value: 'HALF_YEARLY', label: 'Half-Yearly', months: 6  },
-  { value: 'YEARLY',      label: 'Yearly',      months: 12 },
-];
 const PAYMENT_METHODS = ['UPI', 'BANK_TRANSFER', 'CASH', 'ONLINE', 'OTHER'];
 
-function cycleLabel(c: string) {
-  return BILLING_CYCLES.find(b => b.value === c)?.label ?? c;
+// A plan with no explicit durationDays falls back to a year (matches the backend default).
+const DEFAULT_DURATION_DAYS = 365;
+
+function planDuration(plan?: Plan | null): number {
+  return plan?.durationDays ?? DEFAULT_DURATION_DAYS;
 }
 
-function calcEndFromNow(cycle: BillingCycle): Date {
+function addDaysFromNow(days: number): Date {
   const d = new Date();
-  d.setMonth(d.getMonth() + (BILLING_CYCLES.find(b => b.value === cycle)?.months ?? 12));
+  d.setDate(d.getDate() + days);
   return d;
 }
 
@@ -68,10 +65,9 @@ function SubStatusBadge({ status }: { status: ComputedStatus }) {
 
 // ── Plan Preview ───────────────────────────────────────────────────────────────
 
-function PlanPreview({ plan, cycle }: { plan: Plan; cycle: BillingCycle | '' }) {
-  const months = BILLING_CYCLES.find(b => b.value === cycle)?.months ?? 12;
-  const total = Number(plan.price) * months;
-  const endDate = cycle ? calcEndFromNow(cycle as BillingCycle) : null;
+function PlanPreview({ plan }: { plan: Plan }) {
+  const days = planDuration(plan);
+  const endDate = addDaysFromNow(days);
   return (
     <div className="rounded-xl border border-indigo-200 bg-indigo-50 p-4 text-sm">
       <div className="flex items-start justify-between mb-3">
@@ -79,12 +75,10 @@ function PlanPreview({ plan, cycle }: { plan: Plan; cycle: BillingCycle | '' }) 
           <p className="font-bold text-indigo-900 text-base">{plan.name}</p>
           <p className="text-indigo-600 text-xs">₹{Number(plan.price).toLocaleString()} / month</p>
         </div>
-        {cycle && (
-          <div className="text-right">
-            <p className="text-xs text-indigo-500">Total ({cycleLabel(cycle)})</p>
-            <p className="font-bold text-indigo-800">₹{total.toLocaleString()}</p>
-          </div>
-        )}
+        <div className="text-right">
+          <p className="text-xs text-indigo-500">Duration</p>
+          <p className="font-bold text-indigo-800">{days} days</p>
+        </div>
       </div>
       <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs text-indigo-800">
         {[
@@ -93,7 +87,7 @@ function PlanPreview({ plan, cycle }: { plan: Plan; cycle: BillingCycle | '' }) 
           ['Customers',   plan.customerLimit   >= 99999 ? 'Unlimited' : plan.customerLimit],
           ['Tickets',     plan.ticketLimit     >= 99999 ? 'Unlimited' : plan.ticketLimit],
           ['Storage',     `${plan.storageLimitGb} GB`],
-          ['Ends',        endDate ? dayjs(endDate).format('DD MMM YYYY') : '—'],
+          ['Ends',        dayjs(endDate).format('DD MMM YYYY')],
         ].map(([k, v]) => (
           <span key={String(k)}>{k}: <strong>{String(v)}</strong></span>
         ))}
@@ -125,13 +119,11 @@ function Btn({ children, title, onClick, loading, danger }: {
 function CreateModal({ onClose, plans, tenants, defaultTenantId }: { onClose: () => void; plans: Plan[]; tenants: Tenant[]; defaultTenantId?: string }) {
   const qc = useQueryClient();
   const { register, handleSubmit, watch, reset, formState: { errors, isSubmitting } } = useForm({
-    defaultValues: { tenantId: defaultTenantId ?? '', planId: '', billingCycle: 'YEARLY', paymentStatus: 'PAID', paymentMethod: 'UPI', notes: '', isTrial: false },
+    defaultValues: { tenantId: defaultTenantId ?? '', planId: '', paymentStatus: 'PAID', paymentMethod: 'UPI', notes: '', isTrial: false },
   });
 
   const watchedTenantId = watch('tenantId');
   const watchedPlanId   = watch('planId');
-  const watchedCycle    = watch('billingCycle') as BillingCycle | '';
-  const watchedTrial    = watch('isTrial');
 
   const selectedTenant  = tenants.find(t => t.id === watchedTenantId);
   const selectedPlan    = plans.find(p => p.id === watchedPlanId);
@@ -175,31 +167,23 @@ function CreateModal({ onClose, plans, tenants, defaultTenantId }: { onClose: ()
           </div>
         )}
 
-        <div className="grid grid-cols-2 gap-3">
-          <Select
-            label="Plan *"
-            options={[{ value: '', label: 'Select Plan...' }, ...plans.filter(p => p.isActive).map(p => ({ value: p.id, label: `${p.name} — ₹${Number(p.price).toLocaleString()}/mo` }))]}
-            {...register('planId', { required: 'Select a plan' })}
-            error={errors.planId?.message as string}
-          />
-          <Select
-            label="Billing Cycle *"
-            options={BILLING_CYCLES.map(c => ({ value: c.value, label: c.label }))}
-            {...register('billingCycle', { required: true })}
-            disabled={!!watchedTrial}
-          />
-        </div>
+        <Select
+          label="Plan *"
+          options={[{ value: '', label: 'Select Plan...' }, ...plans.filter(p => p.isActive).map(p => ({ value: p.id, label: `${p.name} — ₹${Number(p.price).toLocaleString()}/mo · ${planDuration(p)} days` }))]}
+          {...register('planId', { required: 'Select a plan' })}
+          error={errors.planId?.message as string}
+        />
 
         {planHasDuration && (
           <label className="flex items-center gap-2.5 cursor-pointer select-none">
             <input type="checkbox" {...register('isTrial')} className="w-4 h-4 rounded accent-[var(--color-primary)]" />
             <span className="text-sm text-[var(--color-text-secondary)]">
-              Trial — use plan duration <strong>({(selectedPlan as any).durationDays} days)</strong> instead of billing cycle
+              Mark as trial subscription <strong>({(selectedPlan as any).durationDays} days)</strong>
             </span>
           </label>
         )}
 
-        {selectedPlan && watchedCycle && !watchedTrial && <PlanPreview plan={selectedPlan} cycle={watchedCycle} />}
+        {selectedPlan && <PlanPreview plan={selectedPlan} />}
 
         <div className="grid grid-cols-2 gap-3">
           <Select
@@ -232,12 +216,11 @@ function CreateModal({ onClose, plans, tenants, defaultTenantId }: { onClose: ()
 function RenewModal({ onClose, tenants, plans, defaultTenantId }: { onClose: () => void; tenants: Tenant[]; plans: Plan[]; defaultTenantId?: string }) {
   const qc = useQueryClient();
   const { register, handleSubmit, watch, formState: { isSubmitting } } = useForm({
-    defaultValues: { tenantId: defaultTenantId ?? '', planId: '', billingCycle: 'MONTHLY', paymentStatus: 'PAID', paymentMethod: 'UPI', notes: '' },
+    defaultValues: { tenantId: defaultTenantId ?? '', planId: '', paymentStatus: 'PAID', paymentMethod: 'UPI', notes: '' },
   });
 
   const watchedTenantId = watch('tenantId');
   const watchedPlanId   = watch('planId');
-  const watchedCycle    = watch('billingCycle') as BillingCycle;
 
   const selectedTenant  = tenants.find(t => t.id === watchedTenantId);
   const existingSub     = selectedTenant?.subscription;
@@ -246,7 +229,9 @@ function RenewModal({ onClose, tenants, plans, defaultTenantId }: { onClose: () 
   const selectedPlan    = plans.find(p => p.id === (watchedPlanId || currentPlanId));
   const currentExpiry   = existingSub?.endDate ? dayjs(existingSub.endDate) : null;
   const renewBase       = isExpired ? dayjs() : currentExpiry;
-  const newExpiry       = renewBase && watchedCycle ? renewBase.add(BILLING_CYCLES.find(b => b.value === watchedCycle)?.months ?? 1, 'month') : null;
+  // Renewal always extends by the (possibly new) plan's own durationDays.
+  const renewDays       = planDuration(selectedPlan);
+  const newExpiry       = renewBase ? renewBase.add(renewDays, 'day') : null;
   const remainingDays   = currentExpiry ? Math.max(0, currentExpiry.diff(dayjs(), 'day')) : 0;
 
   const mutation = useMutation({
@@ -321,19 +306,10 @@ function RenewModal({ onClose, tenants, plans, defaultTenantId }: { onClose: () 
               {...register('planId')}
             />
 
-            {/* Billing Cycle */}
-            <div>
-              <p className="text-xs font-medium text-[var(--color-text-secondary)] mb-2">Billing Cycle *</p>
-              <div className="grid grid-cols-4 gap-2">
-                {BILLING_CYCLES.map(c => (
-                  <label key={c.value} className="cursor-pointer">
-                    <input type="radio" className="sr-only peer" value={c.value} {...register('billingCycle', { required: true })} />
-                    <div className="rounded-lg border border-[var(--color-border)] px-2 py-2 text-center text-xs font-medium text-[var(--color-text-secondary)] transition-colors peer-checked:border-[var(--color-primary)] peer-checked:bg-[var(--color-primary)] peer-checked:text-white hover:border-[var(--color-primary)]">
-                      {c.label}
-                    </div>
-                  </label>
-                ))}
-              </div>
+            {/* Renewal duration — comes from the selected plan, not a billing cycle */}
+            <div className="flex items-center justify-between rounded-lg border border-[var(--color-border)] px-3 py-2.5 text-xs">
+              <span className="font-medium text-[var(--color-text-secondary)]">Renewal Duration</span>
+              <span className="font-semibold text-[var(--color-text-primary)]">{renewDays} days ({selectedPlan?.name ?? '—'})</span>
             </div>
           </>
         )}
@@ -402,7 +378,7 @@ function ChangePlanModal({ sub, plans, onClose }: { sub: SubscriptionWithMeta; p
           onChange={e => setPlanId(e.target.value)}
         />
 
-        {selectedPlan && <PlanPreview plan={selectedPlan} cycle="" />}
+        {selectedPlan && <PlanPreview plan={selectedPlan} />}
 
         {selectedPlan && (
           <p className="text-xs text-[var(--color-text-muted)] bg-[var(--color-surface-elevated)] rounded-lg px-3 py-2 border border-[var(--color-border)]">
@@ -473,7 +449,7 @@ function DetailModal({ sub, onClose }: { sub: SubscriptionWithMeta; onClose: () 
               <table className="w-full text-xs min-w-[400px]">
                 <thead>
                   <tr className="bg-[var(--color-surface-elevated)] border-b border-[var(--color-border)]">
-                    {['Plan', 'Cycle', 'Start', 'End', 'Status'].map(h => (
+                    {['Plan', 'Duration', 'Start', 'End', 'Status'].map(h => (
                       <th key={h} className="px-3 py-2 text-left font-semibold text-[var(--color-text-muted)] uppercase tracking-wide">{h}</th>
                     ))}
                   </tr>
@@ -482,7 +458,7 @@ function DetailModal({ sub, onClose }: { sub: SubscriptionWithMeta; onClose: () 
                   {/* Current subscription row */}
                   <tr className="bg-emerald-50/50">
                     <td className="px-3 py-2.5 font-semibold text-[var(--color-text-primary)]">{plan.name}</td>
-                    <td className="px-3 py-2.5 text-[var(--color-text-secondary)] whitespace-nowrap">{cycleLabel(sub.billingCycle)}</td>
+                    <td className="px-3 py-2.5 text-[var(--color-text-secondary)] whitespace-nowrap">{planDuration(plan)} days</td>
                     <td className="px-3 py-2.5 text-[var(--color-text-secondary)] whitespace-nowrap">{dayjs(sub.startDate).format('DD MMM YYYY')}</td>
                     <td className="px-3 py-2.5 whitespace-nowrap">
                       <span className={sub.daysLeft <= 30 && sub.daysLeft > 0 ? 'text-amber-600 font-medium' : 'text-[var(--color-text-secondary)]'}>
@@ -499,7 +475,7 @@ function DetailModal({ sub, onClose }: { sub: SubscriptionWithMeta; onClose: () 
                     return (
                       <tr className="bg-amber-50/40">
                         <td className="px-3 py-2.5 font-semibold text-[var(--color-text-primary)]">{q.plan?.name ?? '—'}</td>
-                        <td className="px-3 py-2.5 text-[var(--color-text-secondary)] whitespace-nowrap">{cycleLabel(q.billingCycle)}</td>
+                        <td className="px-3 py-2.5 text-[var(--color-text-secondary)] whitespace-nowrap">{planDuration(q.plan)} days</td>
                         <td className="px-3 py-2.5 text-[var(--color-text-secondary)] whitespace-nowrap">{dayjs(q.startDate).format('DD MMM YYYY')}</td>
                         <td className="px-3 py-2.5 text-[var(--color-text-secondary)] whitespace-nowrap">{dayjs(q.endDate).format('DD MMM YYYY')}</td>
                         <td className="px-3 py-2.5">
@@ -566,7 +542,7 @@ function DetailModal({ sub, onClose }: { sub: SubscriptionWithMeta; onClose: () 
                   </div>
                   <div className="text-xs text-amber-900">
                     <span className="font-semibold">{q.plan?.name ?? '—'}</span>
-                    {q.billingCycle && <span className="text-amber-700"> · {cycleLabel(q.billingCycle)}</span>}
+                    {q.plan && <span className="text-amber-700"> · {planDuration(q.plan)} days</span>}
                     <span className="text-amber-600"> · ₹{Number(q.plan?.price ?? 0).toLocaleString()}/mo</span>
                   </div>
                   <p className="text-xs text-amber-700">
@@ -599,7 +575,7 @@ function DetailModal({ sub, onClose }: { sub: SubscriptionWithMeta; onClose: () 
                   </div>
                   <div className="text-xs text-[var(--color-text-secondary)]">
                     <span className="font-medium">{h.plan?.name ?? '—'}</span>
-                    {h.billingCycle && <span className="text-[var(--color-text-muted)]"> · {cycleLabel(h.billingCycle)}</span>}
+                    {h.plan?.durationDays && <span className="text-[var(--color-text-muted)]"> · {h.plan.durationDays} days</span>}
                   </div>
                   {h.previousEndDate ? (
                     <p className="text-xs text-[var(--color-text-muted)]">
@@ -834,7 +810,7 @@ export default function SubscriptionsPage() {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-[var(--color-border)] bg-[var(--color-surface-elevated)]">
-                    {['Tenant', 'Plan', 'Cycle', 'Status', 'Start', 'Expires', 'Days', 'Price/mo', 'Actions'].map(h => (
+                    {['Tenant', 'Plan', 'Duration', 'Status', 'Start', 'Expires', 'Days', 'Price/mo', 'Actions'].map(h => (
                       <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wide whitespace-nowrap">{h}</th>
                     ))}
                   </tr>
@@ -862,7 +838,7 @@ export default function SubscriptionsPage() {
                       <td className="px-4 py-3">
                         <PlanBadge planName={sub.plan.name} />
                       </td>
-                      <td className="px-4 py-3 text-xs text-[var(--color-text-secondary)] whitespace-nowrap">{cycleLabel(sub.billingCycle)}</td>
+                      <td className="px-4 py-3 text-xs text-[var(--color-text-secondary)] whitespace-nowrap">{planDuration(sub.plan)} days</td>
                       <td className="px-4 py-3"><SubStatusBadge status={sub.computedStatus as ComputedStatus} /></td>
                       <td className="px-4 py-3 text-xs text-[var(--color-text-secondary)] whitespace-nowrap">{dayjs(sub.startDate).format('DD MMM YYYY')}</td>
                       <td className="px-4 py-3 text-xs whitespace-nowrap">

@@ -72,6 +72,8 @@ export interface Plan {
   ticketLimit: number;
   customerLimit: number;
   storageLimitGb: number;
+  durationDays?: number | null;
+  isTrial?: boolean;
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
@@ -79,7 +81,6 @@ export interface Plan {
 
 export type SubscriptionStatus = 'ACTIVE' | 'EXPIRED' | 'CANCELLED';
 export type ComputedSubStatus = 'ACTIVE' | 'EXPIRING_SOON' | 'EXPIRED' | 'TRIAL' | 'SUSPENDED' | 'CANCELLED';
-export type BillingCycle = 'MONTHLY' | 'QUARTERLY' | 'HALF_YEARLY' | 'YEARLY';
 
 export interface Subscription {
   id: string;
@@ -89,7 +90,6 @@ export interface Subscription {
   startDate: string;
   endDate: string;
   status: SubscriptionStatus;
-  billingCycle: BillingCycle;
   notes?: string | null;
   paymentMethod?: string | null;
   autoRenew: boolean;
@@ -293,6 +293,7 @@ export interface Skill {
   description?: string;
   isActive: boolean;
   createdAt: string;
+  updatedAt: string;
 }
 
 export interface TechnicianSkill {
@@ -301,6 +302,14 @@ export interface TechnicianSkill {
   experienceLevel: string;
   certificationNumber?: string;
   certificationExpiryDate?: string;
+}
+
+export interface SubCategorySkill {
+  id: string;
+  subCategoryId: string;
+  skillId: string;
+  skill: Skill;
+  createdAt: string;
 }
 
 // ─── Service ──────────────────────────────────────────────────────────────────

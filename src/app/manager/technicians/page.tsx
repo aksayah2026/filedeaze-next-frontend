@@ -11,7 +11,7 @@ import { toast } from 'sonner';
 import { Plus, Eye, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 import api from '@/lib/axios';
-import { Technician } from '@/types';
+import { Technician, Skill } from '@/types';
 import { DataTable } from '@/components/ui/DataTable';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
@@ -36,19 +36,53 @@ export default function TechniciansPage() {
   const prefix = pathname.startsWith('/admin/') ? 'admin' : 'manager';
   const [showCreate, setShowCreate] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [selectedSkillIds, setSelectedSkillIds] = useState<string[]>([]);
 
   const { data: techs = [], isLoading } = useQuery<Technician[]>({
     queryKey: ['technicians'],
     queryFn: async () => (await api.get('/web/manager/technicians')).data.data,
   });
 
+  // Onboarding offers only active Master Skills — creating a technician has no dedicated
+  // "with skills" endpoint, so skills are attached right after creation succeeds.
+  const { data: activeSkills = [] } = useQuery<Skill[]>({
+    queryKey: ['skills', 'active'],
+    queryFn: async () => (await api.get('/web/manager/skills', { params: { isActive: true } })).data.data,
+    enabled: showCreate,
+  });
+
   const { register, handleSubmit, reset, formState: { errors, isSubmitting } } = useForm<Form>({ resolver: zodResolver(schema) });
 
+  const closeCreate = () => { setShowCreate(false); reset(); setSelectedSkillIds([]); };
+
   const createMutation = useMutation({
-    mutationFn: (d: Form) => api.post('/web/manager/technicians', d),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['technicians'] }); toast.success('Technician added'); setShowCreate(false); reset(); },
+    mutationFn: async (d: Form) => {
+      const res = await api.post('/web/manager/technicians', d);
+      const techId = res.data.data.id as string;
+      if (selectedSkillIds.length) {
+        const results = await Promise.allSettled(
+          selectedSkillIds.map(skillId => api.post(`/web/manager/technicians/${techId}/skills`, { skillId })),
+        );
+        const failed = results.filter(r => r.status === 'rejected').length;
+        return { failed };
+      }
+      return { failed: 0 };
+    },
+    onSuccess: ({ failed }) => {
+      qc.invalidateQueries({ queryKey: ['technicians'] });
+      if (failed > 0) {
+        toast.warning(`Technician added, but ${failed} skill${failed > 1 ? 's' : ''} couldn't be attached — add ${failed > 1 ? 'them' : 'it'} from the technician's profile.`);
+      } else {
+        toast.success('Technician added');
+      }
+      closeCreate();
+    },
     onError: (e: unknown) => toast.error((e as { response?: { data?: { message?: string } } })?.response?.data?.message ?? 'Error'),
   });
+
+  const toggleSkill = (id: string) => {
+    setSelectedSkillIds(prev => prev.includes(id) ? prev.filter(s => s !== id) : [...prev, id]);
+  };
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) => api.delete(`/web/manager/technicians/${id}`),
@@ -82,13 +116,38 @@ export default function TechniciansPage() {
       </div>
       <DataTable data={techs} columns={columns} isLoading={isLoading} />
 
-      <Modal open={showCreate} onClose={() => { setShowCreate(false); reset(); }} title="Add Technician">
+      <Modal open={showCreate} onClose={closeCreate} title="Add Technician">
         <form onSubmit={handleSubmit(d => createMutation.mutate(d))} className="space-y-4">
           <Input label="Name" {...register('name')} error={errors.name?.message} />
           <Input label="Email" type="email" {...register('email')} error={errors.email?.message} />
           <Input label="Phone" {...register('phone')} error={errors.phone?.message} />
           <Input label="Password" type="password" {...register('password')} error={errors.password?.message} />
-          <div className="flex justify-end gap-3"><Button variant="secondary" type="button" onClick={() => { setShowCreate(false); reset(); }}>Cancel</Button><Button type="submit" loading={isSubmitting}>Add</Button></div>
+
+          <div>
+            <label className="text-xs font-medium text-[var(--color-text-muted)]">Skills (optional)</label>
+            {activeSkills.length === 0 ? (
+              <p className="text-sm text-[var(--color-text-muted)] mt-1.5">No active skills in the Master Skills list yet.</p>
+            ) : (
+              <div className="mt-1.5 max-h-40 overflow-y-auto rounded-lg border border-[var(--color-border)] p-2 space-y-1">
+                {activeSkills.map(s => (
+                  <label key={s.id} className="flex items-center gap-2 px-1.5 py-1 rounded-md hover:bg-[var(--color-surface-elevated)] cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={selectedSkillIds.includes(s.id)}
+                      onChange={() => toggleSkill(s.id)}
+                      className="h-4 w-4"
+                    />
+                    <span className="text-sm text-[var(--color-text-secondary)]">{s.name}</span>
+                  </label>
+                ))}
+              </div>
+            )}
+            <p className="text-xs text-[var(--color-text-muted)] mt-1">
+              Experience level and certification can be added later from the technician&apos;s profile.
+            </p>
+          </div>
+
+          <div className="flex justify-end gap-3"><Button variant="secondary" type="button" onClick={closeCreate}>Cancel</Button><Button type="submit" loading={isSubmitting}>Add</Button></div>
         </form>
       </Modal>
 

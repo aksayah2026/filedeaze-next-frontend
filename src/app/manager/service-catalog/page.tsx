@@ -9,7 +9,7 @@ import {
   Search, Tag, LayoutGrid, X, Layers,
 } from 'lucide-react';
 import api from '@/lib/axios';
-import { ServiceCategory, ServiceSubCategory } from '@/types';
+import { ServiceCategory, ServiceSubCategory, Skill, SubCategorySkill } from '@/types';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
@@ -125,12 +125,14 @@ function ServiceRow({
   sub,
   onEdit,
   onCharges,
+  onSkills,
   onDelete,
   searchQ,
 }: {
   sub: ServiceSubCategory;
   onEdit: () => void;
   onCharges: () => void;
+  onSkills: () => void;
   onDelete: () => void;
   searchQ: string;
 }) {
@@ -191,6 +193,13 @@ function ServiceRow({
           <DollarSign size={12} />
         </button>
         <button
+          title="Manage skills"
+          onClick={onSkills}
+          className="h-7 w-7 flex items-center justify-center rounded-md text-[var(--color-text-muted)] hover:text-[var(--color-primary)] hover:bg-[var(--color-surface)] transition-colors"
+        >
+          <Tag size={12} />
+        </button>
+        <button
           title="Delete service"
           onClick={onDelete}
           className="h-7 w-7 flex items-center justify-center rounded-md text-[var(--color-text-muted)] hover:text-red-500 hover:bg-[var(--color-surface)] transition-colors"
@@ -212,6 +221,7 @@ function CategoryAccordion({
   onDeleteCat,
   onEditSub,
   onChargesSub,
+  onSkillsSub,
   onDeleteSub,
   onAddService,
   accent,
@@ -225,6 +235,7 @@ function CategoryAccordion({
   onDeleteCat: () => void;
   onEditSub: (s: ServiceSubCategory) => void;
   onChargesSub: (s: ServiceSubCategory) => void;
+  onSkillsSub: (s: ServiceSubCategory) => void;
   onDeleteSub: (id: string) => void;
   onAddService: () => void;
   accent: string;
@@ -333,6 +344,7 @@ function CategoryAccordion({
                   searchQ={searchQ}
                   onEdit={() => onEditSub(sub)}
                   onCharges={() => onChargesSub(sub)}
+                  onSkills={() => onSkillsSub(sub)}
                   onDelete={() => onDeleteSub(sub.id)}
                 />
               ))}
@@ -389,6 +401,10 @@ export default function ServiceCatalogPage() {
   const [chargingId, setChargingId] = useState<string | null>(null);
   const [defaultCatId, setDefaultCatId] = useState<string>('');
 
+  // ── Skill mapping modal state — services select from the Master Skills list only
+  const [skillsFor, setSkillsFor] = useState<ServiceSubCategory | null>(null);
+  const [addSkillId, setAddSkillId] = useState('');
+
   // ── Forms (identical to existing pages)
   const catForm = useForm<CatForm>();
   const subForm = useForm<SubForm>();
@@ -406,6 +422,17 @@ export default function ServiceCatalogPage() {
   });
 
   const isLoading = catsLoading || subsLoading;
+
+  const { data: mappedSkills = [] } = useQuery<SubCategorySkill[]>({
+    queryKey: ['sub-category-skills', skillsFor?.id],
+    queryFn: async () => (await api.get(`/web/manager/service-sub-categories/${skillsFor!.id}/skills`)).data.data.skills ?? [],
+    enabled: !!skillsFor,
+  });
+  const { data: activeSkills = [] } = useQuery<Skill[]>({
+    queryKey: ['skills', 'active'],
+    queryFn: async () => (await api.get('/web/manager/skills', { params: { isActive: true } })).data.data,
+    enabled: !!skillsFor,
+  });
 
   // Auto-expand first category on load
   useEffect(() => {
@@ -461,6 +488,23 @@ export default function ServiceCatalogPage() {
     onError: () => toast.error('Failed'),
   });
 
+  const mapSkillMutation = useMutation({
+    mutationFn: (skillId: string) => api.post(`/web/manager/service-sub-categories/${skillsFor!.id}/skills`, { skillId }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['sub-category-skills', skillsFor?.id] });
+      toast.success('Skill mapped'); setAddSkillId('');
+    },
+    onError: (err: any) => toast.error(err?.response?.data?.message ?? 'Failed to map skill'),
+  });
+  const unmapSkillMutation = useMutation({
+    mutationFn: (skillId: string) => api.delete(`/web/manager/service-sub-categories/${skillsFor!.id}/skills/${skillId}`),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['sub-category-skills', skillsFor?.id] });
+      toast.success('Skill removed');
+    },
+    onError: (err: any) => toast.error(err?.response?.data?.message ?? 'Failed to remove skill'),
+  });
+
   const chargesMutation = useMutation({
     mutationFn: (d: ChargesForm) => api.post(`/web/manager/service-charges/${chargingId}`, d),
     onSuccess: () => {
@@ -509,6 +553,12 @@ export default function ServiceCatalogPage() {
   // ── Filtered data ─────────────────────────────────────────────────────────
 
   const catOptions = categories.map(c => ({ value: c.id, label: c.name }));
+
+  // Only active, not-already-mapped skills are offered — services select from the
+  // Master Skills list, they never define their own.
+  const unmappedActiveSkillOptions = activeSkills
+    .filter(s => !mappedSkills.some(ms => ms.skillId === s.id))
+    .map(s => ({ value: s.id, label: s.name }));
 
   const filteredData = useMemo(() => {
     const q = searchQ.toLowerCase().trim();
@@ -665,6 +715,7 @@ export default function ServiceCatalogPage() {
               onDeleteCat={() => setDeleteCatId(cat.id)}
               onEditSub={openEditSub}
               onChargesSub={openChargeSub}
+              onSkillsSub={s => { setSkillsFor(s); setAddSkillId(''); }}
               onDeleteSub={id => setDeleteSubId(id)}
               onAddService={() => {
                 setExpanded(prev => new Set(prev).add(cat.id));
@@ -760,6 +811,59 @@ export default function ServiceCatalogPage() {
             </Button>
           </div>
         </form>
+      </Modal>
+
+      {/* Skill mapping modal — select from the Master Skills list only */}
+      <Modal
+        open={!!skillsFor}
+        onClose={() => { setSkillsFor(null); setAddSkillId(''); }}
+        title={`Skills — ${skillsFor?.name ?? ''}`}
+        size="sm"
+      >
+        <div className="space-y-4">
+          <p className="text-xs text-[var(--color-text-muted)]">
+            Select which skills a technician needs for this service. Skills come from the Master Skills list — add new ones there first.
+          </p>
+
+          {mappedSkills.length === 0 ? (
+            <p className="text-sm text-[var(--color-text-muted)] py-2">No skills required yet.</p>
+          ) : (
+            <div className="space-y-2">
+              {mappedSkills.map(ms => (
+                <div key={ms.skillId} className="flex items-center justify-between rounded-lg bg-[var(--color-surface-elevated)] px-3 py-2 text-sm">
+                  <span className="font-medium">{ms.skill.name}</span>
+                  <button
+                    type="button"
+                    onClick={() => unmapSkillMutation.mutate(ms.skillId)}
+                    disabled={unmapSkillMutation.isPending}
+                    className="text-[var(--color-text-muted)] hover:text-red-500 transition-colors disabled:opacity-40"
+                    title="Remove"
+                  >
+                    <X size={15} />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+
+          <div className="flex gap-2 items-end pt-2 border-t border-[var(--color-border)]">
+            <Select
+              label="Add a skill"
+              options={[{ value: '', label: unmappedActiveSkillOptions.length ? 'Select skill...' : 'No more active skills to add' }, ...unmappedActiveSkillOptions]}
+              value={addSkillId}
+              onChange={e => setAddSkillId(e.target.value)}
+              className="flex-1"
+            />
+            <Button
+              type="button"
+              onClick={() => addSkillId && mapSkillMutation.mutate(addSkillId)}
+              disabled={!addSkillId || mapSkillMutation.isPending}
+              loading={mapSkillMutation.isPending}
+            >
+              Add
+            </Button>
+          </div>
+        </div>
       </Modal>
 
       {/* Category delete confirm */}

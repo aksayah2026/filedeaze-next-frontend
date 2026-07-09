@@ -364,7 +364,7 @@ export default function TenantDetailPage() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-[var(--color-border)] bg-[var(--color-surface-elevated)]">
-                  {['Plan Name', 'Billing Cycle', 'Start Date', 'End Date', 'Status'].map(h => (
+                  {['Plan Name', 'Duration', 'Start Date', 'End Date', 'Status'].map(h => (
                     <th key={h} className="px-5 py-3 text-left text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wide whitespace-nowrap">{h}</th>
                   ))}
                 </tr>
@@ -378,10 +378,6 @@ export default function TenantDetailPage() {
                     QUEUED:    'bg-amber-100 text-amber-700',
                     TRIAL:     'bg-blue-100 text-blue-700',
                   };
-                  const cycleMap: Record<string, string> = {
-                    MONTHLY: 'Monthly', QUARTERLY: 'Quarterly',
-                    HALF_YEARLY: 'Half-Yearly', YEARLY: 'Yearly',
-                  };
                   const daysLeft = s.endDate ? Math.max(0, dayjs(s.endDate).diff(dayjs(), 'day')) : 0;
                   const isActive = s.status === 'ACTIVE';
                   return (
@@ -390,7 +386,7 @@ export default function TenantDetailPage() {
                         {s.plan?.name ?? '—'}
                       </td>
                       <td className="px-5 py-3 text-[var(--color-text-secondary)] whitespace-nowrap">
-                        {cycleMap[s.billingCycle] ?? s.billingCycle ?? '—'}
+                        {s.plan?.durationDays ? `${s.plan.durationDays} days` : '—'}
                       </td>
                       <td className="px-5 py-3 text-[var(--color-text-secondary)] whitespace-nowrap">
                         {dayjs(s.startDate).format('DD MMM YYYY')}

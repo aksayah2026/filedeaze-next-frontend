@@ -30,7 +30,9 @@ export default function TechnicianDetailPage() {
 
   const { data: tech, isLoading } = useQuery<Technician>({ queryKey: ['technician', id], queryFn: async () => (await api.get(`/web/manager/technicians/${id}`)).data.data });
   const { data: skills = [] } = useQuery<TechnicianSkill[]>({ queryKey: ['tech-skills', id], queryFn: async () => (await api.get(`/web/manager/technicians/${id}/skills`)).data.data.skills ?? [] });
-  const { data: allSkills = [] } = useQuery<Skill[]>({ queryKey: ['skills'], queryFn: async () => (await api.get('/web/manager/skills')).data.data });
+  // Only active skills are offered for new assignment — an already-assigned skill that's since
+  // been deactivated still shows in the technician's own list above, just not re-selectable here.
+  const { data: allSkills = [] } = useQuery<Skill[]>({ queryKey: ['skills', 'active'], queryFn: async () => (await api.get('/web/manager/skills', { params: { isActive: true } })).data.data });
   const { data: location } = useQuery({ queryKey: ['tech-location', id], queryFn: async () => (await api.get(`/web/manager/technicians/${id}/location`)).data.data, refetchInterval: 30_000 });
   const { data: route } = useQuery({ queryKey: ['tech-route', id, routeDate], queryFn: async () => (await api.get(`/web/manager/technicians/${id}/route`, { params: { date: routeDate } })).data.data });
 
@@ -51,7 +53,7 @@ export default function TechnicianDetailPage() {
         ...(d.certificationExpiryDate && { certificationExpiryDate: d.certificationExpiryDate }),
       }),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['tech-skills', id] }); toast.success('Skill added'); setShowAddSkill(false); resetS(); },
-    onError: () => toast.error('Failed'),
+    onError: (err: any) => toast.error(err?.response?.data?.message ?? 'Failed to add skill'),
   });
   const removeSkillMutation = useMutation({ mutationFn: (skillId: string) => api.delete(`/web/manager/technicians/${id}/skills/${skillId}`), onSuccess: () => { qc.invalidateQueries({ queryKey: ['tech-skills', id] }); toast.success('Skill removed'); setRemoveSkillId(null); }, onError: () => toast.error('Failed') });
 
