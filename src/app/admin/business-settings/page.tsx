@@ -25,8 +25,7 @@ const SECTIONS = [
   { id: 'tax', label: 'Tax & Invoice', icon: Receipt },
   { id: 'payments', label: 'Payment Settings', icon: CreditCard },
   { id: 'charges', label: 'Business Charges', icon: DollarSign },
-  { id: 'discounts', label: 'Discount Rules', icon: Percent },
-  { id: 'hours', label: 'Business Hours', icon: Clock },
+  { id: 'discounts', label: 'Discount Rules', icon: Percent }
 ];
 
 export default function BusinessSettingsPage() {
@@ -56,7 +55,7 @@ export default function BusinessSettingsPage() {
   const companyForm = useForm<Omit<CompanySettings, 'id' | 'logoUrl' | 'email'>>();
   const tenantForm = useForm<Omit<TenantSettings, 'id' | 'upiQrImageUrl'>>();
   const platformForm = useForm<Omit<AppSettings, 'id'>>();
-  
+
   // Custom mock form for UI-only settings (Invoice footer, Terms, Business hours, etc.)
   const mockForm = useForm({
     defaultValues: {
@@ -204,7 +203,7 @@ export default function BusinessSettingsPage() {
   const handleSaveAll = async () => {
     try {
       const promises = [];
-      
+
       if (companyForm.formState.isDirty) {
         promises.push(companyMutation.mutateAsync(companyForm.getValues()));
       }
@@ -214,7 +213,7 @@ export default function BusinessSettingsPage() {
       if (platformForm.formState.isDirty) {
         promises.push(platformMutation.mutateAsync(platformForm.getValues()));
       }
-      
+
       if (mockForm.formState.isDirty) {
         // Mock fields saved successfully locally
         mockForm.reset(mockForm.getValues());
@@ -281,7 +280,7 @@ export default function BusinessSettingsPage() {
 
         {/* Content Cards */}
         <div ref={scrollContainerRef} className="flex-1 space-y-6 max-w-3xl">
-          
+
           {/* 1. Company Profile Card */}
           <div id="company" className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl p-6 shadow-sm space-y-6 scroll-mt-20">
             <div className="flex items-center gap-3 border-b border-[var(--color-border)] pb-4">
@@ -428,7 +427,7 @@ export default function BusinessSettingsPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <Input label="UPI ID" placeholder="name@upi" {...tenantForm.register('upiId')} />
                 <Input label="UPI Account Name" placeholder="e.g. John Doe" {...tenantForm.register('upiAccountName')} />
-                
+
                 {/* Default payment mock select */}
                 <div className="md:col-span-2">
                   <Select
@@ -442,14 +441,14 @@ export default function BusinessSettingsPage() {
                   />
                 </div>
 
-                <div className="md:col-span-2">
+                {/* <div className="md:col-span-2">
                   <p className="text-xs font-semibold text-[var(--color-text-secondary)] mb-2">UPI QR Image</p>
                   <FileUpload
                     onFile={file => upiQrMutation.mutate(file)}
                     loading={upiQrMutation.isPending}
                     preview={tenantData?.upiQrImageUrl}
                   />
-                </div>
+                </div> */}
               </div>
             </form>
           </div>
@@ -539,48 +538,6 @@ export default function BusinessSettingsPage() {
                   />
                 </div>
               ))}
-            </form>
-          </div>
-
-          {/* 7. Business Hours Card */}
-          <div id="hours" className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl p-6 shadow-sm space-y-6 scroll-mt-20">
-            <div className="flex items-center gap-3 border-b border-[var(--color-border)] pb-4">
-              <div className="h-9 w-9 rounded-xl bg-[var(--color-primary-light)] flex items-center justify-center text-[var(--color-primary)]">
-                <Clock size={18} />
-              </div>
-              <div>
-                <h3 className="font-semibold text-base text-[var(--color-text-primary)]">Business Hours</h3>
-                <p className="text-xs text-[var(--color-text-muted)]">Set up operation timezone, opening periods, and breaks.</p>
-              </div>
-            </div>
-
-            <form className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <Input label="Timezone" {...mockForm.register('timezone')} />
-                <Input label="Lunch Break" placeholder="e.g. 13:00 - 14:00" {...mockForm.register('lunchBreak')} />
-                <Input label="Opening Time" type="time" {...mockForm.register('openingTime')} />
-                <Input label="Closing Time" type="time" {...mockForm.register('closingTime')} />
-              </div>
-
-              <div className="space-y-2 pt-2 border-t border-[var(--color-border)]">
-                <p className="text-xs font-semibold text-[var(--color-text-secondary)]">Working Days</p>
-                <div className="flex flex-wrap gap-2.5">
-                  {['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'].map(day => (
-                    <label
-                      key={day}
-                      className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-elevated)] text-xs font-medium text-[var(--color-text-secondary)] cursor-pointer hover:bg-[var(--color-surface-hover)]"
-                    >
-                      <input
-                        type="checkbox"
-                        value={day}
-                        {...mockForm.register('workingDays')}
-                        className="h-3.5 w-3.5 rounded border-[var(--color-border-strong)] text-[var(--color-primary)] focus:ring-[var(--color-primary-ring)]"
-                      />
-                      <span className="capitalize">{day}</span>
-                    </label>
-                  ))}
-                </div>
-              </div>
             </form>
           </div>
 

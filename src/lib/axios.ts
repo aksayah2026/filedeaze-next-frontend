@@ -57,7 +57,7 @@ api.interceptors.response.use(
       if (typeof window === 'undefined') return Promise.reject(error);
       // Login endpoints return 401 for wrong credentials — don't treat as session expiry
       const url = original?.url ?? '';
-      if (url.includes('/login') || url.includes('/register') || url.includes('/auth/refresh')) {
+      if (url.includes('/login') || url.includes('/register') || url.includes('/auth/refresh') || url.includes('/notifications')) {
         return Promise.reject(error);
       }
       const prefix = getPortalPrefix();

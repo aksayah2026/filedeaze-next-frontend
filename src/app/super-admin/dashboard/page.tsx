@@ -38,8 +38,8 @@ export default function SuperAdminDashboardPage() {
             value={data.totalTenants}
             icon={Building2}
             accentHex={ACCENT}
-            context="+1 new tenant onboarded this month"
-            status="live"
+            context="+1 tenant onboarded this month"
+            status="growing"
             footerText="Updated 2 mins ago"
           />
 
@@ -50,7 +50,7 @@ export default function SuperAdminDashboardPage() {
             value={data.activeTenants}
             icon={CheckCircle}
             accentHex={ACCENT}
-            context="All subscriptions are currently healthy"
+            context="All subscriptions are active"
             status="healthy"
             footerText="Live"
           />
@@ -62,7 +62,7 @@ export default function SuperAdminDashboardPage() {
             value={`₹${data.totalRevenue.toLocaleString()}`}
             icon={DollarSign}
             accentHex={ACCENT}
-            context="₹250 collected across active tenants today"
+            context="₹250 collected today"
             trend={{ label: '+12%', direction: 'up' }}
             status="healthy"
             footerText="Updated just now"
@@ -87,7 +87,7 @@ export default function SuperAdminDashboardPage() {
             value={data.suspendedTenants}
             icon={XCircle}
             accentHex={ACCENT}
-            context="No accounts currently suspended"
+            context="No suspended accounts"
             status="stable"
             footerText="Live Data"
           />
@@ -99,7 +99,7 @@ export default function SuperAdminDashboardPage() {
             value={data.activeUsers}
             icon={Users}
             accentHex={ACCENT}
-            context="12 users currently online across all tenants"
+            context="12 users currently online"
             status="live"
             footerText="Live"
           />

@@ -16,20 +16,6 @@ export function AppShell({ sidebar, children }: AppShellProps) {
   const close = () => setOpen(false);
 
   const isFetching = useIsFetching();
-  const [showFlash, setShowFlash] = useState(false);
-  const [prevFetching, setPrevFetching] = useState(false);
-
-  useEffect(() => {
-    if (isFetching > 0) {
-      setPrevFetching(true);
-    } else if (isFetching === 0 && prevFetching) {
-      // Trigger a visual pulse confirmation when data finishes refetching
-      setShowFlash(true);
-      setPrevFetching(false);
-      const timer = setTimeout(() => setShowFlash(false), 500);
-      return () => clearTimeout(timer);
-    }
-  }, [isFetching, prevFetching]);
 
   return (
     <div className="flex h-screen overflow-hidden bg-[var(--color-bg)] transition-colors duration-250 ease-in-out">
@@ -67,13 +53,7 @@ export function AppShell({ sidebar, children }: AppShellProps) {
           isCollapsed={isCollapsed}
           onToggleCollapse={() => setIsCollapsed(v => !v)}
         />
-        <main
-          className={cn(
-            "flex-1 overflow-y-auto p-4 sm:p-6 bg-[var(--color-bg)] transition-all duration-300",
-            isFetching > 0 ? "opacity-75 saturate-[0.85] pointer-events-none" : "opacity-100 saturate-100",
-            showFlash ? "animate-[pulse_0.4s_ease-in-out_1]" : "animate-fe-fade-in"
-          )}
-        >
+        <main className="flex-1 overflow-y-auto p-4 sm:p-6 bg-[var(--color-bg)] transition-all duration-300">
           {children}
         </main>
       </div>

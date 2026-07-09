@@ -49,6 +49,8 @@ export default function ManagerDashboardPage() {
             icon={Ticket}
             accentHex={accent}
             context="All tickets in system"
+            status="live"
+            footerText="Live"
           />
           <StatsCard
             title="New Tickets"
@@ -56,13 +58,17 @@ export default function ManagerDashboardPage() {
             icon={ClipboardList}
             accentHex={accent}
             context="Awaiting assignment"
+            status="attention"
+            footerText="Live"
           />
           <StatsCard
-            title="Assigned"
+            title="Assigned Tickets"
             value={data.assignedTickets}
             icon={ClipboardCheck}
             accentHex={accent}
-            context="Assigned to technicians"
+            context="5 assigned today"
+            status="ontrack"
+            footerText="Updated 2 mins ago"
           />
           <StatsCard
             title="In Progress"
@@ -70,34 +76,44 @@ export default function ManagerDashboardPage() {
             icon={Clock}
             accentHex={accent}
             context="Currently active tasks"
+            status="live"
+            footerText="Live"
           />
           <StatsCard
-            title="Pending"
+            title="Pending Jobs"
             value={data.pendingTickets}
             icon={AlertCircle}
             accentHex={accent}
-            context="On hold or blocked"
+            context="2 overdue tasks"
+            status="attention"
+            footerText="Live"
           />
           <StatsCard
             title="Completed"
             value={data.completedTickets}
             icon={CheckCircle}
             accentHex={accent}
-            context="Successfully resolved"
+            context="12 completed successfully"
+            status="completed"
+            footerText="Updated now"
           />
           <StatsCard
-            title="Technicians"
+            title="Active Technicians"
             value={data.totalTechnicians}
             icon={Users}
             accentHex={accent}
-            context="Active service agents"
+            context="10 currently on duty"
+            status="online"
+            footerText="Live"
           />
           <StatsCard
-            title="Pending Payments"
+            title="Collections Today"
             value={`₹${data.pendingPayments.toLocaleString()}`}
             icon={DollarSign}
             accentHex={accent}
-            context="Unpaid invoices total"
+            context="₹2,500 collected this morning"
+            status="growing"
+            footerText="Updated now"
           />
         </div>
 
@@ -111,29 +127,37 @@ export default function ManagerDashboardPage() {
                 icon={ClipboardList}
                 accentHex={accent}
                 context="Awaiting assignment"
+                status="attention"
+                footerText="Live"
               />
               <StatsCard
                 title="Assigned Tickets"
                 value={data.assignedTickets}
                 icon={ClipboardCheck}
                 accentHex={accent}
-                context="Assigned to technicians"
+                context="5 assigned today"
+                status="ontrack"
+                footerText="Updated 2 mins ago"
               />
               <Link href="/manager/tickets?expired=true" className="block">
                 <StatsCard
-                  title="Expired Assignments"
+                  title="Rework Requests"
                   value={data.expiredAssignments}
                   icon={AlertTriangle}
                   accentHex={accent}
-                  context="Waiting for reassignment"
+                  context="1 raised today"
+                  status="review"
+                  footerText="Updated today"
                 />
               </Link>
               <StatsCard
-                title="Completed Today"
+                title="Today's Visits"
                 value={data.completedToday}
                 icon={CalendarCheck}
                 accentHex={accent}
-                context="Jobs finished today"
+                context="12 completed successfully"
+                status="completed"
+                footerText="Updated now"
               />
             </div>
           </div>

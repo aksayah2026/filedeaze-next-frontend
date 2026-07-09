@@ -6,7 +6,21 @@ import { cn } from '@/lib/utils';
 // â”€â”€â”€ Types â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export type CardVariant = 'primary' | 'standard' | 'status';
-export type StatusChip = 'healthy' | 'live' | 'stable' | 'attention' | 'action';
+export type StatusChip =
+  | 'healthy'
+  | 'growing'
+  | 'live'
+  | 'stable'
+  | 'available'
+  | 'attention'
+  | 'followup'
+  | 'critical'
+  | 'offline'
+  | 'ontrack'
+  | 'completed'
+  | 'online'
+  | 'review'
+  | 'action';
 
 interface StatsCardProps {
   /** Visual variant: primary (revenue hero), standard (metrics), status (health) */
@@ -14,11 +28,11 @@ interface StatsCardProps {
   title: string;
   value: string | number;
   icon?: LucideIcon;
-  /** Role hex accent â€” applied to icon, border, hover glow only */
+  /** Role hex accent — applied to icon, border, hover glow only */
   accentHex?: string;
   /** Short business context below the value */
   context: string;
-  /** Optional trend e.g. "+12%" or "â–² 3" */
+  /** Optional trend e.g. "+12%" or "▲ 3" */
   trend?: { label: string; direction: 'up' | 'down' | 'flat' };
   /** Semantic status chip */
   status?: StatusChip;
@@ -27,7 +41,7 @@ interface StatsCardProps {
   staggerClass?: string;
 }
 
-// â”€â”€â”€ Status chip config â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Status chip config ───────────────────────────────────────────────────────
 
 const statusConfig: Record<StatusChip, {
   label: string;
@@ -43,22 +57,85 @@ const statusConfig: Record<StatusChip, {
     text:    'text-emerald-700 dark:text-emerald-400',
     dotColor: '#10b981',
   },
-  live: {
-    label: 'Live',
+  growing: {
+    label: 'Growing',
     gradientFrom: 'rgba(16,185,129,0.10)',
     gradientTo:   'rgba(16,185,129,0.04)',
     text:    'text-emerald-700 dark:text-emerald-400',
     dotColor: '#10b981',
   },
+  live: {
+    label: 'Live',
+    gradientFrom: 'rgba(20,184,166,0.10)',
+    gradientTo:   'rgba(20,184,166,0.04)',
+    text:    'text-teal-700 dark:text-teal-400',
+    dotColor: '#14b8a6',
+  },
   stable: {
     label: 'Stable',
-    gradientFrom: 'rgba(99,102,241,0.10)',
-    gradientTo:   'rgba(99,102,241,0.04)',
-    text:    'text-indigo-600 dark:text-indigo-400',
-    dotColor: '#6366f1',
+    gradientFrom: 'rgba(59,130,246,0.10)',
+    gradientTo:   'rgba(59,130,246,0.04)',
+    text:    'text-blue-700 dark:text-blue-400',
+    dotColor: '#3b82f6',
+  },
+  available: {
+    label: 'Available',
+    gradientFrom: 'rgba(16,185,129,0.10)',
+    gradientTo:   'rgba(16,185,129,0.04)',
+    text:    'text-emerald-700 dark:text-emerald-400',
+    dotColor: '#10b981',
   },
   attention: {
-    label: 'Attention',
+    label: 'Needs Attention',
+    gradientFrom: 'rgba(245,158,11,0.10)',
+    gradientTo:   'rgba(245,158,11,0.04)',
+    text:    'text-amber-700 dark:text-amber-400',
+    dotColor: '#f59e0b',
+  },
+  followup: {
+    label: 'Follow-up Required',
+    gradientFrom: 'rgba(245,158,11,0.10)',
+    gradientTo:   'rgba(245,158,11,0.04)',
+    text:    'text-amber-700 dark:text-amber-400',
+    dotColor: '#f59e0b',
+  },
+  critical: {
+    label: 'Critical',
+    gradientFrom: 'rgba(239,68,68,0.10)',
+    gradientTo:   'rgba(239,68,68,0.04)',
+    text:    'text-red-700 dark:text-red-400',
+    dotColor: '#ef4444',
+  },
+  offline: {
+    label: 'Offline',
+    gradientFrom: 'rgba(107,114,128,0.10)',
+    gradientTo:   'rgba(107,114,128,0.04)',
+    text:    'text-gray-700 dark:text-gray-400',
+    dotColor: '#6b7280',
+  },
+  ontrack: {
+    label: 'On Track',
+    gradientFrom: 'rgba(16,185,129,0.10)',
+    gradientTo:   'rgba(16,185,129,0.04)',
+    text:    'text-emerald-700 dark:text-emerald-400',
+    dotColor: '#10b981',
+  },
+  completed: {
+    label: '80% Completed',
+    gradientFrom: 'rgba(16,185,129,0.10)',
+    gradientTo:   'rgba(16,185,129,0.04)',
+    text:    'text-emerald-700 dark:text-emerald-400',
+    dotColor: '#10b981',
+  },
+  online: {
+    label: 'Online',
+    gradientFrom: 'rgba(16,185,129,0.10)',
+    gradientTo:   'rgba(16,185,129,0.04)',
+    text:    'text-emerald-700 dark:text-emerald-400',
+    dotColor: '#10b981',
+  },
+  review: {
+    label: 'Review Required',
     gradientFrom: 'rgba(245,158,11,0.10)',
     gradientTo:   'rgba(245,158,11,0.04)',
     text:    'text-amber-700 dark:text-amber-400',
