@@ -166,6 +166,7 @@ export interface CreateTenantDto {
 }
 
 export interface TenantBranding {
+  id?: string;
   companyName: string;
   tenantCode?: string;
   logoUrl?: string;

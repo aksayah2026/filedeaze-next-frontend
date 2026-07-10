@@ -19,13 +19,13 @@ import { requiredString } from '@/lib/validations';
 
 const planSchema = z.object({
   name: requiredString('Plan name is required').max(50, 'Max 50 characters'),
-  price: z.number({ invalid_type_error: 'Price is required' }).min(0, 'Price cannot be negative'),
-  managerLimit: z.number({ invalid_type_error: 'Manager limit is required' }).min(1, 'Manager limit must be greater than 0'),
-  technicianLimit: z.number({ invalid_type_error: 'Technician limit is required' }).min(1, 'Technician limit must be greater than 0'),
-  ticketLimit: z.number({ invalid_type_error: 'Ticket limit is required' }).min(1, 'Ticket limit must be greater than 0'),
-  customerLimit: z.number({ invalid_type_error: 'Customer limit is required' }).min(1, 'Customer limit must be greater than 0'),
-  storageLimitGb: z.number({ invalid_type_error: 'Storage limit is required' }).min(1, 'Storage limit must be greater than 0'),
-  durationDays: z.number({ invalid_type_error: 'Duration is required' }).min(1, 'Must be at least 1 day').nullable(),
+  price: z.number({ message: 'Price is required' }).min(0, 'Price cannot be negative'),
+  managerLimit: z.number({ message: 'Manager limit is required' }).min(1, 'Manager limit must be greater than 0'),
+  technicianLimit: z.number({ message: 'Technician limit is required' }).min(1, 'Technician limit must be greater than 0'),
+  ticketLimit: z.number({ message: 'Ticket limit is required' }).min(1, 'Ticket limit must be greater than 0'),
+  customerLimit: z.number({ message: 'Customer limit is required' }).min(1, 'Customer limit must be greater than 0'),
+  storageLimitGb: z.number({ message: 'Storage limit is required' }).min(1, 'Storage limit must be greater than 0'),
+  durationDays: z.number({ message: 'Duration is required' }).min(1, 'Must be at least 1 day').nullable(),
   isTrial: z.boolean(),
   isActive: z.boolean(),
 });

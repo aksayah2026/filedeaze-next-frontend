@@ -15,7 +15,7 @@ import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
 import { Modal } from '@/components/ui/Modal';
 import {
-  Search, RefreshCw, Eye, ArrowUpDown, Ban, CheckCircle, XCircle
+  Search, RefreshCw, Eye, ArrowUpDown, Ban, CheckCircle, XCircle, Clock, ChevronLeft, ChevronRight
 } from 'lucide-react';
 import { FilterCard } from '@/components/ui/FilterCard';
 import { DataTable } from '@/components/ui/DataTable';
