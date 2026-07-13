@@ -14,6 +14,7 @@ import { Modal } from '@/components/ui/Modal';
 import { Select } from '@/components/ui/Select';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { PageSpinner } from '@/components/ui/Spinner';
+import { ErrorState } from '@/components/ui/ErrorState';
 import { MapPin, Route, Star, Trash2, Plus, Key, ChevronLeft } from 'lucide-react';
 import dayjs from 'dayjs';
 import Link from 'next/link';
@@ -28,7 +29,7 @@ export default function TechnicianDetailPage() {
   const [removeSkillId, setRemoveSkillId] = useState<string | null>(null);
   const [routeDate, setRouteDate] = useState(dayjs().format('YYYY-MM-DD'));
 
-  const { data: tech, isLoading } = useQuery<Technician>({ queryKey: ['technician', id], queryFn: async () => (await api.get(`/web/manager/technicians/${id}`)).data.data });
+  const { data: tech, isLoading, isError, error, refetch, isFetching } = useQuery<Technician>({ queryKey: ['technician', id], queryFn: async () => (await api.get(`/web/manager/technicians/${id}`)).data.data });
   const { data: skills = [] } = useQuery<TechnicianSkill[]>({ queryKey: ['tech-skills', id], queryFn: async () => (await api.get(`/web/manager/technicians/${id}/skills`)).data.data.skills ?? [] });
   // Only active skills are offered for new assignment — an already-assigned skill that's since
   // been deactivated still shows in the technician's own list above, just not re-selectable here.
@@ -57,7 +58,9 @@ export default function TechnicianDetailPage() {
   });
   const removeSkillMutation = useMutation({ mutationFn: (skillId: string) => api.delete(`/web/manager/technicians/${id}/skills/${skillId}`), onSuccess: () => { qc.invalidateQueries({ queryKey: ['tech-skills', id] }); toast.success('Skill removed'); setRemoveSkillId(null); }, onError: () => toast.error('Failed') });
 
-  if (isLoading || !tech) return <PageSpinner />;
+  if (isLoading) return <PageSpinner />;
+  if (isError) return <ErrorState error={error} onRetry={refetch} isRetrying={isFetching} />;
+  if (!tech) return <ErrorState title="Technician not found" message="This technician may have been removed or the link is incorrect." onRetry={refetch} />;
 
   const skillOptions = allSkills.filter(s => !skills.find(ts => ts.skillId === s.id)).map(s => ({ value: s.id, label: s.name }));
 

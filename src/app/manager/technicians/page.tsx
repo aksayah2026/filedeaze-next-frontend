@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { usePathname } from 'next/navigation';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -13,6 +13,7 @@ import Link from 'next/link';
 import api from '@/lib/axios';
 import { Technician, Skill } from '@/types';
 import { DataTable } from '@/components/ui/DataTable';
+import { PaginationMeta } from '@/components/ui/Pagination';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Modal } from '@/components/ui/Modal';
@@ -37,11 +38,16 @@ export default function TechniciansPage() {
   const [showCreate, setShowCreate] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [selectedSkillIds, setSelectedSkillIds] = useState<string[]>([]);
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(20);
 
-  const { data: techs = [], isLoading } = useQuery<Technician[]>({
-    queryKey: ['technicians'],
-    queryFn: async () => (await api.get('/web/manager/technicians')).data.data,
+  const { data, isLoading, isError, error, refetch } = useQuery<{ items: Technician[]; meta: PaginationMeta }>({
+    queryKey: ['technicians', page, limit],
+    queryFn: async () => (await api.get('/web/manager/technicians', { params: { page, limit } })).data.data,
+    placeholderData: keepPreviousData,
   });
+
+  const techs = data?.items ?? [];
 
   // Onboarding offers only active Master Skills — creating a technician has no dedicated
   // "with skills" endpoint, so skills are attached right after creation succeeds.
@@ -114,7 +120,19 @@ export default function TechniciansPage() {
         <h2 className="text-xl font-semibold text-[var(--color-text-primary)]">Technicians</h2>
         <Button onClick={() => setShowCreate(true)}><Plus size={15} /> Add Technician</Button>
       </div>
-      <DataTable data={techs} columns={columns} isLoading={isLoading} />
+      <DataTable
+        data={techs}
+        columns={columns}
+        isLoading={isLoading}
+        isError={isError}
+        error={error}
+        onRetry={refetch}
+        pagination={data?.meta ? {
+          meta: data.meta,
+          onPageChange: setPage,
+          onLimitChange: (l) => { setPage(1); setLimit(l); },
+        } : undefined}
+      />
 
       <Modal open={showCreate} onClose={closeCreate} title="Add Technician">
         <form onSubmit={handleSubmit(d => createMutation.mutate(d))} className="space-y-4">

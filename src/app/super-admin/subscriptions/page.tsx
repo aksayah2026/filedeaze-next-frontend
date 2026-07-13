@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import api from '@/lib/axios';
@@ -14,11 +14,13 @@ import { Badge, PlanBadge } from '@/components/ui/Badge';
 import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
 import { Modal } from '@/components/ui/Modal';
+import { ErrorState } from '@/components/ui/ErrorState';
 import {
   Search, RefreshCw, Eye, ArrowUpDown, Ban, CheckCircle,
-  XCircle, Clock, ChevronLeft, ChevronRight,
+  XCircle, Clock,
 } from 'lucide-react';
 import { FilterCard } from '@/components/ui/FilterCard';
+import { Pagination } from '@/components/ui/Pagination';
 import dayjs from 'dayjs';
 
 // ── Constants ──────────────────────────────────────────────────────────────────
@@ -161,7 +163,7 @@ function RenewModal({ onClose, tenants, plans, defaultTenantId }: { onClose: () 
 
         {watchedTenantId && !existingSub && (
           <p className="text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
-            This tenant has no subscription on record. This shouldn't normally happen — every tenant gets a subscription automatically when created. Contact engineering if you see this.
+            This tenant has no subscription on record. This shouldn&apos;t normally happen — every tenant gets a subscription automatically when created. Contact engineering if you see this.
           </p>
         )}
 
@@ -298,7 +300,7 @@ function UpgradeDowngradeModal({ sub, plans, onClose }: { sub: SubscriptionWithM
         {selectedPlan && direction !== 'same' && (
           <>
             <div className={`text-xs font-semibold rounded-lg px-3 py-2 border ${direction === 'upgrade' ? 'bg-emerald-50 border-emerald-200 text-emerald-700' : 'bg-amber-50 border-amber-200 text-amber-700'}`}>
-              This is a{direction === 'upgrade' ? 'n upgrade' : ' downgrade'} — plan limits update immediately and the subscription's new duration ({planDuration(selectedPlan)} days) extends from its current end date.
+              This is a{direction === 'upgrade' ? 'n upgrade' : ' downgrade'} — plan limits update immediately and the subscription&apos;s new duration ({planDuration(selectedPlan)} days) extends from its current end date.
             </div>
             <PlanPreview plan={selectedPlan} />
             <div className="grid grid-cols-2 gap-3">
@@ -538,6 +540,7 @@ export default function SubscriptionsPage() {
   const [statusFilter, setStatus]     = useState('');
   const [planFilter, setPlan]         = useState('');
   const [params, setParams]           = useState({ search: '', status: '', planId: '', page: 1 });
+  const [limit, setLimit]             = useState(20);
 
   const [showRenew,            setShowRenew]            = useState(false);
   const [showUpgradeDowngrade, setShowUpgradeDowngrade] = useState(false);
@@ -551,11 +554,12 @@ export default function SubscriptionsPage() {
     staleTime: 30_000,
   });
 
-  const { data: listData, isLoading: listLoading, isError } = useQuery<SubscriptionListResponse>({
-    queryKey: ['subscriptions', params],
+  const { data: listData, isLoading: listLoading, isError, error, refetch, isFetching } = useQuery<SubscriptionListResponse>({
+    queryKey: ['subscriptions', params, limit],
     queryFn: async () => (await api.get('/web/super-admin/subscriptions', {
-      params: Object.fromEntries(Object.entries({ ...params, limit: 20 }).filter(([, v]) => v !== '' && v !== 0)),
+      params: Object.fromEntries(Object.entries({ ...params, limit }).filter(([, v]) => v !== '' && v !== 0)),
     })).data.data,
+    placeholderData: keepPreviousData,
   });
 
   const { data: plans = [] }   = useQuery<Plan[]>({   queryKey: ['plans'],   queryFn: async () => (await api.get('/web/super-admin/plans')).data.data,   staleTime: 60_000 });
@@ -714,7 +718,7 @@ export default function SubscriptionsPage() {
 
       {/* Table */}
       {isError ? (
-        <div className="rounded-xl border border-red-200 bg-red-50 p-6 text-center text-sm text-red-600">Failed to load subscriptions.</div>
+        <ErrorState error={error} onRetry={refetch} isRetrying={isFetching} />
       ) : (
         <>
           {!listLoading && totalCount > 0 && (
@@ -798,16 +802,15 @@ export default function SubscriptionsPage() {
             </div>
           </div>
 
-          {!listLoading && totalPages > 1 && (
-            <div className="flex items-center justify-center gap-2 pt-1">
-              <button className="p-1.5 rounded-lg border border-[var(--color-border)] text-[var(--color-text-muted)] hover:bg-[var(--color-surface-elevated)] disabled:opacity-40" disabled={params.page <= 1} onClick={() => apply(params.page - 1)}><ChevronLeft size={14} /></button>
-              {Array.from({ length: Math.min(totalPages, 7) }, (_, i) => {
-                const p = params.page <= 4 ? i + 1 : params.page - 3 + i;
-                if (p < 1 || p > totalPages) return null;
-                return <button key={p} className={`w-8 h-8 rounded-lg text-sm font-medium transition-colors ${p === params.page ? 'bg-[var(--color-primary)] text-white' : 'text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-elevated)]'}`} onClick={() => apply(p)}>{p}</button>;
-              })}
-              <button className="p-1.5 rounded-lg border border-[var(--color-border)] text-[var(--color-text-muted)] hover:bg-[var(--color-surface-elevated)] disabled:opacity-40" disabled={params.page >= totalPages} onClick={() => apply(params.page + 1)}><ChevronRight size={14} /></button>
-            </div>
+          {!listLoading && listData?.meta && listData.meta.total > 0 && (
+            <Pagination
+              page={listData.meta.currentPage}
+              totalPages={listData.meta.totalPages}
+              total={listData.meta.total}
+              limit={listData.meta.limit}
+              onPageChange={(p) => setParams(prev => ({ ...prev, page: p }))}
+              onLimitChange={(l) => { setLimit(l); setParams(prev => ({ ...prev, page: 1 })); }}
+            />
           )}
         </>
       )}

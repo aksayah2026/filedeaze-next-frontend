@@ -3,16 +3,31 @@
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
+export interface PaginationMeta {
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+  currentPage: number;
+  hasNext: boolean;
+  hasPrevious: boolean;
+}
+
+const DEFAULT_PAGE_SIZES = [10, 20, 50, 100];
+
 interface PaginationProps {
   page: number;
   totalPages: number;
   total: number;
   limit: number;
   onPageChange: (page: number) => void;
+  /** When provided, renders a rows-per-page selector next to the record count. */
+  onLimitChange?: (limit: number) => void;
+  pageSizeOptions?: number[];
 }
 
-export function Pagination({ page, totalPages, total, limit, onPageChange }: PaginationProps) {
-  const from = (page - 1) * limit + 1;
+export function Pagination({ page, totalPages, total, limit, onPageChange, onLimitChange, pageSizeOptions = DEFAULT_PAGE_SIZES }: PaginationProps) {
+  const from = total === 0 ? 0 : (page - 1) * limit + 1;
   const to = Math.min(page * limit, total);
 
   const pageNumbers = Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
@@ -27,13 +42,29 @@ export function Pagination({ page, totalPages, total, limit, onPageChange }: Pag
 
   return (
     <div className="flex items-center justify-between px-1 py-4 mt-1 select-none">
-      <p className="text-xs text-[var(--color-text-muted)]">
-        Showing{' '}
-        <span className="font-semibold text-[var(--color-text-secondary)]">{from}–{to}</span>
-        {' '}of{' '}
-        <span className="font-semibold text-[var(--color-text-secondary)]">{total}</span>
-        {' '}results
-      </p>
+      <div className="flex items-center gap-3">
+        <p className="text-xs text-[var(--color-text-muted)]">
+          Showing{' '}
+          <span className="font-semibold text-[var(--color-text-secondary)]">{from}–{to}</span>
+          {' '}of{' '}
+          <span className="font-semibold text-[var(--color-text-secondary)]">{total}</span>
+          {' '}results
+        </p>
+        {onLimitChange && (
+          <label className="flex items-center gap-1.5 text-xs text-[var(--color-text-muted)]">
+            <span>Rows:</span>
+            <select
+              value={limit}
+              onChange={(e) => onLimitChange(Number(e.target.value))}
+              className="rounded-md border border-[var(--color-border-input)] bg-[var(--color-input-bg)] px-1.5 py-1 text-xs text-[var(--color-text-secondary)] focus:border-[var(--color-primary)] focus:outline-none"
+            >
+              {pageSizeOptions.map((size) => (
+                <option key={size} value={size}>{size}</option>
+              ))}
+            </select>
+          </label>
+        )}
+      </div>
 
       <div className="flex items-center gap-1">
         <button

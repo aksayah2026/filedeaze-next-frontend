@@ -11,9 +11,11 @@ import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { PageSpinner } from '@/components/ui/Spinner';
+import { ErrorState } from '@/components/ui/ErrorState';
 import Link from 'next/link';
 import { ChevronLeft, Star } from 'lucide-react';
 import dayjs from 'dayjs';
+import { formatDate } from '@/lib/utils';
 
 type ManagerDetailResponse = {
   manager: Manager & { email: string; profileImageUrl?: string };
@@ -25,7 +27,7 @@ export default function ManagerDetailPage() {
   const { id } = useParams<{ id: string }>();
   const qc = useQueryClient();
 
-  const { data, isLoading } = useQuery<ManagerDetailResponse>({
+  const { data, isLoading, isError, error, refetch, isFetching } = useQuery<ManagerDetailResponse>({
     queryKey: ['manager', id],
     queryFn: async () => (await api.get(`/web/admin/managers/${id}`)).data.data,
   });
@@ -41,7 +43,9 @@ export default function ManagerDetailPage() {
     onError: () => toast.error('Failed'),
   });
 
-  if (isLoading || !data) return <PageSpinner />;
+  if (isLoading) return <PageSpinner />;
+  if (isError) return <ErrorState error={error} onRetry={refetch} isRetrying={isFetching} />;
+  if (!data) return <ErrorState title="Manager not found" message="This manager may have been removed or the link is incorrect." onRetry={refetch} />;
 
   const { manager, assignedTechnicians, assignedTickets } = data;
 
@@ -115,7 +119,7 @@ export default function ManagerDetailPage() {
                   <span className="text-xs text-[var(--color-text-muted)]">{ticket.customer?.name}</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="text-xs text-[var(--color-text-muted)]">{dayjs(ticket.createdAt).format('DD MMM YYYY')}</span>
+                  <span className="text-xs text-[var(--color-text-muted)]">{formatDate(ticket.createdAt)}</span>
                   <Badge variant="info">{ticket.status.replace(/_/g, ' ')}</Badge>
                 </div>
               </div>

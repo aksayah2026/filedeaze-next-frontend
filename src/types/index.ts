@@ -1,3 +1,5 @@
+import type { PaginationMeta } from '@/components/ui/Pagination';
+
 // ─── Auth ────────────────────────────────────────────────────────────────────
 export type UserRole = 'SUPER_ADMIN' | 'ADMIN' | 'MANAGER';
 
@@ -127,6 +129,7 @@ export interface SubscriptionListResponse {
   page: number;
   limit: number;
   totalPages: number;
+  meta?: PaginationMeta;
 }
 
 export interface Tenant {
@@ -229,6 +232,7 @@ export interface BillingReport {
   limit: number;
   totalPages: number;
   summary: { totalPaid: number; totalPending: number };
+  meta?: PaginationMeta;
 }
 
 export interface ActivityLog {

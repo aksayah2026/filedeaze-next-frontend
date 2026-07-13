@@ -15,6 +15,7 @@ import dayjs from 'dayjs';
 import { ReportLayout, KpiGrid } from '@/components/ui/ReportLayout';
 import { StatsCard } from '@/components/ui/StatsCard';
 import { EmptyState } from '@/components/ui/EmptyState';
+import { ErrorState } from '@/components/ui/ErrorState';
 
 const CHART_COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4', '#84cc16'];
 
@@ -28,7 +29,7 @@ export default function TechniciansReportPage() {
 
   useEffect(() => setMounted(true), []);
 
-  const { data = [], isLoading } = useQuery<TechnicianReportRow[]>({
+  const { data = [], isLoading, isError, error, refetch, isFetching } = useQuery<TechnicianReportRow[]>({
     queryKey: ['technicians-report', params],
     queryFn: async () => {
       const raw: { id: string; name: string; rating: number; _count: { tickets: number; attendance: number } }[] =
@@ -165,7 +166,9 @@ export default function TechniciansReportPage() {
         />
       </KpiGrid>
 
-      {totalTechnicians === 0 && !isLoading ? (
+      {isError ? (
+        <ErrorState error={error} onRetry={refetch} isRetrying={isFetching} />
+      ) : totalTechnicians === 0 && !isLoading ? (
         <EmptyState message="No Technician Data" description="No technicians found for this period." />
       ) : (
         <>

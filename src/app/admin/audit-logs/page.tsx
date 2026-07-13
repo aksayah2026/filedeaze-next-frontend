@@ -1,32 +1,38 @@
 'use client';
 
 import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, keepPreviousData } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import api from '@/lib/axios';
 import { AuditLog } from '@/types';
 import { DataTable } from '@/components/ui/DataTable';
+import { PaginationMeta } from '@/components/ui/Pagination';
 import { Select } from '@/components/ui/Select';
 import { FilterCard } from '@/components/ui/FilterCard';
 import dayjs from 'dayjs';
+import { formatDateTime } from '@/lib/utils';
 
 export default function AuditLogsPage() {
   const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(50);
   const [draftFilters, setDraftFilters] = useState({ entity: '', from: '', to: '' });
   const [filters, setFilters] = useState({ entity: '', from: '', to: '' });
 
-  const { data = [], isLoading } = useQuery<AuditLog[]>({
-    queryKey: ['audit-logs', page, filters],
+  const { data, isLoading, isError, error, refetch } = useQuery<{ data: AuditLog[]; meta: PaginationMeta }>({
+    queryKey: ['audit-logs', page, limit, filters],
     queryFn: async () => (await api.get('/web/admin/audit-logs', {
-      params: { page, limit: 50, ...Object.fromEntries(Object.entries(filters).filter(([, v]) => v)) },
-    })).data.data,
+      params: { page, limit, ...Object.fromEntries(Object.entries(filters).filter(([, v]) => v)) },
+    })).data,
+    placeholderData: keepPreviousData,
   });
+
+  const logs = data?.data ?? [];
 
   const columns: ColumnDef<AuditLog, unknown>[] = [
     { accessorKey: 'user.name', header: 'User', cell: ({ row }) => row.original.user?.name ?? row.original.userId },
     { accessorKey: 'entity', header: 'Entity' },
     { accessorKey: 'action', header: 'Action' },
-    { accessorKey: 'createdAt', header: 'Time', cell: ({ row }) => dayjs(row.original.createdAt).format('DD MMM YYYY HH:mm') },
+    { accessorKey: 'createdAt', header: 'Time', cell: ({ row }) => formatDateTime(row.original.createdAt, 'DD MMM YYYY HH:mm') },
   ];
 
   return (
@@ -66,7 +72,19 @@ export default function AuditLogsPage() {
           />
         </div>
       </FilterCard>
-      <DataTable data={data} columns={columns} isLoading={isLoading} />
+      <DataTable
+        data={logs}
+        columns={columns}
+        isLoading={isLoading}
+        isError={isError}
+        error={error}
+        onRetry={refetch}
+        pagination={data?.meta ? {
+          meta: data.meta,
+          onPageChange: setPage,
+          onLimitChange: (l) => { setPage(1); setLimit(l); },
+        } : undefined}
+      />
     </div>
   );
 }

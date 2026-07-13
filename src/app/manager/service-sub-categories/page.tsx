@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
@@ -9,6 +9,7 @@ import { Plus, Pencil, Trash2, DollarSign, Tag, X } from 'lucide-react';
 import api from '@/lib/axios';
 import { ServiceCategory, ServiceSubCategory, Skill, SubCategorySkill } from '@/types';
 import { DataTable } from '@/components/ui/DataTable';
+import { PaginationMeta } from '@/components/ui/Pagination';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
@@ -28,12 +29,17 @@ export default function ServiceSubCategoriesPage() {
   const [categoryFilter, setCategoryFilter] = useState('');
   const [skillsFor, setSkillsFor] = useState<ServiceSubCategory | null>(null);
   const [addSkillId, setAddSkillId] = useState('');
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(20);
 
   const { data: categories = [] } = useQuery<ServiceCategory[]>({ queryKey: ['service-categories'], queryFn: async () => (await api.get('/web/manager/service-categories')).data.data });
-  const { data = [], isLoading } = useQuery<ServiceSubCategory[]>({
-    queryKey: ['sub-categories', categoryFilter],
-    queryFn: async () => (await api.get('/web/manager/service-sub-categories', { params: { categoryId: categoryFilter || undefined } })).data.data,
+  const { data, isLoading, isError, error, refetch } = useQuery<{ items: ServiceSubCategory[]; meta: PaginationMeta }>({
+    queryKey: ['sub-categories', categoryFilter, page, limit],
+    queryFn: async () => (await api.get('/web/manager/service-sub-categories', { params: { categoryId: categoryFilter || undefined, page, limit } })).data.data,
+    placeholderData: keepPreviousData,
   });
+
+  const subCategories = data?.items ?? [];
 
   const { register, handleSubmit, reset, formState: { isSubmitting } } = useForm<SubForm>();
   const { register: rc, handleSubmit: hc, reset: resetC, formState: { isSubmitting: sc } } = useForm<ChargesForm>();
@@ -116,9 +122,21 @@ export default function ServiceSubCategoriesPage() {
         <Button onClick={() => { setShowCreate(true); reset({ name: '', isActive: true }); }}><Plus size={15} /> New Sub Category</Button>
       </div>
       <div className="mb-4">
-        <Select options={[{ value: '', label: 'All Categories' }, ...catOptions]} value={categoryFilter} onChange={e => setCategoryFilter(e.target.value)} className="w-56" />
+        <Select options={[{ value: '', label: 'All Categories' }, ...catOptions]} value={categoryFilter} onChange={e => { setPage(1); setCategoryFilter(e.target.value); }} className="w-56" />
       </div>
-      <DataTable data={data} columns={columns} isLoading={isLoading} />
+      <DataTable
+        data={subCategories}
+        columns={columns}
+        isLoading={isLoading}
+        isError={isError}
+        error={error}
+        onRetry={refetch}
+        pagination={data?.meta ? {
+          meta: data.meta,
+          onPageChange: setPage,
+          onLimitChange: (l) => { setPage(1); setLimit(l); },
+        } : undefined}
+      />
 
       <Modal open={showCreate || !!editing} onClose={() => { setShowCreate(false); setEditing(null); reset(); }} title={editing ? 'Edit Sub Category' : 'New Sub Category'} size="sm">
         <form onSubmit={handleSubmit(d => saveMutation.mutate(d))} className="space-y-4">

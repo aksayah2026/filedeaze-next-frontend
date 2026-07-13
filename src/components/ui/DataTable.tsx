@@ -8,15 +8,28 @@ import { useState } from 'react';
 import { ChevronUp, ChevronDown, ChevronsUpDown } from 'lucide-react';
 import { PageSpinner } from './Spinner';
 import { EmptyState } from './EmptyState';
+import { ErrorState } from './ErrorState';
+import { Pagination, PaginationMeta } from './Pagination';
 import { cn } from '@/lib/utils';
+
+export interface DataTablePagination {
+  meta: PaginationMeta;
+  onPageChange: (page: number) => void;
+  onLimitChange?: (limit: number) => void;
+}
 
 interface DataTableProps<T> {
   data: T[];
   columns: ColumnDef<T, unknown>[];
   isLoading?: boolean;
+  isError?: boolean;
+  error?: unknown;
+  onRetry?: () => void;
+  /** Server-side pagination controls rendered under the table. */
+  pagination?: DataTablePagination;
 }
 
-export function DataTable<T>({ data, columns, isLoading }: DataTableProps<T>) {
+export function DataTable<T>({ data, columns, isLoading, isError, error, onRetry, pagination }: DataTableProps<T>) {
   const [sorting, setSorting] = useState<SortingState>([]);
 
   const table = useReactTable({
@@ -29,6 +42,7 @@ export function DataTable<T>({ data, columns, isLoading }: DataTableProps<T>) {
   });
 
   if (isLoading) return <PageSpinner />;
+  if (isError) return <ErrorState error={error} onRetry={onRetry} />;
 
   return (
     <div className="overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-[0_1px_3px_rgba(0,0,0,0.03)]">
@@ -103,6 +117,18 @@ export function DataTable<T>({ data, columns, isLoading }: DataTableProps<T>) {
           </tbody>
         </table>
       </div>
+      {pagination && pagination.meta.total > 0 && (
+        <div className="border-t border-[var(--color-border)] px-3">
+          <Pagination
+            page={pagination.meta.currentPage}
+            totalPages={pagination.meta.totalPages}
+            total={pagination.meta.total}
+            limit={pagination.meta.limit}
+            onPageChange={pagination.onPageChange}
+            onLimitChange={pagination.onLimitChange}
+          />
+        </div>
+      )}
     </div>
   );
 }

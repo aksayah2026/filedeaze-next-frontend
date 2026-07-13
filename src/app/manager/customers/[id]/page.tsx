@@ -18,7 +18,7 @@ export default function CustomerHistoryPage() {
   const pathname = usePathname();
   const prefix = pathname.startsWith('/admin/') ? 'admin' : 'manager';
 
-  const { data: history = [], isLoading } = useQuery<Ticket[]>({
+  const { data: history = [], isLoading, isError, error, refetch } = useQuery<Ticket[]>({
     queryKey: ['customer-history', id],
     queryFn: async () => {
       const res = await api.get(`/web/manager/customers/${id}/history`);
@@ -39,7 +39,7 @@ export default function CustomerHistoryPage() {
   return (
     <div>
       <h2 className="text-xl font-semibold text-[var(--color-text-primary)] mb-6">Customer Ticket History</h2>
-      <DataTable data={history} columns={columns} />
+      <DataTable data={history} columns={columns} isError={isError} error={error} onRetry={refetch} />
     </div>
   );
 }

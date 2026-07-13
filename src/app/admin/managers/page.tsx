@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -12,12 +12,14 @@ import Link from 'next/link';
 import api from '@/lib/axios';
 import { Manager } from '@/types';
 import { DataTable } from '@/components/ui/DataTable';
+import { PaginationMeta } from '@/components/ui/Pagination';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Modal } from '@/components/ui/Modal';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { Badge } from '@/components/ui/Badge';
 import dayjs from 'dayjs';
+import { formatDate } from '@/lib/utils';
 
 const schema = z.object({
   name: z.string().min(1, 'Name is required (e.g. Siva Kumar)'),
@@ -32,11 +34,16 @@ export default function ManagersPage() {
   const qc = useQueryClient();
   const [showCreate, setShowCreate] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(20);
 
-  const { data: managers = [], isLoading } = useQuery<Manager[]>({
-    queryKey: ['managers'],
-    queryFn: async () => (await api.get('/web/admin/managers')).data.data,
+  const { data, isLoading, isError, error, refetch } = useQuery<{ items: Manager[]; meta: PaginationMeta }>({
+    queryKey: ['managers', page, limit],
+    queryFn: async () => (await api.get('/web/admin/managers', { params: { page, limit } })).data.data,
+    placeholderData: keepPreviousData,
   });
+
+  const managers = data?.items ?? [];
 
   const { register, handleSubmit, reset, formState: { errors, isSubmitting } } = useForm<Form>({ resolver: zodResolver(schema) });
 
@@ -57,7 +64,7 @@ export default function ManagersPage() {
     { accessorKey: 'email', header: 'Email' },
     { accessorKey: 'phone', header: 'Phone' },
     { accessorKey: 'isActive', header: 'Status', cell: ({ row }) => <Badge variant={row.original.isActive ? 'success' : 'danger'}>{row.original.isActive ? 'Active' : 'Inactive'}</Badge> },
-    { accessorKey: 'createdAt', header: 'Created', cell: ({ row }) => dayjs(row.original.createdAt).format('DD MMM YYYY') },
+    { accessorKey: 'createdAt', header: 'Created', cell: ({ row }) => formatDate(row.original.createdAt) },
     {
       id: 'actions', header: '',
       cell: ({ row }) => (
@@ -75,7 +82,19 @@ export default function ManagersPage() {
         <h2 className="text-xl font-semibold text-[var(--color-text-primary)]">Managers</h2>
         <Button onClick={() => setShowCreate(true)}><Plus size={15} /> Add Manager</Button>
       </div>
-      <DataTable data={managers} columns={columns} isLoading={isLoading} />
+      <DataTable
+        data={managers}
+        columns={columns}
+        isLoading={isLoading}
+        isError={isError}
+        error={error}
+        onRetry={refetch}
+        pagination={data?.meta ? {
+          meta: data.meta,
+          onPageChange: setPage,
+          onLimitChange: (l) => { setPage(1); setLimit(l); },
+        } : undefined}
+      />
 
       <Modal open={showCreate} onClose={() => { setShowCreate(false); reset(); }} title="Add Manager">
         <form onSubmit={handleSubmit(d => createMutation.mutate(d))} className="space-y-4">

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
@@ -11,6 +11,7 @@ import api from '@/lib/axios';
 import { Skill } from '@/types';
 import { useAuth } from '@/contexts/AuthContext';
 import { DataTable } from '@/components/ui/DataTable';
+import { PaginationMeta } from '@/components/ui/Pagination';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Textarea } from '@/components/ui/Textarea';
@@ -29,11 +30,16 @@ export default function SkillsPage() {
   const [showCreate, setShowCreate] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<Skill | null>(null);
   const [search, setSearch] = useState('');
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(20);
 
-  const { data: skills = [], isLoading } = useQuery<Skill[]>({
-    queryKey: ['skills', search],
-    queryFn: async () => (await api.get('/web/manager/skills', { params: { search: search || undefined } })).data.data,
+  const { data, isLoading, isError, error, refetch } = useQuery<{ items: Skill[]; meta: PaginationMeta }>({
+    queryKey: ['skills', search, page, limit],
+    queryFn: async () => (await api.get('/web/manager/skills', { params: { search: search || undefined, page, limit } })).data.data,
+    placeholderData: keepPreviousData,
   });
+
+  const skills = data?.items ?? [];
 
   const { register, handleSubmit, reset, formState: { isSubmitting } } = useForm<Form>();
 
@@ -84,9 +90,21 @@ export default function SkillsPage() {
         )}
       </div>
       <div className="mb-4">
-        <Input placeholder="Search skills..." value={search} onChange={e => setSearch(e.target.value)} className="w-64" />
+        <Input placeholder="Search skills..." value={search} onChange={e => { setPage(1); setSearch(e.target.value); }} className="w-64" />
       </div>
-      <DataTable data={skills} columns={columns} isLoading={isLoading} />
+      <DataTable
+        data={skills}
+        columns={columns}
+        isLoading={isLoading}
+        isError={isError}
+        error={error}
+        onRetry={refetch}
+        pagination={data?.meta ? {
+          meta: data.meta,
+          onPageChange: setPage,
+          onLimitChange: (l) => { setPage(1); setLimit(l); },
+        } : undefined}
+      />
 
       {isAdmin && (
         <Modal open={showCreate || !!editing} onClose={() => { setShowCreate(false); setEditing(null); reset(); }} title={editing ? 'Edit Skill' : 'New Skill'} size="sm">

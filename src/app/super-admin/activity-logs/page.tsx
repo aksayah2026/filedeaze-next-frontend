@@ -1,19 +1,19 @@
 'use client';
 
 import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, keepPreviousData } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import api from '@/lib/axios';
 import { ActivityLog } from '@/types';
 import { DataTable } from '@/components/ui/DataTable';
-import { Pagination } from '@/components/ui/Pagination';
+import { Pagination, PaginationMeta } from '@/components/ui/Pagination';
 import { Select } from '@/components/ui/Select';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { Search, Download, Activity } from 'lucide-react';
 import dayjs from 'dayjs';
 
-type ActivityLogPage = { logs: ActivityLog[]; total: number; page: number; limit: number; totalPages: number };
+type ActivityLogPage = { logs: ActivityLog[]; total: number; page: number; limit: number; totalPages: number; meta?: PaginationMeta };
 
 function exportCsv(logs: ActivityLog[]) {
   const headers = ['User', 'Entity', 'Module', 'Action', 'IP Address', 'Time'];
@@ -45,14 +45,16 @@ const entityVariants: Record<string, 'info' | 'warning' | 'success' | 'danger' |
 
 export default function ActivityLogsPage() {
   const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(50);
   const [entity, setEntity] = useState('');
   const [filters, setFilters] = useState({ entity: '' });
 
-  const { data, isLoading } = useQuery<ActivityLogPage>({
-    queryKey: ['activity-logs', page, filters],
+  const { data, isLoading, isError, error, refetch } = useQuery<ActivityLogPage>({
+    queryKey: ['activity-logs', page, limit, filters],
     queryFn: async () => (await api.get('/web/super-admin/activity-logs', {
-      params: { page, limit: 50, entity: filters.entity || undefined },
+      params: { page, limit, entity: filters.entity || undefined },
     })).data.data,
+    placeholderData: keepPreviousData,
   });
 
   const columns: ColumnDef<ActivityLog, unknown>[] = [
@@ -170,15 +172,16 @@ export default function ActivityLogsPage() {
         )}
       </div>
 
-      <DataTable data={data?.logs ?? []} columns={columns} isLoading={isLoading} />
+      <DataTable data={data?.logs ?? []} columns={columns} isLoading={isLoading} isError={isError} error={error} onRetry={refetch} />
 
-      {data && data.totalPages > 1 && (
+      {data?.meta && data.meta.total > 0 && (
         <Pagination
-          page={page}
-          totalPages={data.totalPages}
-          total={data.total}
-          limit={50}
+          page={data.meta.currentPage}
+          totalPages={data.meta.totalPages}
+          total={data.meta.total}
+          limit={data.meta.limit}
           onPageChange={setPage}
+          onLimitChange={(l) => { setPage(1); setLimit(l); }}
         />
       )}
     </div>

@@ -10,10 +10,11 @@ import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import { FileUpload } from '@/components/ui/FileUpload';
 import { PageSpinner } from '@/components/ui/Spinner';
+import { ErrorState } from '@/components/ui/ErrorState';
 
 export default function ProfilePage() {
   const qc = useQueryClient();
-  const { data, isLoading } = useQuery<User>({
+  const { data, isLoading, isError, error, refetch, isFetching } = useQuery<User>({
     queryKey: ['admin-profile'],
     queryFn: async () => (await api.get('/web/admin/profile')).data.data,
   });
@@ -35,6 +36,7 @@ export default function ProfilePage() {
   });
 
   if (isLoading) return <PageSpinner />;
+  if (isError || !data) return <ErrorState error={error} onRetry={refetch} isRetrying={isFetching} />;
 
   return (
     <div className="max-w-xl space-y-6">

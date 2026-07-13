@@ -3,7 +3,7 @@
 import { LucideIcon, TrendingUp, TrendingDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-// â”€â”€â”€ Types â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// --- Types ---â”€â”€â”€â”€
 
 export type CardVariant = 'primary' | 'standard' | 'status';
 export type StatusChip =
@@ -177,7 +177,7 @@ const statusConfig: Record<StatusChip, {
   },
 };
 
-// â”€â”€â”€ Icon wrapper â€” gradient circle with soft radial glow â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// --- Icon wrapper - gradient circle with soft radial glow ---
 
 function IconBadge({
   Icon,
@@ -215,7 +215,7 @@ function IconBadge({
   );
 }
 
-// â”€â”€â”€ StatusChip â€” translucent gradient pill with animated dot â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// --- StatusChip - translucent gradient pill with animated dot ---
 
 function StatusPill({ status }: { status: StatusChip }) {
   const s = statusConfig[status];
@@ -247,7 +247,7 @@ function StatusPill({ status }: { status: StatusChip }) {
   );
 }
 
-// â”€â”€â”€ Trend badge â€” semantic gradient pill â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// --- Trend badge - semantic gradient pill ---
 
 function TrendBadge({ trend }: { trend: { label: string; direction: 'up' | 'down' | 'flat' } }) {
   const up   = trend.direction === 'up';
@@ -291,7 +291,7 @@ function TrendBadge({ trend }: { trend: { label: string; direction: 'up' | 'down
   );
 }
 
-// â”€â”€â”€ Card shell â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// --- Card shell ---
 
 function CardShell({
   accentHex,
@@ -358,7 +358,7 @@ function CardShell({
   );
 }
 
-// â”€â”€â”€ PRIMARY variant â€” Revenue hero â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// --- PRIMARY variant - Revenue hero ---
 
 function PrimaryCard({
   title, value, icon: Icon, accentHex = '#2563EB',
@@ -401,7 +401,7 @@ function PrimaryCard({
   );
 }
 
-// â”€â”€â”€ STANDARD variant â€” Metrics â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// --- STANDARD variant - Metrics ---
 
 function StandardCard({
   title, value, icon: Icon, accentHex = '#2563EB',
@@ -440,7 +440,7 @@ function StandardCard({
   );
 }
 
-// â”€â”€â”€ STATUS variant â€” Health-focused â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// --- STATUS variant - Health-focused ---
 
 function StatusCard({
   title, value, icon: Icon, accentHex = '#2563EB',
@@ -481,7 +481,7 @@ function StatusCard({
   );
 }
 
-// â”€â”€â”€ Public export â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// --- Public export ---
 
 const tailwindHexMap: Record<string, string> = {
   'bg-emerald-500': '#10b981',

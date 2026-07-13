@@ -15,6 +15,7 @@ import dayjs from 'dayjs';
 import { ReportLayout, KpiGrid } from '@/components/ui/ReportLayout';
 import { StatsCard } from '@/components/ui/StatsCard';
 import { EmptyState } from '@/components/ui/EmptyState';
+import { ErrorState } from '@/components/ui/ErrorState';
 
 const PRIORITY_COLORS: Record<string, string> = {
   High: '#ef4444',
@@ -37,7 +38,7 @@ export default function TicketsReportPage() {
 
   useEffect(() => setMounted(true), []);
 
-  const { data, isLoading } = useQuery<TicketReport>({
+  const { data, isLoading, isError, error, refetch, isFetching } = useQuery<TicketReport>({
     queryKey: ['tickets-report', params],
     queryFn: async () => {
       const res = await api.get('/web/admin/reports/tickets', { params });
@@ -202,7 +203,9 @@ export default function TicketsReportPage() {
         />
       </KpiGrid>
 
-      {totalTickets === 0 && !isLoading ? (
+      {isError ? (
+        <ErrorState error={error} onRetry={refetch} isRetrying={isFetching} />
+      ) : totalTickets === 0 && !isLoading ? (
         <EmptyState message="No Ticket Data" description="Try adjusting your date filters to see operational data." />
       ) : (
         <>

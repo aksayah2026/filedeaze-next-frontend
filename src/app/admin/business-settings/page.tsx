@@ -6,8 +6,8 @@ import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import {
   Building2, MapPin, Receipt, CreditCard,
-  Percent, Clock, DollarSign, ArrowRight,
-  ShieldCheck, Check, RotateCcw
+  Percent, DollarSign,
+  Check, RotateCcw
 } from 'lucide-react';
 import api from '@/lib/axios';
 import { CompanySettings, TenantSettings, AppSettings } from '@/types';
@@ -16,6 +16,7 @@ import { Select } from '@/components/ui/Select';
 import { Button } from '@/components/ui/Button';
 import { FileUpload } from '@/components/ui/FileUpload';
 import { PageSpinner } from '@/components/ui/Spinner';
+import { ErrorState } from '@/components/ui/ErrorState';
 import { cn } from '@/lib/utils';
 
 // ─── Sections definition ─────────────────────────────────────────────────────
@@ -34,22 +35,25 @@ export default function BusinessSettingsPage() {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   // ─── Queries ────────────────────────────────────────────────────────────────
-  const { data: companyData, isLoading: companyLoading } = useQuery<CompanySettings>({
+  const { data: companyData, isLoading: companyLoading, isError: companyError, error: companyErr, refetch: refetchCompany } = useQuery<CompanySettings>({
     queryKey: ['company-settings'],
     queryFn: async () => (await api.get('/web/admin/company-settings')).data.data,
   });
 
-  const { data: tenantData, isLoading: tenantLoading } = useQuery<TenantSettings>({
+  const { data: tenantData, isLoading: tenantLoading, isError: tenantError, error: tenantErr, refetch: refetchTenant } = useQuery<TenantSettings>({
     queryKey: ['tenant-settings'],
     queryFn: async () => (await api.get('/web/admin/tenant-settings')).data.data,
   });
 
-  const { data: appData, isLoading: appLoading } = useQuery<AppSettings>({
+  const { data: appData, isLoading: appLoading, isError: appError, error: appErr, refetch: refetchApp } = useQuery<AppSettings>({
     queryKey: ['app-settings'],
     queryFn: async () => (await api.get('/web/settings/charges')).data.data,
   });
 
   const isLoading = companyLoading || tenantLoading || appLoading;
+  const isError = companyError || tenantError || appError;
+  const settingsError = companyErr ?? tenantErr ?? appErr;
+  const refetchAll = () => { refetchCompany(); refetchTenant(); refetchApp(); };
 
   // ─── Forms ──────────────────────────────────────────────────────────────────
   const companyForm = useForm<Omit<CompanySettings, 'id' | 'logoUrl' | 'email'>>();
@@ -164,7 +168,7 @@ export default function BusinessSettingsPage() {
     onError: () => toast.error('Logo upload failed'),
   });
 
-  const upiQrMutation = useMutation({
+  const _upiQrMutation = useMutation({
     mutationFn: (file: File) => {
       const fd = new FormData();
       fd.append('file', file);
@@ -238,6 +242,7 @@ export default function BusinessSettingsPage() {
   };
 
   if (isLoading) return <PageSpinner />;
+  if (isError) return <ErrorState error={settingsError} onRetry={refetchAll} />;
 
   return (
     <div className="space-y-6 pb-24">

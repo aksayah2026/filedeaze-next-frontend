@@ -6,6 +6,7 @@ import { useQuery } from '@tanstack/react-query';
 import api from '@/lib/axios';
 import { Plan } from '@/types';
 import { PageSpinner } from '@/components/ui/Spinner';
+import { ErrorState } from '@/components/ui/ErrorState';
 import { Badge } from '@/components/ui/Badge';
 import { CheckCircle, Clock, CreditCard, AlertCircle } from 'lucide-react';
 import dayjs from 'dayjs';
@@ -20,12 +21,13 @@ interface SubscriptionInfo {
 }
 
 export default function ManagerSubscriptionPage() {
-  const { data, isLoading } = useQuery<SubscriptionInfo>({
+  const { data, isLoading, isError, error, refetch, isFetching } = useQuery<SubscriptionInfo>({
     queryKey: ['my-subscription'],
     queryFn: async () => (await api.get('/web/subscription/info')).data.data,
   });
 
   if (isLoading) return <PageSpinner />;
+  if (isError) return <ErrorState error={error} onRetry={refetch} isRetrying={isFetching} />;
 
   const { tenantStatus, trialDaysLeft, currentPlan, subscription, latestPaymentRequest } = data ?? {};
   const isTrial = tenantStatus === 'TRIAL';

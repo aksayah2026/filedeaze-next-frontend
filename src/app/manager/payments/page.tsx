@@ -2,17 +2,18 @@
 'use client';
 
 import { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import { toast } from 'sonner';
 import api from '@/lib/axios';
 import { Payment } from '@/types';
 import { DataTable } from '@/components/ui/DataTable';
+import { PaginationMeta } from '@/components/ui/Pagination';
 import { Button } from '@/components/ui/Button';
-import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
 import { PaymentStatusBadge } from '@/components/ui/Badge';
 import { FilterCard } from '@/components/ui/FilterCard';
+import { ErrorState } from '@/components/ui/ErrorState';
 import { CheckCircle, DollarSign } from 'lucide-react';
 import dayjs from 'dayjs';
 
@@ -24,17 +25,18 @@ export default function PaymentsPage() {
   const [from, setFrom] = useState(monthStart);
   const [to, setTo] = useState(today);
   const [params, setParams] = useState({ status: '', from: monthStart, to: today });
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(20);
 
-  const { data = [], isLoading } = useQuery<Payment[]>({
-    queryKey: ['payments', params],
-    queryFn: async () => {
-      const res = await api.get('/web/manager/payments', {
-        params: Object.fromEntries(Object.entries(params).filter(([, v]) => v)),
-      });
-      const d = res.data.data;
-      return Array.isArray(d) ? d : (d?.items ?? d?.payments ?? d?.data ?? []);
-    },
+  const { data: response, isLoading, isError, error, refetch, isFetching } = useQuery<{ items: Payment[]; meta: PaginationMeta; totalVerified: number }>({
+    queryKey: ['payments', params, page, limit],
+    queryFn: async () => (await api.get('/web/manager/payments', {
+      params: { ...Object.fromEntries(Object.entries(params).filter(([, v]) => v)), page, limit },
+    })).data.data,
+    placeholderData: keepPreviousData,
   });
+
+  const data = response?.items ?? [];
 
   const verifyMutation = useMutation({
     mutationFn: (id: string) => api.patch(`/web/manager/payments/${id}/verify`),
@@ -42,7 +44,7 @@ export default function PaymentsPage() {
     onError: () => toast.error('Failed'),
   });
 
-  const totalVerified = data.filter(p => p.status === 'VERIFIED').reduce((sum, p) => sum + Number(p.amount), 0);
+  const totalVerified = response?.totalVerified ?? 0;
 
   const columns: ColumnDef<Payment, unknown>[] = [
     {
@@ -137,8 +139,8 @@ export default function PaymentsPage() {
         to={to}
         onFromChange={setFrom}
         onToChange={setTo}
-        onApply={() => setParams({ status, from, to })}
-        onReset={() => { setStatus(''); setFrom(monthStart); setTo(today); setParams({ status: '', from: monthStart, to: today }); }}
+        onApply={() => { setPage(1); setParams({ status, from, to }); }}
+        onReset={() => { setStatus(''); setFrom(monthStart); setTo(today); setPage(1); setParams({ status: '', from: monthStart, to: today }); }}
         isLoading={isLoading}
       >
         <div className="space-y-1">
@@ -183,6 +185,8 @@ export default function PaymentsPage() {
               </div>
             ))}
           </div>
+        ) : isError ? (
+          <ErrorState error={error} onRetry={refetch} isRetrying={isFetching} />
         ) : data.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 text-center">
             <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[var(--color-surface-elevated)] mb-4">
@@ -192,7 +196,16 @@ export default function PaymentsPage() {
             <p className="mt-1 text-xs text-[var(--color-text-muted)]">Try adjusting your filters</p>
           </div>
         ) : (
-          <DataTable data={data} columns={columns} isLoading={false} />
+          <DataTable
+            data={data}
+            columns={columns}
+            isLoading={false}
+            pagination={response?.meta ? {
+              meta: response.meta,
+              onPageChange: setPage,
+              onLimitChange: (l) => { setPage(1); setLimit(l); },
+            } : undefined}
+          />
         )}
       </div>
     </div>

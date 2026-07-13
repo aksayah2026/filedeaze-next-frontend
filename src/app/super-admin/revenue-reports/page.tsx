@@ -9,10 +9,10 @@ import { SuperAdminRevenueReport, Tenant } from '@/types';
 import { PlanBadge } from '@/components/ui/Badge';
 import { DataTable } from '@/components/ui/DataTable';
 import { Button } from '@/components/ui/Button';
-import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
 import { PageSpinner } from '@/components/ui/Spinner';
-import { Download, Search, TrendingUp, BarChart2, Calendar } from 'lucide-react';
+import { ErrorState } from '@/components/ui/ErrorState';
+import { Download, TrendingUp, BarChart2, Calendar } from 'lucide-react';
 import { FilterCard } from '@/components/ui/FilterCard';
 import dayjs from 'dayjs';
 
@@ -48,7 +48,7 @@ export default function RevenueReportsPage() {
 
   useEffect(() => setMounted(true), []);
 
-  const { data, isLoading } = useQuery<SuperAdminRevenueReport>({
+  const { data, isLoading, isError, error, refetch, isFetching } = useQuery<SuperAdminRevenueReport>({
     queryKey: ['sa-revenue-report', params],
     queryFn: async () => (await api.get('/web/super-admin/reports/revenue', {
       params: Object.fromEntries(Object.entries(params).filter(([, v]) => v)),
@@ -199,7 +199,9 @@ export default function RevenueReportsPage() {
         />
       </FilterCard>
 
-      {isLoading ? <PageSpinner /> : (
+      {isLoading ? <PageSpinner /> : isError ? (
+        <ErrorState error={error} onRetry={refetch} isRetrying={isFetching} />
+      ) : (
         <>
           {/* Total Revenue Hero */}
           {data && (

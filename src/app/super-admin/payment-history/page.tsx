@@ -1,16 +1,16 @@
 'use client';
 
 import { JSX, useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, keepPreviousData } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import api from '@/lib/axios';
 import { Billing, BillingReport, PaymentStats, Tenant, Plan } from '@/types';
 import { DataTable } from '@/components/ui/DataTable';
 import { Badge, PlanBadge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
-import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
 import { Modal } from '@/components/ui/Modal';
+import { ErrorState } from '@/components/ui/ErrorState';
 import { Download, Search, FileText, Eye } from 'lucide-react';
 import { FilterCard } from '@/components/ui/FilterCard';
 import dayjs from 'dayjs';
@@ -171,12 +171,14 @@ export default function PaymentHistoryPage() {
     tenantId: '', status: '', plan: '', search: '', from: '', to: today, page: 1,
   });
   const [selected, setSelected] = useState<Billing | null>(null);
+  const [limit, setLimit] = useState(20);
 
-  const { data, isLoading, isError } = useQuery<BillingReport>({
-    queryKey: ['payment-history', params],
+  const { data, isLoading, isError, error, refetch, isFetching } = useQuery<BillingReport>({
+    queryKey: ['payment-history', params, limit],
     queryFn: async () => (await api.get('/web/super-admin/billing', {
-      params: Object.fromEntries(Object.entries({ ...params, limit: 20 }).filter(([, v]) => v !== '' && v !== 0)),
+      params: Object.fromEntries(Object.entries({ ...params, limit }).filter(([, v]) => v !== '' && v !== 0)),
     })).data.data,
+    placeholderData: keepPreviousData,
   });
 
   const { data: stats, isLoading: statsLoading } = useQuery<PaymentStats>({
@@ -399,9 +401,7 @@ export default function PaymentHistoryPage() {
 
       {/* Table */}
       {isError ? (
-        <div className="rounded-xl border border-red-200 bg-red-50 p-6 text-center text-sm text-red-600">
-          Failed to load payment records. Please try again.
-        </div>
+        <ErrorState error={error} onRetry={refetch} isRetrying={isFetching} />
       ) : (
         <>
           {!isLoading && totalCount > 0 && (
@@ -410,30 +410,16 @@ export default function PaymentHistoryPage() {
               {totalPages > 1 && <span>Page {params.page} of {totalPages}</span>}
             </div>
           )}
-          <DataTable data={billings} columns={columns} isLoading={isLoading} />
-          {!isLoading && totalPages > 1 && (
-            <div className="flex items-center justify-center gap-2 pt-2">
-              <Button variant="secondary" size="sm" disabled={params.page <= 1} onClick={() => applyFilters(params.page - 1)}>
-                Previous
-              </Button>
-              {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
-                const p = params.page <= 3 ? i + 1 : params.page - 2 + i;
-                if (p < 1 || p > totalPages) return null;
-                return (
-                  <button
-                    key={p}
-                    className={`w-8 h-8 rounded-lg text-sm font-medium transition-colors ${p === params.page ? 'bg-[var(--color-primary)] text-white' : 'text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-elevated)]'}`}
-                    onClick={() => applyFilters(p)}
-                  >
-                    {p}
-                  </button>
-                );
-              })}
-              <Button variant="secondary" size="sm" disabled={params.page >= totalPages} onClick={() => applyFilters(params.page + 1)}>
-                Next
-              </Button>
-            </div>
-          )}
+          <DataTable
+            data={billings}
+            columns={columns}
+            isLoading={isLoading}
+            pagination={data?.meta ? {
+              meta: data.meta,
+              onPageChange: (p) => setParams(prev => ({ ...prev, page: p })),
+              onLimitChange: (l) => { setLimit(l); setParams(prev => ({ ...prev, page: 1 })); },
+            } : undefined}
+          />
         </>
       )}
 

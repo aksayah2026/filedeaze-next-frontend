@@ -30,7 +30,7 @@ export default function OffersPage() {
   const [showCreate, setShowCreate] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
-  const { data = [], isLoading } = useQuery<Offer[]>({
+  const { data = [], isLoading, isError, error, refetch } = useQuery<Offer[]>({
     queryKey: ['offers'],
     queryFn: async () => (await api.get('/web/offers')).data.data,
   });
@@ -78,7 +78,7 @@ export default function OffersPage() {
         <h2 className="text-xl font-semibold text-[var(--color-text-primary)]">Offers</h2>
         <Button onClick={() => { setShowCreate(true); reset({ discountType: 'PERCENTAGE', offerType: 'GENERAL', isRecurring: false }); }}><Plus size={15} /> New Offer</Button>
       </div>
-      <DataTable data={data} columns={columns} isLoading={isLoading} />
+      <DataTable data={data} columns={columns} isLoading={isLoading} isError={isError} error={error} onRetry={refetch} />
 
       <Modal open={showCreate || !!editing} onClose={() => { setShowCreate(false); setEditing(null); reset(); }} title={editing ? 'Edit Offer' : 'New Offer'} size="lg">
         <form onSubmit={handleSubmit(d => saveMutation.mutate(d))} className="grid grid-cols-2 gap-4">

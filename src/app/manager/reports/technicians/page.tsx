@@ -8,7 +8,7 @@ import { DataTable } from '@/components/ui/DataTable';
 import { Star } from 'lucide-react';
 
 export default function ManagerTechniciansReportPage() {
-  const { data = [], isLoading } = useQuery<TechnicianReportRow[]>({
+  const { data = [], isLoading, isError, error, refetch } = useQuery<TechnicianReportRow[]>({
     queryKey: ['manager-technicians-report'],
     queryFn: async () => {
       const raw: {
@@ -66,7 +66,7 @@ export default function ManagerTechniciansReportPage() {
           Slowest: <span className="font-medium text-[var(--color-text-secondary)]">{slowest.name}</span> ({slowest.averageResponseMinutes} min)
         </p>
       )}
-      <DataTable data={data} columns={columns} isLoading={isLoading} />
+      <DataTable data={data} columns={columns} isLoading={isLoading} isError={isError} error={error} onRetry={refetch} />
     </div>
   );
 }

@@ -1,18 +1,18 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useState } from 'react';
+import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
-import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
+import Link from 'next/link';
+import { QRCodeCanvas } from 'qrcode.react';
 import api from '@/lib/axios';
 import { Billing, BillingReport, Tenant, PlatformUpi } from '@/types';
 import { DataTable } from '@/components/ui/DataTable';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Select } from '@/components/ui/Select';
-import { Input } from '@/components/ui/Input';
-import { Search, CheckCircle, QrCode, TrendingUp, Clock } from 'lucide-react';
+import { CheckCircle, QrCode, TrendingUp, Clock, Pencil } from 'lucide-react';
 import { FilterCard } from '@/components/ui/FilterCard';
 import dayjs from 'dayjs';
 
@@ -23,12 +23,15 @@ export default function BillingPage() {
   const [from, setFrom] = useState('');
   const [to, setTo] = useState('');
   const [params, setParams] = useState({ tenantId: '', status: '', from: '', to: '' });
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(20);
 
-  const { data, isLoading } = useQuery<BillingReport>({
-    queryKey: ['billing', params],
+  const { data, isLoading, isError, error, refetch } = useQuery<BillingReport>({
+    queryKey: ['billing', params, page, limit],
     queryFn: async () => (await api.get('/web/super-admin/billing', {
-      params: Object.fromEntries(Object.entries(params).filter(([, v]) => v)),
+      params: { ...Object.fromEntries(Object.entries(params).filter(([, v]) => v)), page, limit },
     })).data.data,
+    placeholderData: keepPreviousData,
   });
 
   const { data: tenants = [] } = useQuery<Tenant[]>({
@@ -40,15 +43,6 @@ export default function BillingPage() {
   const { data: upiData } = useQuery<PlatformUpi>({
     queryKey: ['platform-upi'],
     queryFn: async () => (await api.get('/web/super-admin/platform-upi')).data.data,
-  });
-
-  const { register, handleSubmit, reset, formState: { isSubmitting } } = useForm<PlatformUpi>();
-  useEffect(() => { if (upiData) reset(upiData); }, [upiData, reset]);
-
-  const upiMutation = useMutation({
-    mutationFn: (d: PlatformUpi) => api.patch('/web/super-admin/platform-upi', d),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['platform-upi'] }); toast.success('UPI settings saved'); },
-    onError: () => toast.error('Failed to save UPI settings'),
   });
 
   const markPaidMutation = useMutation({
@@ -174,33 +168,53 @@ export default function BillingPage() {
         </div>
       )}
 
-      {/* UPI Settings Card */}
+      {/* Platform Payment Information — read-only. Edited only from Platform Settings. */}
       <div className="bg-[var(--color-surface)] rounded-xl border border-[var(--color-border)] overflow-hidden shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
         <div className="px-6 py-4 border-b border-[var(--color-border)] bg-[var(--color-surface-elevated)]/50 flex items-center gap-2">
           <QrCode size={15} className="text-blue-500" />
-          <h3 className="text-sm font-semibold text-[var(--color-text-primary)]">Platform UPI Settings</h3>
+          <h3 className="text-sm font-semibold text-[var(--color-text-primary)]">Platform Payment Information</h3>
+          <Link href="/super-admin/platform-settings" className="ml-auto">
+            <Button size="sm" variant="secondary">
+              <Pencil size={12} /> Edit Payment Settings
+            </Button>
+          </Link>
         </div>
         <div className="p-6">
-          <p className="text-xs text-[var(--color-text-muted)] mb-4">
-            Tenants will see this UPI ID and QR code when they need to pay their subscription bill.
-          </p>
-          <form onSubmit={handleSubmit(d => upiMutation.mutate(d))} className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <Input label="UPI ID" placeholder="example@upi" {...register('upiId')} />
-            <Input label="Account Name" placeholder="Your Business Name" {...register('upiAccountName')} />
-            <Input label="QR Code Image URL" placeholder="https://…" {...register('upiQrImageUrl')} />
-            <div className="sm:col-span-3 flex items-center justify-between">
-              {upiData?.upiQrImageUrl && (
-                <img
-                  src={upiData.upiQrImageUrl}
-                  alt="UPI QR"
-                  className="h-20 w-20 rounded-xl border border-[var(--color-border)] object-contain"
-                />
-              )}
-              <Button type="submit" loading={isSubmitting} className="ml-auto">
-                Save UPI Settings
-              </Button>
+          {upiData?.upiId ? (
+            <div className="flex items-start gap-6 flex-col sm:flex-row">
+              <div className="flex flex-col items-center gap-2 shrink-0">
+                <div className="p-3 bg-[var(--color-surface-elevated)] rounded-xl border border-[var(--color-border)]">
+                  {upiData.upiQrImageUrl ? (
+                    <img src={upiData.upiQrImageUrl} alt="UPI QR" className="h-24 w-24 object-contain" />
+                  ) : (
+                    <QRCodeCanvas
+                      value={`upi://pay?pa=${upiData.upiId}&pn=${encodeURIComponent(upiData.upiAccountName || 'FieldEaze')}&cu=INR`}
+                      size={96}
+                      level="M"
+                      marginSize={2}
+                    />
+                  )}
+                </div>
+                <p className="text-[10px] text-[var(--color-text-muted)]">Read-only</p>
+              </div>
+              <div className="space-y-3 text-sm">
+                <div>
+                  <p className="text-[10px] font-semibold uppercase tracking-wide text-[var(--color-text-muted)] mb-1">UPI ID</p>
+                  <p className="font-mono font-semibold text-[var(--color-text-primary)]">{upiData.upiId}</p>
+                </div>
+                {upiData.upiAccountName && (
+                  <div>
+                    <p className="text-[10px] font-semibold uppercase tracking-wide text-[var(--color-text-muted)] mb-1">Account Name</p>
+                    <p className="font-semibold text-[var(--color-text-primary)]">{upiData.upiAccountName}</p>
+                  </div>
+                )}
+              </div>
             </div>
-          </form>
+          ) : (
+            <p className="text-sm text-[var(--color-text-muted)]">
+              No platform UPI configured yet. <Link href="/super-admin/platform-settings" className="text-blue-600 hover:underline">Set it up in Platform Settings</Link>.
+            </p>
+          )}
         </div>
       </div>
 
@@ -211,12 +225,13 @@ export default function BillingPage() {
         to={to}
         onFromChange={setFrom}
         onToChange={setTo}
-        onApply={() => setParams({ tenantId, status, from, to })}
+        onApply={() => { setPage(1); setParams({ tenantId, status, from, to }); }}
         onReset={() => {
           setTenantId('');
           setStatus('');
           setFrom('');
           setTo('');
+          setPage(1);
           setParams({ tenantId: '', status: '', from: '', to: '' });
         }}
       >
@@ -240,7 +255,19 @@ export default function BillingPage() {
         />
       </FilterCard>
 
-      <DataTable data={data?.billings ?? []} columns={columns} isLoading={isLoading} />
+      <DataTable
+        data={data?.billings ?? []}
+        columns={columns}
+        isLoading={isLoading}
+        isError={isError}
+        error={error}
+        onRetry={refetch}
+        pagination={data?.meta ? {
+          meta: data.meta,
+          onPageChange: setPage,
+          onLimitChange: (l) => { setPage(1); setLimit(l); },
+        } : undefined}
+      />
     </div>
   );
 }

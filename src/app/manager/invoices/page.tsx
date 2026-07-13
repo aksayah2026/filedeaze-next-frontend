@@ -2,13 +2,14 @@
 
 import { useState } from 'react';
 import { usePathname } from 'next/navigation';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, keepPreviousData } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import { Eye } from 'lucide-react';
 import Link from 'next/link';
 import api from '@/lib/axios';
 import { Invoice } from '@/types';
 import { DataTable } from '@/components/ui/DataTable';
+import { PaginationMeta } from '@/components/ui/Pagination';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { FilterCard } from '@/components/ui/FilterCard';
@@ -23,13 +24,18 @@ export default function InvoicesPage() {
   const [from, setFrom] = useState(monthStart);
   const [to, setTo] = useState(today);
   const [params, setParams] = useState({ search: '', from: monthStart, to: today });
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(20);
 
-  const { data = [], isLoading } = useQuery<Invoice[]>({
-    queryKey: ['invoices', params],
+  const { data, isLoading, isError, error, refetch } = useQuery<{ items: Invoice[]; meta: PaginationMeta }>({
+    queryKey: ['invoices', params, page, limit],
     queryFn: async () => (await api.get('/web/manager/invoices', {
-      params: Object.fromEntries(Object.entries(params).filter(([, v]) => v)),
+      params: { ...Object.fromEntries(Object.entries(params).filter(([, v]) => v)), page, limit },
     })).data.data,
+    placeholderData: keepPreviousData,
   });
+
+  const invoices = data?.items ?? [];
 
   const columns: ColumnDef<Invoice, unknown>[] = [
     { accessorKey: 'invoiceNumber', header: 'Invoice #' },
@@ -50,8 +56,8 @@ export default function InvoicesPage() {
         to={to}
         onFromChange={setFrom}
         onToChange={setTo}
-        onApply={() => setParams({ search, from, to })}
-        onReset={() => { setSearch(''); setFrom(monthStart); setTo(today); setParams({ search: '', from: monthStart, to: today }); }}
+        onApply={() => { setPage(1); setParams({ search, from, to }); }}
+        onReset={() => { setSearch(''); setFrom(monthStart); setTo(today); setPage(1); setParams({ search: '', from: monthStart, to: today }); }}
         isLoading={isLoading}
       >
         <div className="space-y-1">
@@ -59,7 +65,19 @@ export default function InvoicesPage() {
           <Input placeholder="Invoice # or Ticket" value={search} onChange={e => setSearch(e.target.value)} className="w-48 h-10" />
         </div>
       </FilterCard>
-      <DataTable data={data} columns={columns} isLoading={isLoading} />
+      <DataTable
+        data={invoices}
+        columns={columns}
+        isLoading={isLoading}
+        isError={isError}
+        error={error}
+        onRetry={refetch}
+        pagination={data?.meta ? {
+          meta: data.meta,
+          onPageChange: setPage,
+          onLimitChange: (l) => { setPage(1); setLimit(l); },
+        } : undefined}
+      />
     </div>
   );
 }

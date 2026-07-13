@@ -11,6 +11,7 @@ import { AdminDashboard } from '@/types';
 import { StatsCard } from '@/components/ui/StatsCard';
 import { ProgressBar } from '@/components/ui/ProgressBar';
 import { SkeletonCard, SkeletonLine } from '@/components/ui/Spinner';
+import { ErrorState } from '@/components/ui/ErrorState';
 import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
 import { useRoleAccent } from '@/lib/useRoleAccent';
@@ -67,7 +68,7 @@ const QUICK_ACTIONS = [
 
 export default function AdminDashboardPage() {
   const accent = useRoleAccent();
-  const { data, isLoading } = useQuery<AdminDashboard>({
+  const { data, isLoading, isError, error, refetch, isFetching } = useQuery<AdminDashboard>({
     queryKey: ['admin-dashboard'],
     queryFn: async () => (await api.get('/web/admin/dashboard')).data.data,
   });
@@ -130,7 +131,7 @@ export default function AdminDashboardPage() {
               </h2>
             </div>
             <p className="text-sm text-[var(--color-text-muted)] ml-[2.75rem]">
-              Here's today's overview of your workspace.
+              Here&apos;s today&apos;s overview of your workspace.
             </p>
           </div>
 
@@ -158,7 +159,9 @@ export default function AdminDashboardPage() {
             <SkeletonLine className="w-full h-6" />
           </div>
         </div>
-      ) : !data ? null : (
+      ) : isError || !data ? (
+        <ErrorState error={error} onRetry={refetch} isRetrying={isFetching} />
+      ) : (
         <>
           {/* ── KPI Cards ───────────────────────────────── */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">

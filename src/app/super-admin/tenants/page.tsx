@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -17,6 +17,9 @@ import { Select } from '@/components/ui/Select';
 import { Modal } from '@/components/ui/Modal';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { FilterCard } from '@/components/ui/FilterCard';
+import { ErrorState } from '@/components/ui/ErrorState';
+import { EmptyState } from '@/components/ui/EmptyState';
+import { Pagination, PaginationMeta } from '@/components/ui/Pagination';
 import dayjs from 'dayjs';
 
 const schema = z.object({
@@ -60,32 +63,26 @@ export default function TenantsPage() {
   const [statusFilter, setStatusFilter] = useState('');
   const [planFilter, setPlanFilter] = useState('');
   const [params, setParams] = useState({ search: '', status: '', plan: '' });
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(20);
   const [showCreate, setShowCreate] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [togglingId, setTogglingId] = useState<string | null>(null);
 
-  const { data: tenants = [], isLoading } = useQuery<Tenant[]>({
-    queryKey: ['tenants', params],
-    queryFn: async () => (await api.get('/web/super-admin/tenants', {
-      params: Object.fromEntries(Object.entries(params).filter(([, v]) => v)),
-    })).data.data,
+  const { data, isLoading, isError, error, refetch, isFetching } = useQuery<{ tenants: Tenant[]; meta?: PaginationMeta }>({
+    queryKey: ['tenants', params, page, limit],
+    queryFn: async () => {
+      const res = await api.get('/web/super-admin/tenants', {
+        params: { ...Object.fromEntries(Object.entries(params).filter(([, v]) => v)), page, limit },
+      });
+      // Paginated envelope: res.data.data = tenant array, res.data.meta = pagination meta (sibling of data).
+      return { tenants: res.data.data as Tenant[], meta: res.data.meta as PaginationMeta | undefined };
+    },
+    placeholderData: keepPreviousData,
   });
 
-  const filteredTenants = tenants.filter(t => {
-    const s = params.search.toLowerCase().trim();
-    const matchesSearch = !s || 
-      t.companyName.toLowerCase().includes(s) || 
-      t.tenantCode.toLowerCase().includes(s) ||
-      t.email.toLowerCase().includes(s) ||
-      t.phone.toLowerCase().includes(s);
-
-    const matchesStatus = !params.status || t.status === params.status;
-
-    const planName = ((t as any).subscription?.plan ?? t.plan ?? (t as any).selectedPlan)?.name;
-    const matchesPlan = !params.plan || planName === params.plan;
-
-    return matchesSearch && matchesStatus && matchesPlan;
-  });
+  const filteredTenants = data?.tenants ?? [];
+  const meta = data?.meta;
 
   const { data: plans = [] } = useQuery<{ id: string; name: string; isActive: boolean }[]>({
     queryKey: ['plans'],
@@ -119,7 +116,7 @@ export default function TenantsPage() {
   const statusMutation = useMutation({
     mutationFn: ({ id, status }: { id: string; status: TenantStatus }) =>
       api.patch(`/web/super-admin/tenants/${id}/status`, { status }),
-    onSuccess: (_, { id: _id }) => {
+    onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['tenants'] });
       setTogglingId(null);
     },
@@ -154,11 +151,12 @@ export default function TenantsPage() {
       <FilterCard
         title="Filter Tenants"
         hideDateRange
-        onApply={() => setParams({ search, status: statusFilter, plan: planFilter })}
+        onApply={() => { setPage(1); setParams({ search, status: statusFilter, plan: planFilter }); }}
         onReset={() => {
           setSearch('');
           setStatusFilter('');
           setPlanFilter('');
+          setPage(1);
           setParams({ search: '', status: '', plan: '' });
         }}
       >
@@ -170,7 +168,7 @@ export default function TenantsPage() {
               placeholder="Company or code…"
               value={search}
               onChange={e => setSearch(e.target.value)}
-              onKeyDown={e => e.key === 'Enter' && setParams({ search, status: statusFilter, plan: planFilter })}
+              onKeyDown={e => { if (e.key === 'Enter') { setPage(1); setParams({ search, status: statusFilter, plan: planFilter }); } }}
               className="w-52 rounded-[10px] border border-[var(--color-border-input)] bg-[var(--color-input-bg)] pl-8 pr-3 py-2 text-sm text-[var(--color-text-primary)] placeholder:text-[var(--color-text-muted)] focus:border-[var(--color-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-ring)] transition-all h-10"
             />
           </div>
@@ -184,7 +182,7 @@ export default function TenantsPage() {
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-[var(--colx`or-border)] bg-[var(--color-surface-elevated)]">
+              <tr className="border-b border-[var(--color-border)] bg-[var(--color-surface-elevated)]">
                 {['Company', 'Code', 'Email', 'Phone', 'Status', 'Plan', 'Created', 'Login URL', 'Active', 'Actions'].map(h => (
                   <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wide whitespace-nowrap">{h}</th>
                 ))}
@@ -197,8 +195,10 @@ export default function TenantsPage() {
                     <td key={j} className="px-4 py-3"><div className="h-4 bg-[var(--color-surface-elevated)] rounded animate-pulse" /></td>
                   ))}</tr>
                 ))
+              ) : isError ? (
+                <tr><td colSpan={10}><ErrorState error={error} onRetry={refetch} isRetrying={isFetching} /></td></tr>
               ) : filteredTenants.length === 0 ? (
-                <tr><td colSpan={10} className="px-4 py-14 text-center text-sm text-[var(--color-text-muted)]">No tenants found.</td></tr>
+                <tr><td colSpan={10}><EmptyState message="No tenants found" description={params.search || params.status || params.plan ? 'Try adjusting your filters.' : 'Create your first tenant to get started.'} /></td></tr>
               ) : filteredTenants.map(t => {
                 const sub = (t as any).subscription;
                 const loginUrl = `${process.env.NEXT_PUBLIC_APP_URL ?? (typeof window !== 'undefined' ? window.location.origin : '')}/admin/${t.tenantCode}/login`;
@@ -282,9 +282,16 @@ export default function TenantsPage() {
             </tbody>
           </table>
         </div>
-        {!isLoading && filteredTenants.length > 0 && (
-          <div className="px-5 py-3 border-t border-[var(--color-border)] text-xs text-[var(--color-text-muted)]">
-            {filteredTenants.length} tenant{filteredTenants.length !== 1 ? 's' : ''}
+        {!isLoading && meta && meta.total > 0 && (
+          <div className="px-4 border-t border-[var(--color-border)]">
+            <Pagination
+              page={meta.currentPage}
+              totalPages={meta.totalPages}
+              total={meta.total}
+              limit={meta.limit}
+              onPageChange={setPage}
+              onLimitChange={(l) => { setPage(1); setLimit(l); }}
+            />
           </div>
         )}
       </div>

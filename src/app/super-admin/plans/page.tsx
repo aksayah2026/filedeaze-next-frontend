@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { Plus, Pencil, Trash2, Users, Ticket, HardDrive, ShieldCheck } from 'lucide-react';
@@ -12,6 +12,9 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Modal } from '@/components/ui/Modal';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
+import { ErrorState } from '@/components/ui/ErrorState';
+import { EmptyState } from '@/components/ui/EmptyState';
+import { Pagination, PaginationMeta } from '@/components/ui/Pagination';
 import { cn } from '@/lib/utils';
 
 type Form = {
@@ -35,11 +38,17 @@ export default function PlansPage() {
   const [editing, setEditing] = useState<Plan | null>(null);
   const [showCreate, setShowCreate] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<Plan | null>(null);
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(20);
 
-  const { data: plans = [], isLoading } = useQuery<Plan[]>({
-    queryKey: ['plans'],
-    queryFn: async () => (await api.get('/web/super-admin/plans')).data.data,
+  const { data, isLoading, isError, error, refetch, isFetching } = useQuery<{ items: Plan[]; meta: PaginationMeta }>({
+    queryKey: ['plans', 'paged', page, limit],
+    queryFn: async () => (await api.get('/web/super-admin/plans', { params: { page, limit } })).data.data,
+    placeholderData: keepPreviousData,
   });
+
+  const plans = data?.items ?? [];
+  const meta = data?.meta;
 
   const { register, handleSubmit, reset, watch, formState: { errors, isSubmitting } } = useForm<Form>({
     defaultValues: { isTrial: false, isActive: true, durationDays: null },
@@ -73,6 +82,7 @@ export default function PlansPage() {
     mutationFn: (data: Form) => {
       const clean = { ...data, durationDays: data.durationDays || undefined, isTrial: data.isTrial ?? false, isActive: data.isActive ?? true };
       if (editing) {
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const { name: _n, ...payload } = clean;
         return api.patch(`/web/super-admin/plans/${editing.id}`, payload);
       }
@@ -129,8 +139,10 @@ export default function PlansPage() {
                     <td key={j} className="px-5 py-4"><div className="h-4 bg-[var(--color-surface-elevated)] rounded animate-pulse" /></td>
                   ))}</tr>
                 ))
+              ) : isError ? (
+                <tr><td colSpan={10}><ErrorState error={error} onRetry={refetch} isRetrying={isFetching} /></td></tr>
               ) : plans.length === 0 ? (
-                <tr><td colSpan={10} className="px-5 py-14 text-center text-sm text-[var(--color-text-muted)]">No plans yet. Create one to get started.</td></tr>
+                <tr><td colSpan={10}><EmptyState message="No plans yet" description="Create one to get started." /></td></tr>
               ) : plans.map(plan => (
                 <tr key={plan.id} className="hover:bg-[var(--color-surface-elevated)] transition-colors">
                   {/* Plan name */}
@@ -234,9 +246,16 @@ export default function PlansPage() {
             </tbody>
           </table>
         </div>
-        {!isLoading && plans.length > 0 && (
-          <div className="px-5 py-3 border-t border-[var(--color-border)] text-xs text-[var(--color-text-muted)]">
-            {plans.length} plan{plans.length !== 1 ? 's' : ''}
+        {!isLoading && meta && meta.total > 0 && (
+          <div className="px-4 border-t border-[var(--color-border)]">
+            <Pagination
+              page={meta.currentPage}
+              totalPages={meta.totalPages}
+              total={meta.total}
+              limit={meta.limit}
+              onPageChange={setPage}
+              onLimitChange={(l) => { setPage(1); setLimit(l); }}
+            />
           </div>
         )}
       </div>

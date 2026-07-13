@@ -13,6 +13,7 @@ import { Modal } from '@/components/ui/Modal';
 import { Input } from '@/components/ui/Input';
 import { Textarea } from '@/components/ui/Textarea';
 import { PageSpinner } from '@/components/ui/Spinner';
+import { ErrorState } from '@/components/ui/ErrorState';
 import { Star, CheckCircle, XCircle, RefreshCw, UserCheck, ChevronLeft, CalendarClock, ThumbsUp, ThumbsDown, AlertTriangle } from 'lucide-react';
 import dayjs from 'dayjs';
 import Link from 'next/link';
@@ -90,7 +91,7 @@ export default function TicketDetailPage() {
   const [showCancel, setShowCancel] = useState(false);
   const [assignMode, setAssignMode] = useState<'assign' | 'reassign' | 'reschedule'>('assign');
 
-  const { data: ticket, isLoading } = useQuery<Ticket>({ queryKey: ['ticket', id], queryFn: async () => (await api.get(`/web/manager/tickets/${id}`)).data.data });
+  const { data: ticket, isLoading, isError, error, refetch, isFetching } = useQuery<Ticket>({ queryKey: ['ticket', id], queryFn: async () => (await api.get(`/web/manager/tickets/${id}`)).data.data });
   const { data: techs = [] } = useQuery<Technician[]>({ queryKey: ['technicians'], queryFn: async () => (await api.get('/web/manager/technicians')).data.data });
 
   const { data: allTickets = [] } = useQuery<Ticket[]>({
@@ -166,7 +167,9 @@ export default function TicketDetailPage() {
     onError: (err: any) => toast.error(err?.response?.data?.message ?? 'Failed'),
   });
 
-  if (isLoading || !ticket) return <PageSpinner />;
+  if (isLoading) return <PageSpinner />;
+  if (isError) return <ErrorState error={error} onRetry={refetch} isRetrying={isFetching} />;
+  if (!ticket) return <ErrorState title="Ticket not found" message="This ticket may have been removed or the link is incorrect." onRetry={refetch} />;
 
   const canAssign = ticket.status === 'NEW_TICKET';
   const canReassign = ticket.status === 'ASSIGNED' || ticket.status === 'ACCEPTED';

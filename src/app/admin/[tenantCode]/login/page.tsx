@@ -146,7 +146,7 @@ function WorkspaceErrorScreen({ errorCode }: { errorCode: ErrorCode }) {
           )}
 
           <p className="text-slate-500 text-xs text-center mb-6 leading-relaxed">
-            Please contact your organisation's administrator or verify the workspace URL.
+            Please contact your organisation&apos;s administrator or verify the workspace URL.
           </p>
 
           <button

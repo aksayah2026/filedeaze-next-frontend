@@ -7,6 +7,7 @@ import { toast } from 'sonner';
 import api from '@/lib/axios';
 import { Plan } from '@/types';
 import { PageSpinner } from '@/components/ui/Spinner';
+import { ErrorState } from '@/components/ui/ErrorState';
 import { Badge } from '@/components/ui/Badge';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
@@ -48,7 +49,7 @@ export default function SubscriptionPage() {
   const [uploading, setUploading] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
-  const { data, isLoading } = useQuery<SubscriptionInfo>({
+  const { data, isLoading, isError, error, refetch, isFetching } = useQuery<SubscriptionInfo>({
     queryKey: ['my-subscription'],
     queryFn: async () => (await api.get('/web/subscription/info')).data.data,
   });
@@ -102,6 +103,8 @@ export default function SubscriptionPage() {
   });
 
   if (isLoading) return <PageSpinner />;
+  if (isError) return <ErrorState error={error} onRetry={refetch} isRetrying={isFetching} />;
+  if (!data) return <ErrorState title="Not found" message="This record may have been removed or the link is incorrect." onRetry={refetch} />;
 
   const {
     tenantStatus, isTrial: isTrialFromApi, trialDaysLeft, trialEndsAt, currentPlan,

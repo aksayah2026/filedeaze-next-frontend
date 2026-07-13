@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import api from '@/lib/axios';
@@ -9,6 +9,8 @@ import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { PageSpinner } from '@/components/ui/Spinner';
+import { ErrorState } from '@/components/ui/ErrorState';
+import { Pagination, PaginationMeta } from '@/components/ui/Pagination';
 import { CheckCircle, XCircle, ExternalLink, Clock } from 'lucide-react';
 import dayjs from 'dayjs';
 
@@ -38,12 +40,20 @@ export default function PaymentRequestsPage() {
   const qc = useQueryClient();
   const [filter, setFilter] = useState<string>('PENDING_REVIEW');
   const [rejectId, setRejectId] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(20);
 
-  const { data: requests = [], isLoading } = useQuery<PaymentRequest[]>({
-    queryKey: ['payment-requests', filter],
+  const { data, isLoading, isError, error, refetch, isFetching } = useQuery<{ items: PaymentRequest[]; meta: PaginationMeta }>({
+    queryKey: ['payment-requests', filter, page, limit],
     queryFn: async () =>
-      (await api.get('/web/super-admin/payment-requests', { params: filter ? { status: filter } : {} })).data.data,
+      (await api.get('/web/super-admin/payment-requests', {
+        params: { ...(filter ? { status: filter } : {}), page, limit },
+      })).data.data,
+    placeholderData: keepPreviousData,
   });
+
+  const requests = data?.items ?? [];
+  const meta = data?.meta;
 
   const approveMutation = useMutation({
     mutationFn: (id: string) => api.patch(`/web/super-admin/payment-requests/${id}/approve`),
@@ -83,7 +93,7 @@ export default function PaymentRequestsPage() {
           {filterOptions.map(opt => (
             <button
               key={opt.value}
-              onClick={() => setFilter(opt.value)}
+              onClick={() => { setPage(1); setFilter(opt.value); }}
               className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
                 filter === opt.value
                   ? 'bg-violet-600 text-white'
@@ -98,6 +108,8 @@ export default function PaymentRequestsPage() {
 
       {isLoading ? (
         <PageSpinner />
+      ) : isError ? (
+        <ErrorState error={error} onRetry={refetch} isRetrying={isFetching} />
       ) : requests.length === 0 ? (
         <div className="bg-[var(--color-surface)] rounded-xl p-10 text-center border border-[var(--color-border)]">
           <Clock size={32} className="text-gray-300 mx-auto mb-3" />
@@ -203,6 +215,17 @@ export default function PaymentRequestsPage() {
               )}
             </div>
           ))}
+
+          {meta && meta.total > 0 && (
+            <Pagination
+              page={meta.currentPage}
+              totalPages={meta.totalPages}
+              total={meta.total}
+              limit={meta.limit}
+              onPageChange={setPage}
+              onLimitChange={(l) => { setPage(1); setLimit(l); }}
+            />
+          )}
         </div>
       )}
     </div>

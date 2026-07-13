@@ -13,6 +13,7 @@ import { Button } from '@/components/ui/Button';
 import { Select } from '@/components/ui/Select';
 import { Badge, TenantStatusBadge } from '@/components/ui/Badge';
 import { PageSpinner } from '@/components/ui/Spinner';
+import { ErrorState } from '@/components/ui/ErrorState';
 import { ColumnDef } from '@tanstack/react-table';
 import { DataTable } from '@/components/ui/DataTable';
 import dayjs from 'dayjs';
@@ -25,7 +26,7 @@ export default function TenantDetailPage() {
   const qc = useQueryClient();
   const [showQr, setShowQr] = useState(false);
 
-  const { data: tenant, isLoading } = useQuery<Tenant>({
+  const { data: tenant, isLoading, isError, error, refetch, isFetching } = useQuery<Tenant>({
     queryKey: ['tenant', id],
     queryFn: async () => (await api.get(`/web/super-admin/tenants/${id}`)).data.data,
   });
@@ -35,7 +36,7 @@ export default function TenantDetailPage() {
     queryFn: async () => (await api.get('/web/super-admin/plans')).data.data,
   });
 
-  const { data: billings = [] } = useQuery<Billing[]>({
+  const { data: billings = [], isLoading: billingsLoading, isError: billingsError, error: billingsErr, refetch: refetchBillings } = useQuery<Billing[]>({
     queryKey: ['tenant-billings', id],
     queryFn: async () => {
       const res = await api.get(`/web/super-admin/billing`, { params: { tenantId: id } });
@@ -141,7 +142,9 @@ export default function TenantDetailPage() {
     },
   ];
 
-  if (isLoading || !tenant) return <PageSpinner />;
+  if (isLoading) return <PageSpinner />;
+  if (isError) return <ErrorState error={error} onRetry={refetch} isRetrying={isFetching} />;
+  if (!tenant) return <ErrorState title="Tenant not found" message="This tenant may have been removed or the link is incorrect." onRetry={refetch} />;
 
   const currentPlan = tenant.subscription?.plan ?? tenant.selectedPlan ?? null;
   const currentPlanId = tenant.subscription?.planId ?? tenant.selectedPlanId ?? '';
@@ -503,7 +506,7 @@ export default function TenantDetailPage() {
           {billings.length === 0 ? (
             <p className="text-sm text-[var(--color-text-muted)] text-center py-6">No billing records found.</p>
           ) : (
-            <DataTable data={billings} columns={billingColumns} isLoading={false} />
+            <DataTable data={billings} columns={billingColumns} isLoading={billingsLoading} isError={billingsError} error={billingsErr} onRetry={refetchBillings} />
           )}
         </div>
       </div>

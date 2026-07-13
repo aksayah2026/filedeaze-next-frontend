@@ -12,10 +12,12 @@ import { DataTable } from '@/components/ui/DataTable';
 import { ColumnDef } from '@tanstack/react-table';
 import { DollarSign, CreditCard, Banknote, Receipt, Activity, Clock } from 'lucide-react';
 import dayjs from 'dayjs';
+import { formatDate, formatCurrency } from '@/lib/utils';
 
 import { ReportLayout, KpiGrid } from '@/components/ui/ReportLayout';
 import { StatsCard } from '@/components/ui/StatsCard';
 import { EmptyState } from '@/components/ui/EmptyState';
+import { ErrorState } from '@/components/ui/ErrorState';
 
 type Payment = RevenueReport['payments'][number];
 
@@ -28,7 +30,7 @@ const METHOD_COLORS: Record<string, string> = {
 
 function exportCsv(payments: Payment[]) {
   const headers = ['Ticket', 'Customer', 'Amount', 'Method', 'Date'];
-  const rows = payments.map(p => [p.ticketNumber, p.customer, p.amount, p.method, dayjs(p.date).format('DD MMM YYYY')]);
+  const rows = payments.map(p => [p.ticketNumber, p.customer, p.amount, p.method, formatDate(p.date)]);
   const csv = [headers, ...rows].map(r => r.map(c => `"${c}"`).join(',')).join('\n');
   const blob = new Blob([csv], { type: 'text/csv' });
   const url = URL.createObjectURL(blob);
@@ -49,7 +51,7 @@ export default function RevenueReportPage() {
 
   useEffect(() => setMounted(true), []);
 
-  const { data, isLoading } = useQuery<RevenueReport>({
+  const { data, isLoading, isError, error, refetch, isFetching } = useQuery<RevenueReport>({
     queryKey: ['revenue-report', params],
     queryFn: async () => {
       const res = await api.get('/web/admin/reports/revenue', { params });
@@ -96,10 +98,10 @@ export default function RevenueReportPage() {
   const insights = useMemo(() => {
     if (payments.length === 0) return ['No revenue data recorded for this period.'];
     const i = [];
-    i.push(`Total revenue for the selected period reached ₹${total.toLocaleString()}.`);
-    
+    i.push(`Total revenue for the selected period reached ${formatCurrency(total)}.`);
+
     if (transactions > 0) {
-      i.push(`Average ticket value is strong at ₹${avgValue.toLocaleString()} across ${transactions} transactions.`);
+      i.push(`Average ticket value is strong at ${formatCurrency(avgValue)} across ${transactions} transactions.`);
     }
     
     const topMethod = methodData.sort((a,b) => b.amount - a.amount)[0];
@@ -127,7 +129,7 @@ export default function RevenueReportPage() {
         </span>
       )
     },
-    { accessorKey: 'date', header: 'Date', cell: ({ row }) => dayjs(row.original.date).format('DD MMM YYYY') },
+    { accessorKey: 'date', header: 'Date', cell: ({ row }) => formatDate(row.original.date) },
   ];
 
   const CustomTooltip = ({ active, payload, label }: any) => {
@@ -165,7 +167,7 @@ export default function RevenueReportPage() {
       <KpiGrid>
         <StatsCard
           title="Total Revenue"
-          value={`₹${total.toLocaleString()}`}
+          value={formatCurrency(total)}
           icon={DollarSign}
           iconColor="text-emerald-600"
           iconBg="bg-emerald-100 dark:bg-emerald-500/20"
@@ -182,7 +184,7 @@ export default function RevenueReportPage() {
         />
         <StatsCard
           title="Average Ticket"
-          value={`₹${avgValue.toLocaleString()}`}
+          value={formatCurrency(avgValue)}
           icon={Activity}
           iconColor="text-violet-600"
           iconBg="bg-violet-100 dark:bg-violet-500/20"
@@ -190,7 +192,7 @@ export default function RevenueReportPage() {
         />
         <StatsCard
           title="Cash Collection"
-          value={`₹${cashTotal.toLocaleString()}`}
+          value={formatCurrency(cashTotal)}
           icon={Banknote}
           iconColor="text-teal-600"
           iconBg="bg-teal-100 dark:bg-teal-500/20"
@@ -198,7 +200,7 @@ export default function RevenueReportPage() {
         />
         <StatsCard
           title="Online Payments"
-          value={`₹${onlineTotal.toLocaleString()}`}
+          value={formatCurrency(onlineTotal)}
           icon={CreditCard}
           iconColor="text-amber-600"
           iconBg="bg-amber-100 dark:bg-amber-500/20"
@@ -206,7 +208,9 @@ export default function RevenueReportPage() {
         />
       </KpiGrid>
 
-      {payments.length === 0 && !isLoading ? (
+      {isError ? (
+        <ErrorState error={error} onRetry={refetch} isRetrying={isFetching} />
+      ) : payments.length === 0 && !isLoading ? (
         <EmptyState message="No Revenue Data" description="Try adjusting your date filters to see data." />
       ) : (
         <>

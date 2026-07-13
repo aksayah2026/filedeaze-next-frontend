@@ -16,6 +16,7 @@ import { Select } from '@/components/ui/Select';
 import { Modal } from '@/components/ui/Modal';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { Badge } from '@/components/ui/Badge';
+import { ErrorState } from '@/components/ui/ErrorState';
 import { useRoleAccent } from '@/lib/useRoleAccent';
 import { cn } from '@/lib/utils';
 
@@ -399,7 +400,7 @@ export default function ServiceCatalogPage() {
   const [showCreateSub, setShowCreateSub] = useState(false);
   const [deleteSubId, setDeleteSubId] = useState<string | null>(null);
   const [chargingId, setChargingId] = useState<string | null>(null);
-  const [defaultCatId, setDefaultCatId] = useState<string>('');
+  const [, setDefaultCatId] = useState<string>('');
 
   // ── Skill mapping modal state — services select from the Master Skills list only
   const [skillsFor, setSkillsFor] = useState<ServiceSubCategory | null>(null);
@@ -411,17 +412,26 @@ export default function ServiceCatalogPage() {
   const chargesForm = useForm<ChargesForm>();
 
   // ── Queries (same query keys — no extra API calls)
-  const { data: categories = [], isLoading: catsLoading } = useQuery<ServiceCategory[]>({
+  const {
+    data: categories = [], isLoading: catsLoading,
+    isError: catsError, error: catsErr, refetch: refetchCats,
+  } = useQuery<ServiceCategory[]>({
     queryKey: ['service-categories'],
     queryFn: async () => (await api.get('/web/manager/service-categories')).data.data,
   });
 
-  const { data: allSubs = [], isLoading: subsLoading } = useQuery<ServiceSubCategory[]>({
+  const {
+    data: allSubs = [], isLoading: subsLoading,
+    isError: subsError, error: subsErr, refetch: refetchSubs,
+  } = useQuery<ServiceSubCategory[]>({
     queryKey: ['sub-categories', ''],
     queryFn: async () => (await api.get('/web/manager/service-sub-categories')).data.data,
   });
 
   const isLoading = catsLoading || subsLoading;
+  const isError = catsError || subsError;
+  const pageError = catsErr ?? subsErr;
+  const refetchAll = () => { refetchCats(); refetchSubs(); };
 
   const { data: mappedSkills = [] } = useQuery<SubCategorySkill[]>({
     queryKey: ['sub-category-skills', skillsFor?.id],
@@ -690,6 +700,8 @@ export default function ServiceCatalogPage() {
             </div>
           ))}
         </div>
+      ) : isError ? (
+        <ErrorState error={pageError} onRetry={refetchAll} />
       ) : filteredData.length === 0 ? (
         <div className="py-16 flex flex-col items-center gap-3 text-center">
           <div className="h-14 w-14 rounded-2xl bg-[var(--color-surface-elevated)] flex items-center justify-center">

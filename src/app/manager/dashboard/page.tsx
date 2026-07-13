@@ -8,11 +8,12 @@ import { ManagerDashboard } from '@/types';
 import { StatsCard } from '@/components/ui/StatsCard';
 import { ProgressBar } from '@/components/ui/ProgressBar';
 import { SkeletonCard, SkeletonLine } from '@/components/ui/Spinner';
+import { ErrorState } from '@/components/ui/ErrorState';
 import { useRoleAccent } from '@/lib/useRoleAccent';
 
 export default function ManagerDashboardPage() {
   const accent = useRoleAccent();
-  const { data, isLoading } = useQuery<ManagerDashboard>({
+  const { data, isLoading, isError, error, refetch, isFetching } = useQuery<ManagerDashboard>({
     queryKey: ['manager-dashboard'],
     queryFn: async () => (await api.get('/web/manager/dashboard')).data.data,
   });
@@ -40,7 +41,9 @@ export default function ManagerDashboardPage() {
             <SkeletonLine className="w-full h-6" />
           </div>
         </div>
-      ) : !data ? null : (
+      ) : isError || !data ? (
+        <ErrorState error={error} onRetry={refetch} isRetrying={isFetching} />
+      ) : (
         <div className="space-y-6">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           <StatsCard

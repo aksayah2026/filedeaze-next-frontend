@@ -2,11 +2,11 @@
 
 import { useState } from 'react';
 import { usePathname, useSearchParams } from 'next/navigation';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
-import { AlertTriangle, Eye, Phone, Plus } from 'lucide-react';
+import { Eye, Phone, Plus } from 'lucide-react';
 import Link from 'next/link';
 import api from '@/lib/axios';
 import { Ticket, TicketStatus, Customer, ServiceCategory, ServiceSubCategory } from '@/types';
@@ -18,6 +18,7 @@ import { Modal } from '@/components/ui/Modal';
 import { Textarea } from '@/components/ui/Textarea';
 import { TicketStatusBadge } from '@/components/ui/Badge';
 import { FilterCard } from '@/components/ui/FilterCard';
+import { PaginationMeta } from '@/components/ui/Pagination';
 import dayjs from 'dayjs';
 
 const STATUS_OPTIONS = [
@@ -53,18 +54,19 @@ export default function TicketsPage() {
   const prefix = pathname.startsWith('/admin/') ? 'admin' : 'manager';
   const searchParams = useSearchParams();
   const initialExpiredOnly = searchParams.get('expired') === 'true';
-  const [expiredOnly] = useState(initialExpiredOnly);
   const [params, setParams] = useState<Record<string, string>>(initialExpiredOnly ? { expiredOnly: 'true' } : {});
   const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(20);
   const [showCreate, setShowCreate] = useState(false);
   const [showNewCustomer, setShowNewCustomer] = useState(false);
   const [newCust, setNewCust] = useState<NewCustomerForm>({ name: '', phone: '', email: '', address: '' });
 
-  const { data: response, isLoading } = useQuery<{ data: Ticket[]; meta: { total: number; page: number; limit: number; totalPages: number } }>({
-    queryKey: ['tickets', params, page],
+  const { data: response, isLoading, isError, error, refetch } = useQuery<{ data: Ticket[]; meta: PaginationMeta }>({
+    queryKey: ['tickets', params, page, limit],
     queryFn: async () => (await api.get('/web/manager/tickets', {
-      params: { ...Object.fromEntries(Object.entries(params).filter(([, v]) => v)), page: String(page) },
+      params: { ...Object.fromEntries(Object.entries(params).filter(([, v]) => v)), page, limit },
     })).data,
+    placeholderData: keepPreviousData,
   });
 
   const data = response?.data ?? [];
@@ -174,18 +176,19 @@ export default function TicketsPage() {
         </div>
       </FilterCard>
 
-      <DataTable data={data} columns={columns} isLoading={isLoading} />
-
-      {meta && meta.totalPages > 1 && (
-        <div className="flex items-center justify-between mt-4 text-sm text-[var(--color-text-muted)]">
-          <span>{meta.total} tickets</span>
-          <div className="flex items-center gap-2">
-            <Button variant="secondary" size="sm" onClick={() => setPage(p => p - 1)} disabled={page === 1}>Prev</Button>
-            <span>Page {page} of {meta.totalPages}</span>
-            <Button variant="secondary" size="sm" onClick={() => setPage(p => p + 1)} disabled={page === meta.totalPages}>Next</Button>
-          </div>
-        </div>
-      )}
+      <DataTable
+        data={data}
+        columns={columns}
+        isLoading={isLoading}
+        isError={isError}
+        error={error}
+        onRetry={refetch}
+        pagination={meta ? {
+          meta,
+          onPageChange: setPage,
+          onLimitChange: (l) => { setPage(1); setLimit(l); },
+        } : undefined}
+      />
 
       {/* Create ticket on behalf of customer */}
       <Modal open={showCreate} onClose={closeModal} title="New Ticket — Customer Call" size="md">
@@ -193,7 +196,7 @@ export default function TicketsPage() {
           <Phone size={14} className="text-blue-500 mt-0.5 shrink-0" />
           <p className="text-xs text-blue-700">
             Use this form to raise a service ticket on behalf of a customer who called in.
-            The ticket will be created under the selected customer's account.
+            The ticket will be created under the selected customer&apos;s account.
           </p>
         </div>
 

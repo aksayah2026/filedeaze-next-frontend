@@ -6,7 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useRouter, usePathname } from 'next/navigation';
 import { flushSync } from 'react-dom';
-import { Clock, Eye, EyeOff, Loader2, ShieldCheck, Zap } from 'lucide-react';
+import { Clock, Eye, EyeOff, Loader2, ShieldCheck } from 'lucide-react';
 import api from '@/lib/axios';
 import { useAuth } from '@/contexts/AuthContext';
 import { TenantBranding } from '@/types';

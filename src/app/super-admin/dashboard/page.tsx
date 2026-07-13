@@ -6,11 +6,12 @@ import api from '@/lib/axios';
 import { SuperAdminDashboard } from '@/types';
 import { StatsCard } from '@/components/ui/StatsCard';
 import { SkeletonCard } from '@/components/ui/Spinner';
+import { ErrorState } from '@/components/ui/ErrorState';
 import { useRoleAccent } from '@/lib/useRoleAccent';
 
 export default function SuperAdminDashboardPage() {
   const ACCENT = useRoleAccent();
-  const { data, isLoading } = useQuery<SuperAdminDashboard>({
+  const { data, isLoading, isError, error, refetch, isFetching } = useQuery<SuperAdminDashboard>({
     queryKey: ['super-admin-dashboard'],
     queryFn: async () => (await api.get('/web/super-admin/dashboard')).data.data,
   });
@@ -28,7 +29,9 @@ export default function SuperAdminDashboardPage() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {Array.from({ length: 6 }).map((_, i) => <SkeletonCard key={i} />)}
         </div>
-      ) : !data ? null : (
+      ) : isError || !data ? (
+        <ErrorState error={error} onRetry={refetch} isRetrying={isFetching} />
+      ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
 
           {/* ── Standard: Total Tenants ── */}

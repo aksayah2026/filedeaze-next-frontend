@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
@@ -9,6 +9,7 @@ import { Plus, Pencil, Trash2 } from 'lucide-react';
 import api from '@/lib/axios';
 import { ServiceCategory } from '@/types';
 import { DataTable } from '@/components/ui/DataTable';
+import { PaginationMeta } from '@/components/ui/Pagination';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Modal } from '@/components/ui/Modal';
@@ -22,11 +23,16 @@ export default function ServiceCategoriesPage() {
   const [editing, setEditing] = useState<ServiceCategory | null>(null);
   const [showCreate, setShowCreate] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(20);
 
-  const { data = [], isLoading } = useQuery<ServiceCategory[]>({
-    queryKey: ['service-categories'],
-    queryFn: async () => (await api.get('/web/manager/service-categories')).data.data,
+  const { data, isLoading, isError, error, refetch } = useQuery<{ items: ServiceCategory[]; meta: PaginationMeta }>({
+    queryKey: ['service-categories', page, limit],
+    queryFn: async () => (await api.get('/web/manager/service-categories', { params: { page, limit } })).data.data,
+    placeholderData: keepPreviousData,
   });
+
+  const categories = data?.items ?? [];
 
   const { register, handleSubmit, reset, formState: { isSubmitting } } = useForm<Form>();
 
@@ -64,7 +70,19 @@ export default function ServiceCategoriesPage() {
         <h2 className="text-xl font-semibold text-[var(--color-text-primary)]">Service Categories</h2>
         <Button onClick={() => { setShowCreate(true); reset({ name: '', isActive: true }); }}><Plus size={15} /> New Category</Button>
       </div>
-      <DataTable data={data} columns={columns} isLoading={isLoading} />
+      <DataTable
+        data={categories}
+        columns={columns}
+        isLoading={isLoading}
+        isError={isError}
+        error={error}
+        onRetry={refetch}
+        pagination={data?.meta ? {
+          meta: data.meta,
+          onPageChange: setPage,
+          onLimitChange: (l) => { setPage(1); setLimit(l); },
+        } : undefined}
+      />
 
       <Modal open={showCreate || !!editing} onClose={() => { setShowCreate(false); setEditing(null); reset(); }} title={editing ? 'Edit Category' : 'New Category'} size="sm">
         <form onSubmit={handleSubmit(d => saveMutation.mutate(d))} className="space-y-4">

@@ -1,11 +1,12 @@
 'use client';
 
 import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, keepPreviousData } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import api from '@/lib/axios';
 import { Feedback } from '@/types';
 import { DataTable } from '@/components/ui/DataTable';
+import { PaginationMeta } from '@/components/ui/Pagination';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import { Star } from 'lucide-react';
@@ -27,11 +28,16 @@ export default function FeedbackPage() {
   const [from, setFrom] = useState(monthStart);
   const [to, setTo] = useState(today);
   const [params, setParams] = useState({ from: monthStart, to: today });
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(20);
 
-  const { data = [], isLoading } = useQuery<Feedback[]>({
-    queryKey: ['feedback', params],
-    queryFn: async () => (await api.get('/web/manager/feedback', { params })).data.data,
+  const { data, isLoading, isError, error, refetch } = useQuery<{ items: Feedback[]; meta: PaginationMeta }>({
+    queryKey: ['feedback', params, page, limit],
+    queryFn: async () => (await api.get('/web/manager/feedback', { params: { ...params, page, limit } })).data.data,
+    placeholderData: keepPreviousData,
   });
+
+  const feedback = data?.items ?? [];
 
   const columns: ColumnDef<Feedback, unknown>[] = [
     { accessorKey: 'customer.name', header: 'Customer', cell: ({ row }) => row.original.customer?.name ?? '—' },
@@ -47,9 +53,21 @@ export default function FeedbackPage() {
       <div className="flex gap-3 mb-4 items-end">
         <Input type="date" value={from} onChange={e => setFrom(e.target.value)} className="w-44" />
         <Input type="date" value={to} onChange={e => setTo(e.target.value)} className="w-44" />
-        <Button variant="secondary" onClick={() => setParams({ from, to })}>Filter</Button>
+        <Button variant="secondary" onClick={() => { setPage(1); setParams({ from, to }); }}>Filter</Button>
       </div>
-      <DataTable data={data} columns={columns} isLoading={isLoading} />
+      <DataTable
+        data={feedback}
+        columns={columns}
+        isLoading={isLoading}
+        isError={isError}
+        error={error}
+        onRetry={refetch}
+        pagination={data?.meta ? {
+          meta: data.meta,
+          onPageChange: setPage,
+          onLimitChange: (l) => { setPage(1); setLimit(l); },
+        } : undefined}
+      />
     </div>
   );
 }

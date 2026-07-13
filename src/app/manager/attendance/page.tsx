@@ -1,11 +1,12 @@
 'use client';
 
 import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, keepPreviousData } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import api from '@/lib/axios';
 import { Attendance, Technician } from '@/types';
 import { DataTable } from '@/components/ui/DataTable';
+import { PaginationMeta } from '@/components/ui/Pagination';
 import { Select } from '@/components/ui/Select';
 import { FilterCard } from '@/components/ui/FilterCard';
 import dayjs from 'dayjs';
@@ -17,12 +18,19 @@ export default function AttendancePage() {
   const [from, setFrom] = useState(monthStart);
   const [to, setTo] = useState(today);
   const [params, setParams] = useState({ technicianId: '', from: monthStart, to: today });
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(20);
 
   const { data: techs = [] } = useQuery<Technician[]>({ queryKey: ['technicians'], queryFn: async () => (await api.get('/web/manager/technicians')).data.data });
-  const { data = [], isLoading } = useQuery<Attendance[]>({
-    queryKey: ['attendance', params],
-    queryFn: async () => (await api.get('/web/manager/attendance', { params: Object.fromEntries(Object.entries(params).filter(([, v]) => v)) })).data.data,
+  const { data, isLoading, isError, error, refetch } = useQuery<{ items: Attendance[]; meta: PaginationMeta }>({
+    queryKey: ['attendance', params, page, limit],
+    queryFn: async () => (await api.get('/web/manager/attendance', {
+      params: { ...Object.fromEntries(Object.entries(params).filter(([, v]) => v)), page, limit },
+    })).data.data,
+    placeholderData: keepPreviousData,
   });
+
+  const records = data?.items ?? [];
 
   const columns: ColumnDef<Attendance, unknown>[] = [
     { accessorKey: 'technician.name', header: 'Technician' },
@@ -44,8 +52,8 @@ export default function AttendancePage() {
         to={to}
         onFromChange={setFrom}
         onToChange={setTo}
-        onApply={() => setParams({ technicianId: techId, from, to })}
-        onReset={() => { setTechId(''); setFrom(monthStart); setTo(today); setParams({ technicianId: '', from: monthStart, to: today }); }}
+        onApply={() => { setPage(1); setParams({ technicianId: techId, from, to }); }}
+        onReset={() => { setTechId(''); setFrom(monthStart); setTo(today); setPage(1); setParams({ technicianId: '', from: monthStart, to: today }); }}
         isLoading={isLoading}
       >
         <div className="space-y-1">
@@ -53,7 +61,19 @@ export default function AttendancePage() {
           <Select options={techOptions} value={techId} onChange={e => setTechId(e.target.value)} className="w-48 h-10" />
         </div>
       </FilterCard>
-      <DataTable data={data} columns={columns} isLoading={isLoading} />
+      <DataTable
+        data={records}
+        columns={columns}
+        isLoading={isLoading}
+        isError={isError}
+        error={error}
+        onRetry={refetch}
+        pagination={data?.meta ? {
+          meta: data.meta,
+          onPageChange: setPage,
+          onLimitChange: (l) => { setPage(1); setLimit(l); },
+        } : undefined}
+      />
     </div>
   );
 }
