@@ -145,7 +145,6 @@ export default function TechniciansReportPage() {
           iconColor="text-indigo-600"
           iconBg="bg-indigo-100 dark:bg-indigo-500/20"
           accentColor="bg-indigo-500"
-          trend={{ value: 2, label: 'vs last month' }}
         />
         <StatsCard
           title="Jobs Completed"
@@ -154,7 +153,6 @@ export default function TechniciansReportPage() {
           iconColor="text-teal-600"
           iconBg="bg-teal-100 dark:bg-teal-500/20"
           accentColor="bg-teal-500"
-          trend={{ value: 15, label: 'vs previous' }}
         />
         <StatsCard
           title="Average Rating"

@@ -12,8 +12,10 @@ import { useAuth } from '@/contexts/AuthContext';
 import { TenantInfo } from '@/types';
 import {
   Eye, EyeOff, Loader2, Clock, AlertTriangle,
-  ShieldOff, CreditCard, ChevronLeft, WifiOff, RefreshCw,
+  ShieldOff, CreditCard, ChevronLeft, WifiOff, RefreshCw, ShieldCheck,
 } from 'lucide-react';
+import { toast } from 'sonner';
+import { Modal } from '@/components/ui/Modal';
 
 // ── Schema ─────────────────────────────────────────────────────────────────
 const loginSchema = z.object({
@@ -171,9 +173,35 @@ export default function TenantLoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [loginError, setLoginError] = useState('');
 
-  const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<LoginForm>({
+  const { register, handleSubmit, getValues, formState: { errors, isSubmitting } } = useForm<LoginForm>({
     resolver: zodResolver(loginSchema),
   });
+
+  const [showForgotPass, setShowForgotPass] = useState(false);
+  const [forgotEmail, setForgotEmail] = useState('');
+  const [forgotLoading, setForgotLoading] = useState(false);
+  const [forgotSent, setForgotSent] = useState(false);
+
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!forgotEmail) {
+      toast.error('Please enter your email');
+      return;
+    }
+    setForgotLoading(true);
+    try {
+      await api.post('/auth/forgot-password', {
+        email: forgotEmail,
+        tenantCode
+      });
+      setForgotSent(true);
+    } catch (err: any) {
+      const msg = err.response?.data?.message || 'Failed to send reset link';
+      toast.error(msg);
+    } finally {
+      setForgotLoading(false);
+    }
+  };
 
   const { data: tenant, isLoading, isError, error: queryError, refetch } = useQuery<TenantInfo>({
     queryKey: ['tenant-info', tenantCode],
@@ -279,7 +307,16 @@ export default function TenantLoginPage() {
             </div>
 
             <div>
-              <label className="text-sm font-medium text-slate-300 block mb-2">Password</label>
+              <div className="flex items-center justify-between mb-2">
+                <label className="text-sm font-medium text-slate-300 block">Password</label>
+                <button
+                  type="button"
+                  onClick={() => { setForgotSent(false); setForgotEmail(getValues('email') || ''); setShowForgotPass(true); }}
+                  className="text-xs hover:underline text-blue-500"
+                >
+                  Forgot password?
+                </button>
+              </div>
               <div className="relative">
                 <input
                   type={showPassword ? 'text' : 'password'}
@@ -317,6 +354,60 @@ export default function TenantLoginPage() {
 
         <p className="text-center text-slate-600 text-xs mt-6">Powered by FieldEaze</p>
       </div>
+
+      <Modal open={showForgotPass} onClose={() => setShowForgotPass(false)} title="Reset Password" size="sm">
+        {forgotSent ? (
+          <div className="text-center py-6">
+            <div className="h-12 w-12 rounded-full bg-emerald-100 flex items-center justify-center mx-auto mb-4">
+              <ShieldCheck size={24} className="text-emerald-600" />
+            </div>
+            <h3 className="text-lg font-bold text-slate-800 mb-2">Check your email</h3>
+            <p className="text-sm text-slate-600 mb-6">
+              If an account exists with {forgotEmail}, we've sent instructions to reset your password.
+            </p>
+            <button
+              onClick={() => setShowForgotPass(false)}
+              className="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-500 text-white font-medium py-2.5 rounded-xl transition-colors text-sm"
+            >
+              Back to Sign In
+            </button>
+          </div>
+        ) : (
+          <form onSubmit={handleForgotPassword} className="space-y-4 py-2">
+            <p className="text-sm text-slate-600 mb-4">
+              Enter your email address and we'll send you a link to reset your password.
+            </p>
+            <div>
+              <label className="text-sm font-medium text-slate-700 block mb-1">Email address</label>
+              <input
+                type="email"
+                value={forgotEmail}
+                onChange={e => setForgotEmail(e.target.value)}
+                placeholder="name@company.com"
+                className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+                required
+              />
+            </div>
+            <div className="flex justify-end gap-3 pt-4">
+              <button
+                type="button"
+                onClick={() => setShowForgotPass(false)}
+                className="px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-900"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={forgotLoading || !forgotEmail}
+                className="px-4 py-2 text-sm font-medium text-white rounded-lg transition-colors flex items-center gap-2 disabled:opacity-60 bg-blue-600 hover:bg-blue-500"
+              >
+                {forgotLoading && <Loader2 size={14} className="animate-spin" />}
+                Send Reset Link
+              </button>
+            </div>
+          </form>
+        )}
+      </Modal>
     </div>
   );
 }

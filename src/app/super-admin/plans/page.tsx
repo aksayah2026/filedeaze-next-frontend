@@ -16,19 +16,24 @@ import { ErrorState } from '@/components/ui/ErrorState';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { Pagination, PaginationMeta } from '@/components/ui/Pagination';
 import { cn } from '@/lib/utils';
+import { z } from 'zod';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { requiredString } from '@/lib/validations';
 
-type Form = {
-  name: string;
-  price: number;
-  managerLimit: number;
-  technicianLimit: number;
-  ticketLimit: number;
-  customerLimit: number;
-  storageLimitGb: number;
-  durationDays: number | null;
-  isTrial: boolean;
-  isActive: boolean;
-};
+const planSchema = z.object({
+  name: requiredString('Plan name is required').max(50, 'Max 50 characters'),
+  price: z.number({ message: 'Price is required' }).min(0, 'Price cannot be negative'),
+  managerLimit: z.number({ message: 'Manager limit is required' }).min(1, 'Manager limit must be greater than 0'),
+  technicianLimit: z.number({ message: 'Technician limit is required' }).min(1, 'Technician limit must be greater than 0'),
+  ticketLimit: z.number({ message: 'Ticket limit is required' }).min(1, 'Ticket limit must be greater than 0'),
+  customerLimit: z.number({ message: 'Customer limit is required' }).min(1, 'Customer limit must be greater than 0'),
+  storageLimitGb: z.number({ message: 'Storage limit is required' }).min(1, 'Storage limit must be greater than 0'),
+  durationDays: z.number({ message: 'Duration is required' }).min(1, 'Must be at least 1 day').nullable(),
+  isTrial: z.boolean(),
+  isActive: z.boolean(),
+});
+
+type Form = z.infer<typeof planSchema>;
 
 const lim = (v: number) => (v >= 99999 ? 'Unlimited' : v.toLocaleString());
 
@@ -50,8 +55,10 @@ export default function PlansPage() {
   const plans = data?.items ?? [];
   const meta = data?.meta;
 
-  const { register, handleSubmit, reset, watch, formState: { errors, isSubmitting } } = useForm<Form>({
+  const { register, handleSubmit, reset, watch, formState: { errors, isSubmitting, isValid, isDirty } } = useForm<Form>({
+    resolver: zodResolver(planSchema),
     defaultValues: { isTrial: false, isActive: true, durationDays: null },
+    mode: 'onChange',
   });
   const watchIsTrial = watch('isTrial');
   const watchIsActive = watch('isActive');
@@ -277,18 +284,18 @@ export default function PlansPage() {
             <Input
               label="Plan Name *"
               placeholder="e.g. STARTER, GOLD, ENTERPRISE"
-              {...register('name', { required: 'Plan name is required', maxLength: { value: 50, message: 'Max 50 characters' } })}
+              {...register('name')}
               error={errors.name?.message}
             />
           )}
 
           <div className="grid grid-cols-2 gap-4">
-            <Input label="Price (₹) *" type="number" {...register('price', { valueAsNumber: true, required: 'Price is required', min: { value: 0, message: 'Price cannot be negative' } })} error={errors.price?.message} />
-            <Input label="Manager Limit *" type="number" {...register('managerLimit', { valueAsNumber: true, required: 'Manager limit is required', min: { value: 1, message: 'Manager limit must be greater than 0' } })} error={errors.managerLimit?.message} />
-            <Input label="Technician Limit *" type="number" {...register('technicianLimit', { valueAsNumber: true, required: 'Technician limit is required', min: { value: 1, message: 'Technician limit must be greater than 0' } })} error={errors.technicianLimit?.message} />
-            <Input label="Ticket Limit *" type="number" {...register('ticketLimit', { valueAsNumber: true, required: 'Ticket limit is required', min: { value: 1, message: 'Ticket limit must be greater than 0' } })} error={errors.ticketLimit?.message} />
-            <Input label="Customer Limit *" type="number" {...register('customerLimit', { valueAsNumber: true, required: 'Customer limit is required', min: { value: 1, message: 'Customer limit must be greater than 0' } })} error={errors.customerLimit?.message} />
-            <Input label="Storage (GB) *" type="number" {...register('storageLimitGb', { valueAsNumber: true, required: 'Storage limit is required', min: { value: 1, message: 'Storage limit must be greater than 0' } })} error={errors.storageLimitGb?.message} />
+            <Input label="Price (₹) *" type="number" {...register('price', { valueAsNumber: true })} error={errors.price?.message} />
+            <Input label="Manager Limit *" type="number" {...register('managerLimit', { valueAsNumber: true })} error={errors.managerLimit?.message} />
+            <Input label="Technician Limit *" type="number" {...register('technicianLimit', { valueAsNumber: true })} error={errors.technicianLimit?.message} />
+            <Input label="Ticket Limit *" type="number" {...register('ticketLimit', { valueAsNumber: true })} error={errors.ticketLimit?.message} />
+            <Input label="Customer Limit *" type="number" {...register('customerLimit', { valueAsNumber: true })} error={errors.customerLimit?.message} />
+            <Input label="Storage (GB) *" type="number" {...register('storageLimitGb', { valueAsNumber: true })} error={errors.storageLimitGb?.message} />
           </div>
 
           {/* Make Active + Free Trial toggles — side by side */}
@@ -336,8 +343,6 @@ export default function PlansPage() {
             type="number"
             placeholder="e.g. 30"
             {...register('durationDays', {
-              required: 'Duration is required',
-              min: { value: 1, message: 'Must be at least 1 day' },
               setValueAs: v => (v === '' || v === null || v === undefined ? null : isNaN(Number(v)) ? null : Number(v)),
             })}
             error={errors.durationDays?.message}
@@ -345,7 +350,9 @@ export default function PlansPage() {
 
           <div className="flex justify-end gap-3 pt-1 border-t border-[var(--color-border)]">
             <Button variant="outline" type="button" onClick={() => { setShowCreate(false); setEditing(null); reset(); }}>Cancel</Button>
-            <Button type="submit" loading={isSubmitting}>{editing ? 'Save Changes' : 'Create Plan'}</Button>
+            <Button type="submit" loading={isSubmitting} disabled={!isValid || (!isDirty && !editing)}>
+              {editing ? 'Save Changes' : 'Create Plan'}
+            </Button>
           </div>
         </form>
       </Modal>

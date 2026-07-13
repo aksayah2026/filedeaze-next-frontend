@@ -10,6 +10,8 @@ import { Clock, Eye, EyeOff, Loader2, ShieldCheck } from 'lucide-react';
 import api from '@/lib/axios';
 import { useAuth } from '@/contexts/AuthContext';
 import { TenantBranding } from '@/types';
+import { toast } from 'sonner';
+import { Modal } from '@/components/ui/Modal';
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 
@@ -66,7 +68,33 @@ export default function LoginPage() {
   const [branding, setBranding] = useState<TenantBranding | null>(null);
   const [brandingState, setBrandingState] = useState<'loading' | 'ok' | 'error'>('loading');
 
-  const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<Form>({
+  const [showForgotPass, setShowForgotPass] = useState(false);
+  const [forgotEmail, setForgotEmail] = useState('');
+  const [forgotLoading, setForgotLoading] = useState(false);
+  const [forgotSent, setForgotSent] = useState(false);
+
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!forgotEmail) {
+      toast.error('Please enter your email');
+      return;
+    }
+    setForgotLoading(true);
+    try {
+      await api.post('/auth/forgot-password', {
+        email: forgotEmail,
+        ...(isSuper ? {} : { tenantId: branding?.id })
+      });
+      setForgotSent(true);
+    } catch (err: any) {
+      const msg = err.response?.data?.message || 'Failed to send reset link';
+      toast.error(msg);
+    } finally {
+      setForgotLoading(false);
+    }
+  };
+
+  const { register, handleSubmit, getValues, formState: { errors, isSubmitting } } = useForm<Form>({
     resolver: zodResolver(schema),
   });
 
@@ -295,7 +323,17 @@ export default function LoginPage() {
 
               {/* Password */}
               <div>
-                <label className="text-sm font-medium text-slate-300 block mb-2">Password</label>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="text-sm font-medium text-slate-300 block">Password</label>
+                  <button
+                    type="button"
+                    onClick={() => { setForgotSent(false); setForgotEmail(getValues('email') || ''); setShowForgotPass(true); }}
+                    className="text-xs hover:underline"
+                    style={{ color: accent }}
+                  >
+                    Forgot password?
+                  </button>
+                </div>
                 <div className="relative">
                   <input
                     type={showPw ? 'text' : 'password'}
@@ -345,6 +383,62 @@ export default function LoginPage() {
 
         <p className="text-center text-[var(--color-text-secondary)] text-xs mt-6">Powered by FieldEaze</p>
       </div>
+
+      <Modal open={showForgotPass} onClose={() => setShowForgotPass(false)} title="Reset Password" size="sm">
+        {forgotSent ? (
+          <div className="text-center py-6">
+            <div className="h-12 w-12 rounded-full bg-emerald-100 flex items-center justify-center mx-auto mb-4">
+              <ShieldCheck size={24} className="text-emerald-600" />
+            </div>
+            <h3 className="text-lg font-bold text-slate-800 mb-2">Check your email</h3>
+            <p className="text-sm text-slate-600 mb-6">
+              If an account exists with {forgotEmail}, we've sent instructions to reset your password.
+            </p>
+            <button
+              onClick={() => setShowForgotPass(false)}
+              className="w-full py-2.5 rounded-xl text-white font-medium text-sm transition-colors"
+              style={{ backgroundColor: accent }}
+            >
+              Back to Sign In
+            </button>
+          </div>
+        ) : (
+          <form onSubmit={handleForgotPassword} className="space-y-4 py-2">
+            <p className="text-sm text-slate-600 mb-4">
+              Enter your email address and we'll send you a link to reset your password.
+            </p>
+            <div>
+              <label className="text-sm font-medium text-slate-700 block mb-1">Email address</label>
+              <input
+                type="email"
+                value={forgotEmail}
+                onChange={e => setForgotEmail(e.target.value)}
+                placeholder="name@company.com"
+                className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary-ring)]"
+                required
+              />
+            </div>
+            <div className="flex justify-end gap-3 pt-4">
+              <button
+                type="button"
+                onClick={() => setShowForgotPass(false)}
+                className="px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-900"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={forgotLoading || !forgotEmail}
+                className="px-4 py-2 text-sm font-medium text-white rounded-lg transition-colors flex items-center gap-2 disabled:opacity-60"
+                style={{ backgroundColor: accent }}
+              >
+                {forgotLoading && <Loader2 size={14} className="animate-spin" />}
+                Send Reset Link
+              </button>
+            </div>
+          </form>
+        )}
+      </Modal>
     </div>
   );
 }

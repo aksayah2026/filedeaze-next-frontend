@@ -410,16 +410,30 @@ export default function PaymentHistoryPage() {
               {totalPages > 1 && <span>Page {params.page} of {totalPages}</span>}
             </div>
           )}
-          <DataTable
-            data={billings}
-            columns={columns}
-            isLoading={isLoading}
-            pagination={data?.meta ? {
-              meta: data.meta,
-              onPageChange: (p) => setParams(prev => ({ ...prev, page: p })),
-              onLimitChange: (l) => { setLimit(l); setParams(prev => ({ ...prev, page: 1 })); },
-            } : undefined}
-          />
+          <DataTable data={billings} columns={columns} isLoading={isLoading} />
+          {!isLoading && totalPages > 1 && (
+            <div className="flex items-center justify-center gap-2 pt-2">
+              <Button variant="secondary" size="sm" disabled={params.page <= 1} onClick={() => applyFilters(params.page - 1)}>
+                Previous
+              </Button>
+              {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
+                const p = params.page <= 3 ? i + 1 : params.page - 2 + i;
+                if (p < 1 || p > totalPages) return null;
+                return (
+                  <button
+                    key={p}
+                    className={`w-8 h-8 rounded-lg text-sm font-medium transition-colors ${p === params.page ? 'bg-[var(--color-primary)] text-white' : 'text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-elevated)]'}`}
+                    onClick={() => applyFilters(p)}
+                  >
+                    {p}
+                  </button>
+                );
+              })}
+              <Button variant="secondary" size="sm" disabled={params.page >= totalPages} onClick={() => applyFilters(params.page + 1)}>
+                Next
+              </Button>
+            </div>
+          )}
         </>
       )}
 

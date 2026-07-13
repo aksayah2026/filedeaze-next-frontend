@@ -207,21 +207,21 @@ export default function AdminDashboardPage() {
             />
             <StatsCard
               title="Monthly Revenue"
-              value={`₹${data.monthlyRevenue.toLocaleString()}`}
+              value={`₹${(data.monthlyRevenue || 0).toLocaleString()}`}
               icon={DollarSign}
               accentHex={accent}
-              context={`₹${data.revenueToday.toLocaleString()} collected today`}
-              trend={{ label: `${data.revenueTrendPercent >= 0 ? '+' : ''}${data.revenueTrendPercent}%`, direction: data.revenueTrendPercent >= 0 ? 'up' : 'down' }}
+              context={`₹${(data.revenueToday || 0).toLocaleString()} collected today`}
+              trend={{ label: `${(data.revenueTrendPercent || 0) >= 0 ? '+' : ''}${data.revenueTrendPercent || 0}%`, direction: (data.revenueTrendPercent || 0) >= 0 ? 'up' : 'down' }}
               status="growing"
               footerText="Updated just now"
               staggerClass="stagger-5"
             />
             <StatsCard
               title="Pending Payments"
-              value={`₹${data.pendingPaymentsAmount.toLocaleString()}`}
+              value={`₹${(data.pendingPaymentsAmount || 0).toLocaleString()}`}
               icon={DollarSign}
               accentHex={accent}
-              context={`${data.pendingPaymentsCount} invoice${data.pendingPaymentsCount !== 1 ? 's' : ''} awaiting collection`}
+              context={`${data.pendingPaymentsCount || 0} invoice${(data.pendingPaymentsCount || 0) !== 1 ? 's' : ''} awaiting collection`}
               status="followup"
               footerText="Updated today"
               staggerClass="stagger-6"

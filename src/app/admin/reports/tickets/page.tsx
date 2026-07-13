@@ -190,7 +190,6 @@ export default function TicketsReportPage() {
           iconColor="text-emerald-600"
           iconBg="bg-emerald-100 dark:bg-emerald-500/20"
           accentColor="bg-emerald-500"
-          trend={{ value: 5, label: 'vs previous' }}
         />
         <StatsCard
           title="Avg Resolution"
@@ -199,7 +198,6 @@ export default function TicketsReportPage() {
           iconColor="text-violet-600"
           iconBg="bg-violet-100 dark:bg-violet-500/20"
           accentColor="bg-violet-500"
-          trend={{ value: -12, label: 'faster' }}
         />
       </KpiGrid>
 

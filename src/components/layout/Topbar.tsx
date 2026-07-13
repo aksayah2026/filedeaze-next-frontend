@@ -264,7 +264,26 @@ export function Topbar({ title, onMenuClick, isCollapsed, onToggleCollapse }: To
             <div className="absolute right-0 mt-2 w-80 max-h-96 overflow-y-auto rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-lg z-20">
               <div className="flex items-center justify-between px-3 py-2.5 border-b border-[var(--color-border)]">
                 <span className="text-xs font-semibold text-[var(--color-text-primary)]">Notifications</span>
-                {unreadCount > 0 && (
+                <div className="flex items-center gap-3">
+                  <span
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => {
+                      setShowNotifications(false);
+                      router.push(user?.role === 'SUPER_ADMIN' ? '/super-admin/notifications' : `/${ticketsPrefix}/notifications`);
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        setShowNotifications(false);
+                        router.push(user?.role === 'SUPER_ADMIN' ? '/super-admin/notifications' : `/${ticketsPrefix}/notifications`);
+                      }
+                    }}
+                    className="text-[11px] font-medium text-[var(--color-primary)] hover:underline cursor-pointer"
+                  >
+                    View all
+                  </span>
+                  {unreadCount > 0 && (
                   <div
                     role="button"
                     tabIndex={0}
@@ -283,7 +302,8 @@ export function Topbar({ title, onMenuClick, isCollapsed, onToggleCollapse }: To
                   >
                     Mark all as read
                   </div>
-                )}
+                  )}
+                </div>
               </div>
               {notifications.length === 0 ? (
                 <p className="px-3 py-6 text-center text-xs text-[var(--color-text-muted)]">No notifications yet</p>

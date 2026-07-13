@@ -7,21 +7,26 @@ import { z } from 'zod';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { flushSync } from 'react-dom';
+import Link from 'next/link';
 import api from '@/lib/axios';
 import { useAuth } from '@/contexts/AuthContext';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import { Zap } from 'lucide-react';
+import { emailSchema, requiredString } from '@/lib/validations';
 
 const schema = z.object({
-  email: z.string().min(1, 'Email required').refine(v => v.includes('@') && v.includes('.'), 'Invalid email'),
-  password: z.string().min(1, 'Password required'),
+  email: emailSchema,
+  password: requiredString('Password is required'),
 });
 
 type Form = z.infer<typeof schema>;
 
 export default function SuperAdminLogin() {
-  const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<Form>({ resolver: zodResolver(schema) });
+  const { register, handleSubmit, formState: { errors, isSubmitting, isValid } } = useForm<Form>({ 
+    resolver: zodResolver(schema),
+    mode: 'onChange'
+  });
   const { setAuth } = useAuth();
   const router = useRouter();
 
@@ -51,9 +56,17 @@ export default function SuperAdminLogin() {
         </div>
         <form onSubmit={handleSubmit(onSubmit)} className="bg-[var(--color-surface)] rounded-2xl p-8 shadow-2xl space-y-4">
           <h2 className="text-lg font-semibold text-[var(--color-text-primary)] mb-2">Sign In</h2>
-          <Input label="Email" type="email" placeholder="admin@fieldeaze.com" {...register('email')} error={errors.email?.message} />
-          <Input label="Password" type="password" placeholder="••••••••" {...register('password')} error={errors.password?.message} />
-          <Button type="submit" loading={isSubmitting} className="w-full mt-2">Sign In</Button>
+          <Input label="Email *" type="email" placeholder="admin@fieldeaze.com" {...register('email')} error={errors.email?.message} />
+          <div>
+            <div className="flex items-center justify-between">
+              <label className="text-[11px] font-semibold text-[var(--color-text-muted)] uppercase tracking-wide select-none">Password *</label>
+              <Link href="/super-admin/forgot-password" className="text-xs text-violet-500 hover:text-violet-600 font-medium transition-colors">
+                Forgot Password?
+              </Link>
+            </div>
+            <Input type="password" placeholder="••••••••" {...register('password')} error={errors.password?.message} className="mt-1.5" />
+          </div>
+          <Button type="submit" loading={isSubmitting} disabled={!isValid} className="w-full mt-2">Sign In</Button>
         </form>
       </div>
     </div>

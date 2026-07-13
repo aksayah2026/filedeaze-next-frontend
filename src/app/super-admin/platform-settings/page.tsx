@@ -42,10 +42,11 @@ export default function PlatformSettingsPage() {
   }, [data, reset]);
 
   const saveMutation = useMutation({
-    mutationFn: (dto: UpiForm) => api.patch('/web/super-admin/platform-upi', dto),
-    onSuccess: () => {
+    mutationFn: (dto: UpiForm) => api.patch('/web/super-admin/platform-upi', dto).then(() => dto),
+    onSuccess: (dto) => {
       qc.invalidateQueries({ queryKey: ['platform-upi'] });
       toast.success('UPI settings saved');
+      reset(dto);
     },
     onError: (err: any) => toast.error(err?.response?.data?.message ?? 'Failed to save UPI settings'),
   });

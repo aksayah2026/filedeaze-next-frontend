@@ -172,7 +172,6 @@ export default function RevenueReportPage() {
           iconColor="text-emerald-600"
           iconBg="bg-emerald-100 dark:bg-emerald-500/20"
           accentColor="bg-emerald-500"
-          trend={{ value: 12, label: 'vs previous period' }}
         />
         <StatsCard
           title="Transactions"
