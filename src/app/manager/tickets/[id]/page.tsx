@@ -6,7 +6,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import api from '@/lib/axios';
-import { Ticket, Technician, TicketImage } from '@/types';
+import { Ticket, Technician, TicketImage, SparePart, PaymentMethod, BillingType } from '@/types';
+import { Select } from '@/components/ui/Select';
 import { TicketStatusBadge, PaymentStatusBadge, Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Modal } from '@/components/ui/Modal';
@@ -15,7 +16,7 @@ import { Textarea } from '@/components/ui/Textarea';
 import { PageSpinner } from '@/components/ui/Spinner';
 import { ErrorState } from '@/components/ui/ErrorState';
 import Link from 'next/link';
-import { Star, CheckCircle, XCircle, RefreshCw, UserCheck, ChevronLeft, CalendarClock, ThumbsUp, ThumbsDown, AlertTriangle, Box, ShieldCheck, ShieldOff } from 'lucide-react';
+import { Star, CheckCircle, XCircle, RefreshCw, UserCheck, ChevronLeft, CalendarClock, ThumbsUp, ThumbsDown, AlertTriangle, Box, ShieldCheck, ShieldOff, Plus, Pencil, Trash2 } from 'lucide-react';
 import dayjs from 'dayjs';
 
 const BUSY_STATUSES = ['ASSIGNED', 'ACCEPTED', 'TRAVELLING', 'REACHED_LOCATION', 'IN_PROGRESS', 'PENDING'];
@@ -77,6 +78,232 @@ function TechnicianPicker({ techs, busyIds, value, onChange, skillMatches, requi
         </p>
       )}
       {busy.map(tech => renderTech(tech, 'bg-amber-400', 'On Job', 'bg-amber-100 text-amber-700'))}
+    </div>
+  );
+}
+
+interface DraftPart { sparePartId: string; partName: string; quantity: number; unitPrice: number; unitOfMeasure: string }
+
+function SparePartRow({ part, onEdit, onDelete }: { part: DraftPart; onEdit: () => void; onDelete: () => void }) {
+  return (
+    <div className="flex items-center justify-between rounded-lg border border-[var(--color-border)] px-3 py-2 text-sm">
+      <div>
+        <p className="font-medium text-[var(--color-text-primary)]">{part.partName}</p>
+        <p className="text-xs text-[var(--color-text-muted)]">Qty {part.quantity} × ₹{part.unitPrice.toLocaleString()} / {part.unitOfMeasure}</p>
+      </div>
+      <div className="flex items-center gap-3">
+        <span className="font-medium text-[var(--color-text-primary)]">₹{(part.quantity * part.unitPrice).toLocaleString()}</span>
+        <button type="button" onClick={onEdit} className="text-[var(--color-text-muted)] hover:text-[var(--color-primary)]"><Pencil size={14} /></button>
+        <button type="button" onClick={onDelete} className="text-[var(--color-text-muted)] hover:text-red-500"><Trash2 size={14} /></button>
+      </div>
+    </div>
+  );
+}
+
+/** Interactive Payment card for a COMPLETED ticket with no payment yet — lets a manager collect
+ * payment from the web dashboard, itemizing spare parts as Warranty (always ₹0) or Non-Warranty
+ * (billed at quantity × unit price), matching the Warranty/Non-Warranty billing workflow. */
+function PaymentCollectionCard({ ticketId, subCategoryId, isAmcCovered, onCollected }: {
+  ticketId: string;
+  subCategoryId?: string;
+  isAmcCovered: boolean;
+  onCollected: () => void;
+}) {
+  const [billingType, setBillingType] = useState<BillingType>('NON_WARRANTY');
+  const [serviceCharge, setServiceCharge] = useState('0');
+  const [labourCharge, setLabourCharge] = useState('0');
+  const [additionalCharge, setAdditionalCharge] = useState('0');
+  const [discount, setDiscount] = useState('0');
+  const [method, setMethod] = useState<PaymentMethod>('CASH');
+  const [warrantyParts, setWarrantyParts] = useState<DraftPart[]>([]);
+  const [nonWarrantyParts, setNonWarrantyParts] = useState<DraftPart[]>([]);
+  const [dialog, setDialog] = useState<{ section: 'warranty' | 'nonWarranty'; editIndex?: number } | null>(null);
+  const [dialogPartId, setDialogPartId] = useState('');
+  const [dialogQty, setDialogQty] = useState('1');
+
+  const { data: catalog = [] } = useQuery<SparePart[]>({
+    queryKey: ['sub-category-spare-parts', subCategoryId],
+    queryFn: async () => (await api.get(`/web/manager/service-sub-categories/${subCategoryId}/spare-parts`)).data.data,
+    enabled: !!subCategoryId,
+  });
+
+  const collectMutation = useMutation({
+    mutationFn: (payload: unknown) => api.post(`/web/manager/tickets/${ticketId}/collect-payment`, payload),
+    onSuccess: () => { toast.success('Payment collected and invoice generated'); onCollected(); },
+    onError: (err: any) => toast.error(err?.response?.data?.message ?? 'Failed to collect payment'),
+  });
+
+  const serviceChargeWaived = isAmcCovered || billingType === 'WARRANTY';
+  const effectiveService = serviceChargeWaived ? 0 : Number(serviceCharge) || 0;
+  const effectiveLabour = serviceChargeWaived ? 0 : Number(labourCharge) || 0;
+  const warrantyValue = warrantyParts.reduce((s, p) => s + p.quantity * p.unitPrice, 0);
+  const chargeablePartsTotal = nonWarrantyParts.reduce((s, p) => s + p.quantity * p.unitPrice, 0);
+  const gross = effectiveService + effectiveLabour + chargeablePartsTotal + (Number(additionalCharge) || 0);
+  const grandTotal = Math.max(gross - (Number(discount) || 0), 0);
+
+  const openAddDialog = (section: 'warranty' | 'nonWarranty') => {
+    setDialog({ section });
+    setDialogPartId('');
+    setDialogQty('1');
+  };
+  const openEditDialog = (section: 'warranty' | 'nonWarranty', index: number) => {
+    const part = (section === 'warranty' ? warrantyParts : nonWarrantyParts)[index];
+    setDialog({ section, editIndex: index });
+    setDialogPartId(part.sparePartId);
+    setDialogQty(String(part.quantity));
+  };
+  const closeDialog = () => setDialog(null);
+
+  const saveDialog = () => {
+    if (!dialog) return;
+    const sparePart = catalog.find(p => p.id === dialogPartId);
+    if (!sparePart || !dialogQty || Number(dialogQty) < 1) return;
+    const draft: DraftPart = {
+      sparePartId: sparePart.id, partName: sparePart.partName,
+      quantity: Number(dialogQty), unitPrice: sparePart.unitPrice, unitOfMeasure: sparePart.unitOfMeasure,
+    };
+    const setList = dialog.section === 'warranty' ? setWarrantyParts : setNonWarrantyParts;
+    setList(prev => {
+      if (dialog.editIndex !== undefined) {
+        const copy = [...prev];
+        copy[dialog.editIndex] = draft;
+        return copy;
+      }
+      return [...prev, draft];
+    });
+    closeDialog();
+  };
+
+  const removePart = (section: 'warranty' | 'nonWarranty', index: number) => {
+    const setList = section === 'warranty' ? setWarrantyParts : setNonWarrantyParts;
+    setList(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const handleSubmit = () => {
+    collectMutation.mutate({
+      billingType,
+      serviceCharge: Number(serviceCharge) || 0,
+      labourCharge: Number(labourCharge) || 0,
+      additionalCharge: Number(additionalCharge) || 0,
+      discount: Number(discount) || 0,
+      warrantyParts: warrantyParts.map(p => ({ sparePartId: p.sparePartId, quantity: p.quantity })),
+      nonWarrantyParts: nonWarrantyParts.map(p => ({ sparePartId: p.sparePartId, quantity: p.quantity })),
+      method,
+    });
+  };
+
+  return (
+    <div className="bg-[var(--color-surface)] rounded-xl p-4 border border-[var(--color-border)] shadow-sm space-y-4">
+      <h3 className="font-medium text-[var(--color-text-secondary)]">Payment Details</h3>
+
+      <div className="grid grid-cols-2 gap-3">
+        <Select
+          label="Billing Type" value={billingType}
+          onChange={e => setBillingType(e.target.value as BillingType)}
+          options={[
+            { value: 'NON_WARRANTY', label: 'Non-Warranty' },
+            { value: 'WARRANTY', label: 'Warranty' },
+            { value: 'PARTIAL_WARRANTY', label: 'Partial Warranty' },
+          ]}
+        />
+        <Select
+          label="Payment Method" value={method}
+          onChange={e => setMethod(e.target.value as PaymentMethod)}
+          options={[
+            { value: 'CASH', label: 'Cash' },
+            { value: 'UPI', label: 'UPI' },
+            { value: 'UPI_QR', label: 'UPI QR' },
+            { value: 'RAZORPAY', label: 'Razorpay' },
+            { value: 'CARD', label: 'Card' },
+            { value: 'NET_BANKING', label: 'Net Banking' },
+            { value: 'WALLET', label: 'Wallet' },
+          ]}
+        />
+      </div>
+
+      {isAmcCovered && (
+        <p className="text-xs text-emerald-600 flex items-center gap-1.5"><ShieldCheck size={13} /> AMC-covered visit — service &amp; labour charge are waived regardless of billing type.</p>
+      )}
+
+      <div className="grid grid-cols-2 gap-3">
+        <Input
+          label="Service Charge" type="number" min={0} value={serviceCharge}
+          onChange={e => setServiceCharge(e.target.value)} disabled={serviceChargeWaived}
+          hint={serviceChargeWaived ? 'Waived' : undefined}
+        />
+        <Input
+          label="Labour Charge" type="number" min={0} value={labourCharge}
+          onChange={e => setLabourCharge(e.target.value)} disabled={serviceChargeWaived}
+          hint={serviceChargeWaived ? 'Waived' : undefined}
+        />
+      </div>
+
+      <div>
+        <div className="flex items-center justify-between mb-2">
+          <p className="text-sm font-medium text-emerald-600">🟢 Warranty Spare Parts</p>
+          <Button type="button" size="sm" variant="secondary" onClick={() => openAddDialog('warranty')}><Plus size={13} /> Add Spare Part</Button>
+        </div>
+        <div className="space-y-2">
+          {warrantyParts.map((p, i) => (
+            <SparePartRow key={i} part={p} onEdit={() => openEditDialog('warranty', i)} onDelete={() => removePart('warranty', i)} />
+          ))}
+          {!warrantyParts.length && <p className="text-xs text-[var(--color-text-muted)]">No warranty spare parts added.</p>}
+        </div>
+      </div>
+
+      <div>
+        <div className="flex items-center justify-between mb-2">
+          <p className="text-sm font-medium text-rose-600">🔴 Non-Warranty Spare Parts</p>
+          <Button type="button" size="sm" variant="secondary" onClick={() => openAddDialog('nonWarranty')}><Plus size={13} /> Add Spare Part</Button>
+        </div>
+        <div className="space-y-2">
+          {nonWarrantyParts.map((p, i) => (
+            <SparePartRow key={i} part={p} onEdit={() => openEditDialog('nonWarranty', i)} onDelete={() => removePart('nonWarranty', i)} />
+          ))}
+          {!nonWarrantyParts.length && <p className="text-xs text-[var(--color-text-muted)]">No non-warranty spare parts added.</p>}
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-3">
+        <Input label="Additional Charge" type="number" min={0} value={additionalCharge} onChange={e => setAdditionalCharge(e.target.value)} />
+        <Input label="Discount" type="number" min={0} value={discount} onChange={e => setDiscount(e.target.value)} />
+      </div>
+
+      <div className="rounded-lg bg-[var(--color-surface-elevated)] p-3 space-y-1 text-sm">
+        <p className="font-semibold text-[var(--color-text-secondary)] mb-1">Summary</p>
+        <div className="flex justify-between"><span className="text-[var(--color-text-muted)]">Service Charge</span><span>₹{effectiveService.toLocaleString()}</span></div>
+        <div className="flex justify-between"><span className="text-[var(--color-text-muted)]">Labour Charge</span><span>₹{effectiveLabour.toLocaleString()}</span></div>
+        <div className="flex justify-between">
+          <span className="text-[var(--color-text-muted)]">Warranty Spare Parts</span>
+          <span>₹0 {warrantyValue > 0 && <span className="text-xs text-[var(--color-text-muted)]">(covered value ₹{warrantyValue.toLocaleString()})</span>}</span>
+        </div>
+        <div className="flex justify-between"><span className="text-[var(--color-text-muted)]">Chargeable Spare Parts</span><span>₹{chargeablePartsTotal.toLocaleString()}</span></div>
+        {Number(additionalCharge) > 0 && <div className="flex justify-between"><span className="text-[var(--color-text-muted)]">Additional Charge</span><span>₹{Number(additionalCharge).toLocaleString()}</span></div>}
+        {Number(discount) > 0 && <div className="flex justify-between"><span className="text-[var(--color-text-muted)]">Discount</span><span>-₹{Number(discount).toLocaleString()}</span></div>}
+        <div className="flex justify-between border-t border-[var(--color-border)] pt-1 mt-1 font-semibold text-[var(--color-text-primary)]"><span>Grand Total</span><span>₹{grandTotal.toLocaleString()}</span></div>
+        <p className="text-[10px] text-[var(--color-text-muted)] pt-1">Tax (if enabled for your tenant) is applied at submission — the invoice total may include GST on top of this.</p>
+      </div>
+
+      <div className="flex justify-end">
+        <Button onClick={handleSubmit} loading={collectMutation.isPending} disabled={grandTotal <= 0 && !serviceChargeWaived}>Collect Payment</Button>
+      </div>
+
+      <Modal open={!!dialog} onClose={closeDialog} title={dialog?.editIndex !== undefined ? 'Edit Spare Part' : 'Add Spare Part'} size="sm">
+        <div className="space-y-4">
+          <Select
+            label="Spare Part" value={dialogPartId} placeholder="Select a spare part"
+            onChange={e => setDialogPartId(e.target.value)}
+            options={catalog.map(p => ({ value: p.id, label: `${p.partName} — ₹${p.unitPrice.toLocaleString()} / ${p.unitOfMeasure}` }))}
+          />
+          <Input label="Quantity" type="number" min={1} value={dialogQty} onChange={e => setDialogQty(e.target.value)} />
+          <div className="flex justify-end gap-3">
+            <Button variant="secondary" type="button" onClick={closeDialog}>Cancel</Button>
+            <Button type="button" onClick={saveDialog} disabled={!dialogPartId || Number(dialogQty) < 1}>
+              {dialog?.editIndex !== undefined ? 'Save' : 'Add'}
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 }
@@ -294,11 +521,31 @@ export default function TicketDetailPage() {
           <h3 className="font-medium text-[var(--color-text-secondary)]">Payment</h3>
           {ticket.payment ? (
             <div className="space-y-1 text-[var(--color-text-secondary)]">
-              <div className="flex items-center gap-2"><PaymentStatusBadge status={ticket.payment.status} /></div>
-              {(ticket.payment.serviceCharge || ticket.payment.productAmount) ? (
+              <div className="flex items-center gap-2 flex-wrap">
+                <PaymentStatusBadge status={ticket.payment.status} />
+                {ticket.payment.billingType && (
+                  <Badge variant={ticket.payment.billingType === 'WARRANTY' ? 'purple' : ticket.payment.billingType === 'PARTIAL_WARRANTY' ? 'orange' : 'info'} showDot={false}>
+                    {ticket.payment.billingType.replace('_', ' ')}
+                  </Badge>
+                )}
+              </div>
+              {(ticket.payment.serviceCharge || ticket.payment.labourCharge || ticket.payment.sparePartsAmount || ticket.payment.additionalCharge) ? (
                 <>
-                  <p><span className="text-[var(--color-text-muted)]">Service Charge:</span> ₹{(ticket.payment.serviceCharge ?? 0).toLocaleString()}</p>
-                  <p><span className="text-[var(--color-text-muted)]">Product / Parts:</span> ₹{(ticket.payment.productAmount ?? 0).toLocaleString()}</p>
+                  <p className={ticket.payment.serviceChargeWaived ? 'line-through text-[var(--color-text-muted)]' : ''}>
+                    <span className="text-[var(--color-text-muted)]">Service Charge:</span> ₹{(ticket.payment.serviceCharge ?? 0).toLocaleString()}
+                  </p>
+                  <p className={ticket.payment.labourChargeWaived ? 'line-through text-[var(--color-text-muted)]' : ''}>
+                    <span className="text-[var(--color-text-muted)]">Labour Charge:</span> ₹{(ticket.payment.labourCharge ?? 0).toLocaleString()}
+                  </p>
+                  <p className={ticket.payment.sparePartsWaived ? 'line-through text-[var(--color-text-muted)]' : ''}>
+                    <span className="text-[var(--color-text-muted)]">Spare Parts:</span> ₹{(ticket.payment.sparePartsAmount ?? 0).toLocaleString()}
+                  </p>
+                  {!!ticket.payment.additionalCharge && (
+                    <p><span className="text-[var(--color-text-muted)]">Additional Charge:</span> ₹{ticket.payment.additionalCharge.toLocaleString()}</p>
+                  )}
+                  {!!ticket.payment.discount && (
+                    <p><span className="text-[var(--color-text-muted)]">Discount:</span> -₹{ticket.payment.discount.toLocaleString()}</p>
+                  )}
                   <p className="border-t border-[var(--color-border)] pt-1 mt-1 font-semibold text-[var(--color-text-primary)]">Total: ₹{ticket.payment.amount.toLocaleString()}</p>
                 </>
               ) : (
@@ -306,6 +553,8 @@ export default function TicketDetailPage() {
               )}
               <p><span className="text-[var(--color-text-muted)]">Method:</span> {ticket.payment.method ?? '—'}</p>
             </div>
+          ) : ticket.status === 'COMPLETED' ? (
+            <p className="text-[var(--color-text-muted)]">Not yet collected — see Payment Details below.</p>
           ) : <p className="text-[var(--color-text-muted)]">No payment yet</p>}
 
           {ticket.feedback && (
@@ -321,6 +570,49 @@ export default function TicketDetailPage() {
           )}
         </div>
       </div>
+
+      {ticket.status === 'COMPLETED' && !ticket.payment && (
+        <PaymentCollectionCard
+          ticketId={ticket.id}
+          subCategoryId={ticket.subCategory?.id}
+          isAmcCovered={!!ticket.isAmcCovered}
+          onCollected={() => qc.invalidateQueries({ queryKey: ['ticket', id] })}
+        />
+      )}
+
+      {!!ticket.spareParts?.length && (() => {
+        const warranty = ticket.spareParts!.filter(p => p.coverageType === 'WARRANTY');
+        const chargeable = ticket.spareParts!.filter(p => p.coverageType !== 'WARRANTY');
+        const partRow = (p: typeof ticket.spareParts[number]) => (
+          <div key={p.id} className="flex items-center justify-between text-[var(--color-text-secondary)]">
+            <span>{p.sparePart?.partName ?? 'Spare part'} <span className="text-[var(--color-text-muted)]">× {p.quantity} {p.sparePart?.unitOfMeasure}</span></span>
+            <span>₹{p.unitPrice.toLocaleString()} × {p.quantity} = <span className="font-medium text-[var(--color-text-primary)]">₹{p.calculatedAmount.toLocaleString()}</span></span>
+          </div>
+        );
+        return (
+          <div className="bg-[var(--color-surface)] rounded-xl p-4 border border-[var(--color-border)] shadow-sm">
+            <h3 className="font-medium text-[var(--color-text-secondary)] mb-3">Spare Parts Used</h3>
+            <div className="space-y-3 text-sm">
+              {!!warranty.length && (
+                <div>
+                  <p className="text-[11px] font-semibold uppercase tracking-wide text-emerald-600 mb-1.5">🟢 Warranty Spare Parts (Covered — ₹0)</p>
+                  <div className="space-y-1.5">{warranty.map(partRow)}</div>
+                </div>
+              )}
+              {!!chargeable.length && (
+                <div>
+                  <p className="text-[11px] font-semibold uppercase tracking-wide text-rose-600 mb-1.5">🔴 Non-Warranty Spare Parts</p>
+                  <div className="space-y-1.5">{chargeable.map(partRow)}</div>
+                </div>
+              )}
+              <div className="border-t border-[var(--color-border)] pt-2 mt-2 flex items-center justify-between font-semibold text-[var(--color-text-primary)]">
+                <span>Chargeable Total</span>
+                <span>₹{chargeable.reduce((sum, p) => sum + p.calculatedAmount, 0).toLocaleString()}</span>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
 
       <div className="bg-[var(--color-surface)] rounded-xl p-4 border border-[var(--color-border)] shadow-sm">
         <div className="flex items-center justify-between mb-3">

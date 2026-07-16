@@ -1,13 +1,15 @@
 'use client';
 
 import { useState, useMemo, useEffect } from 'react';
+import { usePathname } from 'next/navigation';
+import Link from 'next/link';
 import { useQuery, useMutation, useQueryClient, useQueries } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import {
-  Plus, Pencil, Trash2, Search, X, LayoutGrid, ArrowLeft, Tag
+  Plus, Pencil, Trash2, Search, X, LayoutGrid, ArrowLeft, Tag, Wrench
 } from 'lucide-react';
 import api from '@/lib/axios';
-import { ServiceCategory, ServiceSubCategory, Skill, SubCategorySkill } from '@/types';
+import { ServiceCategory, ServiceSubCategory, Skill, SubCategorySkill, SparePart } from '@/types';
 import { Button } from '@/components/ui/Button';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { Badge } from '@/components/ui/Badge';
@@ -70,6 +72,8 @@ interface SubCatDraft {
 export default function ServiceCatalogPage() {
   const qc = useQueryClient();
   const accent = useRoleAccent();
+  const pathname = usePathname();
+  const prefix = pathname.startsWith('/admin/') ? 'admin' : 'manager';
 
   // ── UI Layout State
   const [searchQ, setSearchQ] = useState('');
@@ -134,6 +138,23 @@ export default function ServiceCatalogPage() {
     });
     return map;
   }, [selectedCatSubs, skillQueries]);
+
+  // Fetch spare parts concurrently for the selected category's subcategories
+  const sparePartQueries = useQueries({
+    queries: selectedCatSubs.map(sub => ({
+      queryKey: ['sub-category-spare-parts', sub.id],
+      queryFn: async () => (await api.get(`/web/manager/service-sub-categories/${sub.id}/spare-parts`)).data.data as SparePart[],
+    }))
+  });
+
+  // Map subCategoryId -> SparePart[]
+  const sparePartsMap = useMemo(() => {
+    const map: Record<string, SparePart[]> = {};
+    selectedCatSubs.forEach((sub, i) => {
+      map[sub.id] = sparePartQueries[i]?.data ?? [];
+    });
+    return map;
+  }, [selectedCatSubs, sparePartQueries]);
 
   // ── Drawer State
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -491,6 +512,7 @@ export default function ServiceCatalogPage() {
                 ) : (
                   selectedCatSubs.map(sub => {
                     const mappedSkills = skillsMap[sub.id] ?? [];
+                    const mappedParts = sparePartsMap[sub.id] ?? [];
                     return (
                       <div key={sub.id} className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-xl p-5 flex flex-col lg:flex-row gap-5 hover:border-[var(--color-border-hover)] transition-colors shadow-sm">
                         <div className="flex-1 min-w-0">
@@ -514,6 +536,29 @@ export default function ServiceCatalogPage() {
                               </div>
                             ) : (
                               <span className="text-[12px] text-[var(--color-text-muted)] italic">No skills assigned</span>
+                            )}
+                          </div>
+
+                          {/* Spare parts display */}
+                          <div className="mt-3">
+                            <div className="flex items-center justify-between mb-2">
+                              <p className="text-[11px] font-semibold tracking-wider uppercase text-[var(--color-text-muted)]">Spare Parts</p>
+                              <Link href={`/${prefix}/service-catalog/spare-parts?subCategoryId=${sub.id}&subCategoryName=${encodeURIComponent(sub.name)}`} className="text-[11px] font-medium text-[var(--color-primary)] hover:underline">
+                                Manage
+                              </Link>
+                            </div>
+                            {mappedParts.length > 0 ? (
+                              <div className="flex flex-wrap gap-1.5">
+                                {mappedParts.map(part => (
+                                  <span key={part.id} className="px-2 py-1 rounded-md bg-[var(--color-surface-elevated)] border border-[var(--color-border)] text-[11px] font-medium text-[var(--color-text-secondary)]">
+                                    {part.partName} <span className="text-[var(--color-text-muted)]">— ₹{part.unitPrice.toLocaleString()}</span>
+                                  </span>
+                                ))}
+                              </div>
+                            ) : (
+                              <Link href={`/${prefix}/service-catalog/spare-parts?subCategoryId=${sub.id}&subCategoryName=${encodeURIComponent(sub.name)}`}>
+                                <Button variant="secondary" size="sm"><Wrench size={13} /> Add Spare Parts</Button>
+                              </Link>
                             )}
                           </div>
                         </div>

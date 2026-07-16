@@ -428,6 +428,33 @@ export interface AmcStatusSummary {
   remainingVisits: number;
 }
 
+// ─── Spare Parts ──────────────────────────────────────────────────────────────
+export interface SparePart {
+  id: string;
+  subCategoryId: string;
+  partName: string;
+  partNumber?: string;
+  description?: string;
+  unitPrice: number;
+  unitOfMeasure: string;
+  currentStock?: number;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type SparePartCoverageType = 'WARRANTY' | 'NON_WARRANTY';
+
+export interface TicketSparePartUsage {
+  id: string;
+  sparePartId: string;
+  sparePart?: { partName: string; unitOfMeasure: string };
+  quantity: number;
+  unitPrice: number;
+  calculatedAmount: number;
+  coverageType?: SparePartCoverageType | null;
+}
+
 // ─── Ticket ───────────────────────────────────────────────────────────────────
 export type TicketStatus =
   | 'NEW_TICKET' | 'ASSIGNED' | 'ACCEPTED' | 'TRAVELLING'
@@ -477,6 +504,8 @@ export interface Ticket {
   subCategory?: ServiceSubCategory;
   customerAsset?: CustomerAsset;
   amcStatus?: AmcStatusSummary | null;
+  isAmcCovered?: boolean;
+  spareParts?: TicketSparePartUsage[];
   scheduledAt?: string;
   workStartedAt?: string;
   workEndedAt?: string;
@@ -495,15 +524,23 @@ export interface Ticket {
 
 // ─── Payment / Invoice ────────────────────────────────────────────────────────
 export type PaymentStatus = 'PENDING' | 'COLLECTED' | 'VERIFIED' | 'FAILED';
-export type PaymentMethod = 'CASH' | 'UPI' | 'CARD' | 'ONLINE';
+export type PaymentMethod = 'CASH' | 'UPI' | 'UPI_QR' | 'RAZORPAY' | 'CARD' | 'NET_BANKING' | 'WALLET' | 'ONLINE';
+export type BillingType = 'WARRANTY' | 'NON_WARRANTY' | 'PARTIAL_WARRANTY';
 
 export interface Payment {
   id: string;
   ticketId: string;
   ticket?: Ticket;
   amount: number;
+  billingType?: BillingType;
   serviceCharge?: number;
-  productAmount?: number;
+  labourCharge?: number;
+  sparePartsAmount?: number;
+  serviceChargeWaived?: boolean;
+  labourChargeWaived?: boolean;
+  sparePartsWaived?: boolean;
+  additionalCharge?: number;
+  discount?: number;
   status: PaymentStatus;
   method?: PaymentMethod;
   collectedAt?: string;
@@ -517,6 +554,12 @@ export interface Invoice {
   ticket?: Ticket;
   invoiceNumber: string;
   amount: number;
+  billingType?: BillingType;
+  serviceCharge?: number;
+  labourCharge?: number;
+  sparePartsAmount?: number;
+  additionalCharge?: number;
+  discount?: number;
   gstAmount?: number;
   totalAmount: number;
   pdfUrl?: string;
