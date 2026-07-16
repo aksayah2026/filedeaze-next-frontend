@@ -13,6 +13,13 @@ import {
     ClipboardIcon,
     ChartBarIcon,
     ZapIcon,
+    BoxIcon,
+    ShieldCheckIcon,
+    LayersIcon,
+    UserRoundCheckIcon,
+    MapPinCheckIcon,
+    TriangleAlertIcon,
+    LayoutListIcon,
 } from '@animateicons/react/lucide';
 import { cn } from '@/lib/utils';
 import { SidebarNavItem } from './SidebarNavItem';
@@ -27,8 +34,18 @@ const operationsNav: NavItemDef[] = [
     { href: '/manager/technicians', label: 'Technicians', icon: WalletIcon },
     { href: '/manager/skills', label: 'Skills', icon: StarIcon },
     { href: '/manager/customers', label: 'Customers', icon: UsersIcon },
+    { href: '/manager/assets', label: 'Customer Assets', icon: BoxIcon },
     { href: '/manager/attendance', label: 'Attendance', icon: UserCheckIcon },
     { href: '/manager/feedback', label: 'Feedback', icon: StarIcon },
+];
+
+const amcNav: NavItemDef[] = [
+    { href: '/manager/amc', label: 'AMC Dashboard', icon: ShieldCheckIcon },
+    { href: '/manager/amc/plans', label: 'AMC Plans', icon: LayersIcon },
+    { href: '/manager/amc/assign', label: 'Assign AMC', icon: UserRoundCheckIcon },
+    { href: '/manager/amc/upcoming-visits', label: 'Upcoming Visits', icon: MapPinCheckIcon },
+    { href: '/manager/amc/expiring', label: 'Expiring AMC', icon: TriangleAlertIcon },
+    { href: '/manager/amc/history', label: 'AMC History', icon: LayoutListIcon },
 ];
 
 const catalogNav: NavItemDef[] = [
@@ -108,6 +125,11 @@ export function ManagerSidebar({ onClose, isCollapsed = false }: ManagerSidebarP
 
                 {renderSectionHeader("Operations", true)}
                 {operationsNav.map(item => (
+                    <SidebarNavItem key={item.href} item={item} isActive={isActive(item.href)} isCollapsed={isCollapsed} onClose={onClose} />
+                ))}
+
+                {renderSectionHeader("AMC Management", true)}
+                {amcNav.map(item => (
                     <SidebarNavItem key={item.href} item={item} isActive={isActive(item.href)} isCollapsed={isCollapsed} onClose={onClose} />
                 ))}
 

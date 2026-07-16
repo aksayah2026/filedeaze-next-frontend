@@ -9,14 +9,14 @@ import { toast } from 'sonner';
 import { Eye, Phone, Plus } from 'lucide-react';
 import Link from 'next/link';
 import api from '@/lib/axios';
-import { Ticket, TicketStatus, Customer, ServiceCategory, ServiceSubCategory } from '@/types';
+import { Ticket, TicketStatus, Customer, ServiceCategory, ServiceSubCategory, CustomerAsset, AmcSubscription } from '@/types';
 import { DataTable } from '@/components/ui/DataTable';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
 import { Modal } from '@/components/ui/Modal';
 import { Textarea } from '@/components/ui/Textarea';
-import { TicketStatusBadge } from '@/components/ui/Badge';
+import { TicketStatusBadge, Badge } from '@/components/ui/Badge';
 import { FilterCard } from '@/components/ui/FilterCard';
 import { PaginationMeta } from '@/components/ui/Pagination';
 import dayjs from 'dayjs';
@@ -30,10 +30,12 @@ const STATUS_OPTIONS = [
 
 type CreateForm = {
   customerId: string;
+  customerAssetId: string;
   categoryId: string;
   subCategoryId: string;
   description: string;
   priority: string;
+  serviceMode: 'IMMEDIATE' | 'SCHEDULED';
   scheduledAt: string;
   serviceAddress: string;
 };
@@ -48,6 +50,7 @@ type NewCustomerForm = {
 export default function TicketsPage() {
   const qc = useQueryClient();
   const [status, setStatus] = useState('');
+  const [customerName, setCustomerName] = useState('');
   const [from, setFrom] = useState('');
   const [to, setTo] = useState('');
   const pathname = usePathname();
@@ -85,11 +88,14 @@ export default function TicketsPage() {
     enabled: showCreate,
   });
 
-  const { register, handleSubmit, watch, reset, setValue, formState: { isSubmitting } } = useForm<CreateForm>({
-    defaultValues: { priority: 'MEDIUM' },
+  const { register, handleSubmit, watch, reset, setValue, formState: { errors, isSubmitting } } = useForm<CreateForm>({
+    defaultValues: { priority: 'MEDIUM', serviceMode: 'IMMEDIATE' },
   });
 
   const selectedCategoryId = watch('categoryId');
+  const selectedCustomerId = watch('customerId');
+  const selectedAssetId = watch('customerAssetId');
+  const serviceMode = watch('serviceMode') ?? 'IMMEDIATE';
 
   const { data: subCategories = [] } = useQuery<ServiceSubCategory[]>({
     queryKey: ['sub-categories', selectedCategoryId],
@@ -99,14 +105,29 @@ export default function TicketsPage() {
     enabled: showCreate && !!selectedCategoryId,
   });
 
+  // Assets registered to the selected customer, so a call-in request can be tied to a specific unit.
+  const { data: customerAssets = [] } = useQuery<CustomerAsset[]>({
+    queryKey: ['customer-assets-for-ticket', selectedCustomerId],
+    queryFn: async () => (await api.get('/web/manager/customer-assets', { params: { customerId: selectedCustomerId } })).data.data,
+    enabled: showCreate && !!selectedCustomerId,
+  });
+
+  const { data: assetAmcSubs = [] } = useQuery<AmcSubscription[]>({
+    queryKey: ['ticket-asset-amc', selectedAssetId],
+    queryFn: async () => (await api.get('/web/manager/amc/subscriptions', { params: { customerAssetId: selectedAssetId, status: 'ACTIVE' } })).data.data,
+    enabled: showCreate && !!selectedAssetId,
+  });
+  const activeAmc = assetAmcSubs[0];
+
   const createMutation = useMutation({
     mutationFn: (d: CreateForm) => api.post('/web/manager/tickets', {
       customerId: d.customerId,
+      customerAssetId: d.customerAssetId || undefined,
       categoryId: d.categoryId,
       subCategoryId: d.subCategoryId,
       description: d.description,
       priority: d.priority || undefined,
-      scheduledAt: d.scheduledAt || undefined,
+      scheduledAt: d.serviceMode === 'SCHEDULED' ? (d.scheduledAt || undefined) : undefined,
       serviceAddress: d.serviceAddress || undefined,
     }),
     onSuccess: () => {
@@ -167,12 +188,21 @@ export default function TicketsPage() {
         to={to}
         onFromChange={val => setFrom(val)}
         onToChange={val => setTo(val)}
-        onApply={() => { setPage(1); setParams({ status, from, to }); }}
-        onReset={() => { setStatus(''); setFrom(''); setTo(''); setParams({}); setPage(1); }}
+        onApply={() => { setPage(1); setParams({ status, customerName, from, to }); }}
+        onReset={() => { setStatus(''); setCustomerName(''); setFrom(''); setTo(''); setParams({}); setPage(1); }}
       >
         <div className="space-y-1">
           <label className="text-xs font-medium text-[var(--color-text-secondary)]">Status</label>
           <Select options={STATUS_OPTIONS} value={status} onChange={e => setStatus(e.target.value)} className="w-48 h-10" />
+        </div>
+        <div className="space-y-1">
+          <label className="text-xs font-medium text-[var(--color-text-secondary)]">Customer</label>
+          <Input
+            placeholder="Search by customer name..."
+            value={customerName}
+            onChange={e => setCustomerName(e.target.value)}
+            className="w-48 h-10"
+          />
         </div>
       </FilterCard>
 
@@ -274,6 +304,24 @@ export default function TicketsPage() {
             )}
           </div>
 
+          {selectedCustomerId && (
+            <div>
+              <Select
+                label="Customer Asset"
+                options={customerAssets.map(a => ({ value: a.id, label: `${a.name}${a.brand ? ` (${a.brand})` : ''}` }))}
+                placeholder="General request (no specific asset)"
+                {...register('customerAssetId')}
+              />
+              {selectedAssetId && (
+                <div className="mt-1.5">
+                  {activeAmc
+                    ? <Badge variant="success">Under AMC — {activeAmc.plan?.name}</Badge>
+                    : <Badge variant="default" showDot={false}>No active AMC</Badge>}
+                </div>
+              )}
+            </div>
+          )}
+
           <div className="grid grid-cols-2 gap-4">
             <Select
               label="Service Category *"
@@ -306,12 +354,40 @@ export default function TicketsPage() {
               ]}
               {...register('priority')}
             />
-            <Input
-              label="Scheduled Date & Time"
-              type="datetime-local"
-              {...register('scheduledAt')}
-            />
+            <div className="space-y-1.5">
+              <label className="text-[11px] font-semibold text-[var(--color-text-muted)] uppercase tracking-wide">Service Timing</label>
+              <div className="flex gap-2">
+                <Button
+                  type="button"
+                  size="sm"
+                  variant={serviceMode === 'IMMEDIATE' ? 'primary' : 'secondary'}
+                  onClick={() => setValue('serviceMode', 'IMMEDIATE')}
+                  className="flex-1"
+                >
+                  Immediate
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant={serviceMode === 'SCHEDULED' ? 'primary' : 'secondary'}
+                  onClick={() => setValue('serviceMode', 'SCHEDULED')}
+                  className="flex-1"
+                >
+                  Scheduled
+                </Button>
+              </div>
+              <input type="hidden" {...register('serviceMode')} />
+            </div>
           </div>
+
+          {serviceMode === 'SCHEDULED' && (
+            <Input
+              label="Requested Date *"
+              type="datetime-local"
+              error={errors.scheduledAt?.message}
+              {...register('scheduledAt', { required: serviceMode === 'SCHEDULED' ? 'Pick the date & time the customer requested' : false })}
+            />
+          )}
 
           <Input
             label="Service Address"

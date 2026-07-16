@@ -346,6 +346,88 @@ export interface ServiceSubCategory {
   createdAt: string;
 }
 
+// ─── Customer Assets / AMC ────────────────────────────────────────────────────
+export interface CustomerAsset {
+  id: string;
+  customerId: string;
+  customer?: { id: string; name: string; phone: string };
+  categoryId?: string;
+  category?: { id: string; name: string };
+  name: string;
+  brand?: string;
+  model?: string;
+  serialNumber?: string;
+  purchaseDate?: string;
+  installationAddress?: string;
+  notes?: string;
+  isActive: boolean;
+  ticketCount?: number;
+  hasActiveAmc?: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface AmcPlan {
+  id: string;
+  name: string;
+  description?: string;
+  categoryId?: string;
+  category?: { id: string; name: string };
+  durationMonths: number;
+  visitCount: number;
+  price: number;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type AmcSubscriptionStatus = 'ACTIVE' | 'EXPIRED' | 'RENEWED' | 'CANCELLED';
+export type AmcVisitStatus = 'SCHEDULED' | 'COMPLETED' | 'MISSED' | 'CANCELLED';
+
+export interface AmcVisit {
+  id: string;
+  amcSubscriptionId: string;
+  ticketId: string;
+  ticket?: { id: string; ticketNumber: string; status: TicketStatus; technicianId?: string };
+  visitNumber: number;
+  scheduledDate: string;
+  status: AmcVisitStatus;
+  completedAt?: string;
+  notes?: string;
+  createdAt: string;
+}
+
+export interface AmcSubscription {
+  id: string;
+  customerAssetId: string;
+  customerAsset?: { id: string; name: string; brand?: string; model?: string; serialNumber?: string };
+  planId: string;
+  plan?: { id: string; name: string; durationMonths: number; visitCount: number; price: number };
+  customerId: string;
+  customer?: { id: string; name: string; phone: string };
+  startDate: string;
+  endDate: string;
+  totalVisits: number;
+  remainingVisits?: number;
+  status: AmcSubscriptionStatus;
+  renewedFromId?: string;
+  cancelledAt?: string;
+  cancelReason?: string;
+  visits?: AmcVisit[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface AmcStatusSummary {
+  subscriptionId: string;
+  planName: string;
+  status: AmcSubscriptionStatus;
+  startDate: string;
+  endDate: string;
+  totalVisits: number;
+  remainingVisits: number;
+}
+
 // ─── Ticket ───────────────────────────────────────────────────────────────────
 export type TicketStatus =
   | 'NEW_TICKET' | 'ASSIGNED' | 'ACCEPTED' | 'TRAVELLING'
@@ -393,7 +475,12 @@ export interface Ticket {
   customer: Customer;
   technician?: Technician;
   subCategory?: ServiceSubCategory;
+  customerAsset?: CustomerAsset;
+  amcStatus?: AmcStatusSummary | null;
   scheduledAt?: string;
+  workStartedAt?: string;
+  workEndedAt?: string;
+  serviceDurationMinutes?: number | null;
   notes?: string;
   statusLogs: StatusLog[];
   assignmentCount?: number;
@@ -415,6 +502,8 @@ export interface Payment {
   ticketId: string;
   ticket?: Ticket;
   amount: number;
+  serviceCharge?: number;
+  productAmount?: number;
   status: PaymentStatus;
   method?: PaymentMethod;
   collectedAt?: string;

@@ -7,16 +7,16 @@ import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import api from '@/lib/axios';
 import { Ticket, Technician, TicketImage } from '@/types';
-import { TicketStatusBadge, PaymentStatusBadge } from '@/components/ui/Badge';
+import { TicketStatusBadge, PaymentStatusBadge, Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Modal } from '@/components/ui/Modal';
 import { Input } from '@/components/ui/Input';
 import { Textarea } from '@/components/ui/Textarea';
 import { PageSpinner } from '@/components/ui/Spinner';
 import { ErrorState } from '@/components/ui/ErrorState';
-import { Star, CheckCircle, XCircle, RefreshCw, UserCheck, ChevronLeft, CalendarClock, ThumbsUp, ThumbsDown, AlertTriangle } from 'lucide-react';
-import dayjs from 'dayjs';
 import Link from 'next/link';
+import { Star, CheckCircle, XCircle, RefreshCw, UserCheck, ChevronLeft, CalendarClock, ThumbsUp, ThumbsDown, AlertTriangle, Box, ShieldCheck, ShieldOff } from 'lucide-react';
+import dayjs from 'dayjs';
 
 const BUSY_STATUSES = ['ASSIGNED', 'ACCEPTED', 'TRAVELLING', 'REACHED_LOCATION', 'IN_PROGRESS', 'PENDING'];
 
@@ -84,7 +84,8 @@ function TechnicianPicker({ techs, busyIds, value, onChange, skillMatches, requi
 export default function TicketDetailPage() {
   const { id } = useParams<{ id: string }>();
   const pathname = usePathname();
-  const ticketsBase = pathname.startsWith('/admin/') ? '/admin/tickets' : '/manager/tickets';
+  const prefix = pathname.startsWith('/admin/') ? 'admin' : 'manager';
+  const ticketsBase = `/${prefix}/tickets`;
   const qc = useQueryClient();
   const [showAssign, setShowAssign] = useState(false);
   const [showClose, setShowClose] = useState(false);
@@ -232,16 +233,59 @@ export default function TicketDetailPage() {
         </div>
       )}
 
+      <div className={ticket.customerAsset ? 'grid grid-cols-2 gap-4' : ''}>
+        <div className="bg-[var(--color-surface)] rounded-xl p-4 border border-[var(--color-border)] shadow-sm text-sm space-y-2">
+          <h3 className="font-medium text-[var(--color-text-secondary)]">Service Description</h3>
+          <div className="text-[var(--color-text-secondary)] space-y-1">
+            <p><span className="text-[var(--color-text-muted)]">Category:</span> {ticket.subCategory?.category?.name ?? '—'}</p>
+            <p><span className="text-[var(--color-text-muted)]">Sub Category:</span> {ticket.subCategory?.name ?? '—'}</p>
+            {ticket.description && (
+              <p className="font-semibold bg-amber-100 text-amber-900 px-1.5 py-0.5 rounded inline-block">
+                Description: {ticket.description}
+              </p>
+            )}
+          </div>
+          {ticket.subCategory?.serviceCharges && (
+            <div className="flex flex-wrap gap-1.5 pt-1">
+              <Badge variant="info" showDot={false}>Service ₹{ticket.subCategory.serviceCharges.serviceCharge.toLocaleString()}</Badge>
+              <Badge variant="purple" showDot={false}>Inspection ₹{ticket.subCategory.serviceCharges.inspectionCharge.toLocaleString()}</Badge>
+              <Badge variant="orange" showDot={false}>Emergency ₹{ticket.subCategory.serviceCharges.emergencyCharge.toLocaleString()}</Badge>
+            </div>
+          )}
+        </div>
+
+        {ticket.customerAsset && (
+          <div className="bg-[var(--color-surface)] rounded-xl p-4 border border-[var(--color-border)] shadow-sm text-sm space-y-2">
+            <h3 className="font-medium text-[var(--color-text-secondary)] flex items-center gap-1.5"><Box size={14} /> Asset Information</h3>
+            <div className="text-[var(--color-text-secondary)] space-y-1">
+              <p><span className="text-[var(--color-text-muted)]">Name:</span> {ticket.customerAsset.name}</p>
+              <p><span className="text-[var(--color-text-muted)]">Brand/Model:</span> {[ticket.customerAsset.brand, ticket.customerAsset.model].filter(Boolean).join(' / ') || '—'}</p>
+              {ticket.customerAsset.serialNumber && <p><span className="text-[var(--color-text-muted)]">Serial #:</span> {ticket.customerAsset.serialNumber}</p>}
+            </div>
+            {ticket.amcStatus ? (
+              <div className="pt-1 space-y-1">
+                <div className="flex items-center gap-1.5 text-emerald-600 font-medium text-xs"><ShieldCheck size={13} /> AMC — {ticket.amcStatus.planName}</div>
+                <p className="text-xs text-[var(--color-text-muted)]">{ticket.amcStatus.remainingVisits} of {ticket.amcStatus.totalVisits} visits remaining</p>
+              </div>
+            ) : (
+              <div className="pt-1 flex items-center justify-between">
+                <div className="flex items-center gap-1.5 text-[var(--color-text-muted)] text-xs"><ShieldOff size={13} /> No active AMC</div>
+                <Link href={`/${prefix}/amc/assign?customerId=${ticket.customer?.id}&assetId=${ticket.customerAsset.id}`} className="text-xs text-[var(--color-primary)] hover:underline">
+                  Assign AMC →
+                </Link>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
       <div className="grid grid-cols-2 gap-4">
         <div className="bg-[var(--color-surface)] rounded-xl p-4 border border-[var(--color-border)] shadow-sm text-sm space-y-2">
           <h3 className="font-medium text-[var(--color-text-secondary)]">Details</h3>
           <div className="text-[var(--color-text-secondary)] space-y-1">
-            <p><span className="text-[var(--color-text-muted)]">Category:</span> {ticket.subCategory?.category?.name ?? '—'}</p>
-            <p><span className="text-[var(--color-text-muted)]">Sub Category:</span> {ticket.subCategory?.name ?? '—'}</p>
             <p><span className="text-[var(--color-text-muted)]">Technician:</span> {ticket.technician?.name ?? 'Unassigned'}</p>
             <p><span className="text-[var(--color-text-muted)]">Scheduled:</span> {ticket.scheduledAt ? dayjs(ticket.scheduledAt).format('DD MMM YYYY, HH:mm') : '—'}</p>
             {ticket.serviceAddress && <p><span className="text-[var(--color-text-muted)]">Address:</span> {ticket.serviceAddress}</p>}
-            {ticket.description && <p><span className="text-[var(--color-text-muted)]">Description:</span> {ticket.description}</p>}
             <p><span className="text-[var(--color-text-muted)]">Created:</span> {dayjs(ticket.createdAt).format('DD MMM YYYY, HH:mm')}</p>
           </div>
         </div>
@@ -251,7 +295,15 @@ export default function TicketDetailPage() {
           {ticket.payment ? (
             <div className="space-y-1 text-[var(--color-text-secondary)]">
               <div className="flex items-center gap-2"><PaymentStatusBadge status={ticket.payment.status} /></div>
-              <p><span className="text-[var(--color-text-muted)]">Amount:</span> ₹{ticket.payment.amount.toLocaleString()}</p>
+              {(ticket.payment.serviceCharge || ticket.payment.productAmount) ? (
+                <>
+                  <p><span className="text-[var(--color-text-muted)]">Service Charge:</span> ₹{(ticket.payment.serviceCharge ?? 0).toLocaleString()}</p>
+                  <p><span className="text-[var(--color-text-muted)]">Product / Parts:</span> ₹{(ticket.payment.productAmount ?? 0).toLocaleString()}</p>
+                  <p className="border-t border-[var(--color-border)] pt-1 mt-1 font-semibold text-[var(--color-text-primary)]">Total: ₹{ticket.payment.amount.toLocaleString()}</p>
+                </>
+              ) : (
+                <p><span className="text-[var(--color-text-muted)]">Amount:</span> ₹{ticket.payment.amount.toLocaleString()}</p>
+              )}
               <p><span className="text-[var(--color-text-muted)]">Method:</span> {ticket.payment.method ?? '—'}</p>
             </div>
           ) : <p className="text-[var(--color-text-muted)]">No payment yet</p>}
@@ -271,7 +323,12 @@ export default function TicketDetailPage() {
       </div>
 
       <div className="bg-[var(--color-surface)] rounded-xl p-4 border border-[var(--color-border)] shadow-sm">
-        <h3 className="font-medium text-[var(--color-text-secondary)] mb-3">Status Timeline</h3>
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="font-medium text-[var(--color-text-secondary)]">Work Timeline</h3>
+          {typeof ticket.serviceDurationMinutes === 'number' && (
+            <Badge variant="teal" showDot={false}>Duration: {ticket.serviceDurationMinutes} min</Badge>
+          )}
+        </div>
         <div className="space-y-3">
           {(ticket.statusLogs ?? []).map((log, i) => (
             <div key={log.id} className="flex gap-3">

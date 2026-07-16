@@ -1,5 +1,5 @@
 import { cn } from '@/lib/utils';
-import { TicketStatus, TenantStatus, PaymentStatus, UserRole } from '@/types';
+import { TicketStatus, TenantStatus, PaymentStatus, UserRole, AmcSubscriptionStatus, AmcVisitStatus } from '@/types';
 
 const variants = {
   default:  { bg: 'bg-[var(--color-surface-elevated)]',        text: 'text-[var(--color-text-secondary)]',       dot: 'bg-[var(--color-surface-elevated)]' },
@@ -112,4 +112,32 @@ export function RoleBadge({ role, className }: { role: UserRole; className?: str
     MANAGER: 'Manager',
   };
   return <Badge variant={roleColors[role]} showDot={false} className={className}>{roleLabels[role]}</Badge>;
+}
+
+const amcSubscriptionColors: Record<AmcSubscriptionStatus, BadgeVariant> = {
+  ACTIVE: 'success',
+  EXPIRED: 'warning',
+  RENEWED: 'info',
+  CANCELLED: 'danger',
+};
+
+export function AmcSubscriptionStatusBadge({ status }: { status: AmcSubscriptionStatus }) {
+  return <Badge variant={amcSubscriptionColors[status]}>{status}</Badge>;
+}
+
+const amcVisitColors: Record<AmcVisitStatus, BadgeVariant> = {
+  SCHEDULED: 'info',
+  COMPLETED: 'success',
+  MISSED: 'danger',
+  CANCELLED: 'default',
+};
+
+export function AmcVisitStatusBadge({ status }: { status: AmcVisitStatus }) {
+  return <Badge variant={amcVisitColors[status]}>{status}</Badge>;
+}
+
+export function AmcCoverageBadge({ hasActiveAmc }: { hasActiveAmc?: boolean }) {
+  return hasActiveAmc
+    ? <Badge variant="success">Under AMC</Badge>
+    : <Badge variant="default" showDot={false}>No AMC</Badge>;
 }

@@ -15,6 +15,13 @@ import {
   SparklesIcon,
   ZapIcon,
   HandCoinsIcon,
+  BoxIcon,
+  ShieldCheckIcon,
+  LayersIcon,
+  UserRoundCheckIcon,
+  MapPinCheckIcon,
+  TriangleAlertIcon,
+  LayoutListIcon,
 } from '@animateicons/react/lucide';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
@@ -45,11 +52,21 @@ const operationsNav: NavItemDef[] = [
   { href: '/admin/skills', label: 'Skills', icon: StarIcon },
   { href: '/admin/service-catalog', label: 'Categories', icon: SparklesIcon },
   { href: '/admin/customers', label: 'Customers', icon: UsersIcon },
+  { href: '/admin/assets', label: 'Customer Assets', icon: BoxIcon },
   { href: '/admin/attendance', label: 'Attendance', icon: UserCheckIcon },
   { href: '/admin/feedback', label: 'Feedback', icon: StarIcon },
   { href: '/admin/payments', label: 'Payments', icon: HandCoinsIcon },
   { href: '/admin/invoices', label: 'Invoices', icon: CreditCardIcon },
   { href: '/admin/offers', label: 'Offers', icon: SparklesIcon },
+];
+
+const amcNav: NavItemDef[] = [
+  { href: '/admin/amc', label: 'AMC Dashboard', icon: ShieldCheckIcon },
+  { href: '/admin/amc/plans', label: 'AMC Plans', icon: LayersIcon },
+  { href: '/admin/amc/assign', label: 'Assign AMC', icon: UserRoundCheckIcon },
+  { href: '/admin/amc/upcoming-visits', label: 'Upcoming Visits', icon: MapPinCheckIcon },
+  { href: '/admin/amc/expiring', label: 'Expiring AMC', icon: TriangleAlertIcon },
+  { href: '/admin/amc/history', label: 'AMC History', icon: LayoutListIcon },
 ];
 
 const managerDashNav: NavItemDef[] = [
@@ -143,6 +160,11 @@ export function AdminSidebar({ onClose, isCollapsed = false }: AdminSidebarProps
 
         {renderSectionHeader("Operations", true)}
         {operationsNav.map(item => (
+          <SidebarNavItem key={item.href} item={item} isActive={isActive(item.href)} isCollapsed={isCollapsed} onClose={onClose} />
+        ))}
+
+        {renderSectionHeader("AMC Management", true)}
+        {amcNav.map(item => (
           <SidebarNavItem key={item.href} item={item} isActive={isActive(item.href)} isCollapsed={isCollapsed} onClose={onClose} />
         ))}
       </nav>

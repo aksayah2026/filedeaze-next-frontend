@@ -2,6 +2,7 @@ import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
 import { getPortalPrefix, getCookie, setCookie, eraseCookie } from './auth-helper';
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000/api/v1';
+console.log('API Base URL:', BASE_URL);
 
 let accessToken: string | null = null;
 let isRefreshing = false;
@@ -14,7 +15,6 @@ export const api = axios.create({
   baseURL: BASE_URL,
   headers: {
     'Content-Type': 'application/json',
-    "ngrok-skip-browser-warning": "true"
   },
 });
 
@@ -57,7 +57,7 @@ api.interceptors.response.use(
       if (typeof window === 'undefined') return Promise.reject(error);
       // Login endpoints return 401 for wrong credentials — don't treat as session expiry
       const url = original?.url ?? '';
-      if (url.includes('/login') || url.includes('/register') || url.includes('/auth/refresh') || url.includes('/notifications')) {
+      if (url.includes('/login') || url.includes('/register') || url.includes('/auth/refresh')) {
         return Promise.reject(error);
       }
       const prefix = getPortalPrefix();

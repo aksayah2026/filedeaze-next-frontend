@@ -2,7 +2,8 @@
 
 import { useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
-import { Ticket, Users, DollarSign, ClipboardCheck, ClipboardList, Clock, AlertCircle, AlertTriangle, CheckCircle, CalendarCheck } from 'lucide-react';
+import { usePathname } from 'next/navigation';
+import { Ticket, Users, DollarSign, ClipboardCheck, ClipboardList, Clock, AlertCircle, AlertTriangle, CheckCircle, CalendarCheck, ShieldCheck, MapPinCheck } from 'lucide-react';
 import api from '@/lib/axios';
 import { ManagerDashboard } from '@/types';
 import { StatsCard } from '@/components/ui/StatsCard';
@@ -10,9 +11,13 @@ import { ProgressBar } from '@/components/ui/ProgressBar';
 import { SkeletonCard, SkeletonLine } from '@/components/ui/Spinner';
 import { ErrorState } from '@/components/ui/ErrorState';
 import { useRoleAccent } from '@/lib/useRoleAccent';
+import { useAmcOverview } from '@/lib/useAmcOverview';
 
 export default function ManagerDashboardPage() {
   const accent = useRoleAccent();
+  const pathname = usePathname();
+  const prefix = pathname.startsWith('/admin/') ? 'admin' : 'manager';
+  const amc = useAmcOverview();
   const { data, isLoading, isError, error, refetch, isFetching } = useQuery<ManagerDashboard>({
     queryKey: ['manager-dashboard'],
     queryFn: async () => (await api.get('/web/manager/dashboard')).data.data,
@@ -162,6 +167,46 @@ export default function ManagerDashboardPage() {
                 status="completed"
                 footerText="Updated now"
               />
+            </div>
+          </div>
+
+          {/* AMC Overview Section */}
+          <div>
+            <h3 className="text-xs font-bold uppercase tracking-wider text-[var(--color-text-muted)] mb-3">AMC Overview</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              <Link href={`/${prefix}/amc/history?status=ACTIVE`} className="block">
+                <StatsCard
+                  title="Active AMC"
+                  value={amc.activeCount}
+                  icon={ShieldCheck}
+                  accentHex={accent}
+                  context="Assets currently under contract"
+                  status="active"
+                  footerText="Live"
+                />
+              </Link>
+              <Link href={`/${prefix}/amc/expiring`} className="block">
+                <StatsCard
+                  title="Expiring AMC"
+                  value={amc.expiringCount}
+                  icon={AlertTriangle}
+                  accentHex={accent}
+                  context="Ending within 30 days"
+                  status={amc.expiringCount > 0 ? 'attention' : 'stable'}
+                  footerText="Live"
+                />
+              </Link>
+              <Link href={`/${prefix}/amc/upcoming-visits`} className="block">
+                <StatsCard
+                  title="Upcoming AMC Visits"
+                  value={amc.upcomingVisitCount}
+                  icon={MapPinCheck}
+                  accentHex={accent}
+                  context="Scheduled in the next 7 days"
+                  status="ontrack"
+                  footerText="Live"
+                />
+              </Link>
             </div>
           </div>
 
