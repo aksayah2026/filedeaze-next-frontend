@@ -259,7 +259,7 @@ export default function CustomerAssetsPage() {
 
           <div className="grid grid-cols-2 gap-4">
             <Input label="Serial Number" placeholder="e.g. SN-2024-00123" {...register('serialNumber')} />
-            <Input label="Purchase Date" type="date" {...register('purchaseDate')} />
+            <Input label="Purchase Date" type="date" autoComplete="off" max={dayjs().format('YYYY-MM-DD')} {...register('purchaseDate')} />
           </div>
 
           <Textarea label="Installation Address" placeholder="Where this asset is installed" rows={2} {...register('installationAddress')} />

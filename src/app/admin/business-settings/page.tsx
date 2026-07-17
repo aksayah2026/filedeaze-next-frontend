@@ -241,6 +241,61 @@ export default function BusinessSettingsPage() {
     }
   };
 
+  // Scroll-spy: highlight whichever section is currently at the top of the viewport
+  // as the user scrolls manually (scrollToSection only covers clicks on the nav itself).
+  useEffect(() => {
+    if (isLoading) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const visible = entries.filter(e => e.isIntersecting);
+        if (visible.length === 0) return;
+        const topMost = visible.reduce((a, b) => (a.boundingClientRect.top < b.boundingClientRect.top ? a : b));
+        setActiveSection(topMost.target.id);
+      },
+      { rootMargin: '-100px 0px -70% 0px', threshold: 0 }
+    );
+
+    SECTIONS.forEach(s => {
+      const el = document.getElementById(s.id);
+      if (el) observer.observe(el);
+    });
+
+    // The rootMargin above only "activates" a section once its top passes near the
+    // viewport's top band — the last section (Discount Rules) is often shorter than
+    // that band and never crosses it, so scrolling all the way to the bottom would
+    // otherwise leave the previous section highlighted forever. Handle that edge case
+    // directly: once the actual scrollable container is scrolled to its end, force the
+    // last section active.
+    const lastSectionId = SECTIONS[SECTIONS.length - 1].id;
+    let scrollParent: HTMLElement | Window = window;
+    let node: HTMLElement | null = scrollContainerRef.current;
+    while (node) {
+      const style = getComputedStyle(node);
+      if (/(auto|scroll)/.test(style.overflowY) && node.scrollHeight > node.clientHeight) {
+        scrollParent = node;
+        break;
+      }
+      node = node.parentElement;
+    }
+
+    const handleScroll = () => {
+      const { scrollTop, scrollHeight, clientHeight } =
+        scrollParent === window
+          ? { scrollTop: window.scrollY, scrollHeight: document.documentElement.scrollHeight, clientHeight: window.innerHeight }
+          : (scrollParent as HTMLElement);
+      if (scrollTop + clientHeight >= scrollHeight - 4) {
+        setActiveSection(lastSectionId);
+      }
+    };
+    scrollParent.addEventListener('scroll', handleScroll);
+
+    return () => {
+      observer.disconnect();
+      scrollParent.removeEventListener('scroll', handleScroll);
+    };
+  }, [isLoading]);
+
   if (isLoading) return <PageSpinner />;
   if (isError) return <ErrorState error={settingsError} onRetry={refetchAll} />;
 

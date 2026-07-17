@@ -1,34 +1,51 @@
 'use client';
 
+import { useState } from 'react';
 import { useParams, usePathname } from 'next/navigation';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useForm } from 'react-hook-form';
 import { ColumnDef } from '@tanstack/react-table';
+import { toast } from 'sonner';
 import api from '@/lib/axios';
-import { Ticket, CustomerAsset } from '@/types';
+import { Ticket, CustomerAsset, Customer } from '@/types';
 import { DataTable } from '@/components/ui/DataTable';
 import { TicketStatusBadge } from '@/components/ui/Badge';
 import { PageSpinner } from '@/components/ui/Spinner';
+import { Modal } from '@/components/ui/Modal';
+import { Input } from '@/components/ui/Input';
 import Link from 'next/link';
 import { Button } from '@/components/ui/Button';
-import { Eye, Plus, Box } from 'lucide-react';
+import { Eye, Plus, Box, ShieldCheck, ShieldOff, Send } from 'lucide-react';
 import dayjs from 'dayjs';
 
 export default function CustomerHistoryPage() {
   const { id } = useParams<{ id: string }>();
   const pathname = usePathname();
   const prefix = pathname.startsWith('/admin/') ? 'admin' : 'manager';
+  const qc = useQueryClient();
+  const [showAddEmail, setShowAddEmail] = useState(false);
 
-  const { data: history = [], isLoading, isError, error, refetch } = useQuery<Ticket[]>({
+  const { data: detail, isLoading, isError, error, refetch } = useQuery<Customer & { tickets: Ticket[] }>({
     queryKey: ['customer-history', id],
-    queryFn: async () => {
-      const res = await api.get(`/web/manager/customers/${id}/history`);
-      return res.data.data.tickets ?? [];
-    },
+    queryFn: async () => (await api.get(`/web/manager/customers/${id}/history`)).data.data,
   });
+  const history = detail?.tickets ?? [];
 
   const { data: assets = [] } = useQuery<CustomerAsset[]>({
     queryKey: ['customer-assets-summary', id],
     queryFn: async () => (await api.get('/web/manager/customer-assets', { params: { customerId: id } })).data.data,
+  });
+
+  const { register, handleSubmit, reset, formState: { isSubmitting } } = useForm<{ email: string }>();
+
+  const invitationMutation = useMutation({
+    mutationFn: (email?: string) => api.post(`/web/manager/customers/${id}/portal-invitation`, { email }),
+    onSuccess: (res) => {
+      qc.invalidateQueries({ queryKey: ['customer-history', id] });
+      toast.success(res.data?.data?.message ?? res.data?.message ?? 'Invitation sent');
+      setShowAddEmail(false); reset();
+    },
+    onError: (err: any) => toast.error(err?.response?.data?.message ?? 'Something went wrong'),
   });
 
   const columns: ColumnDef<Ticket, unknown>[] = [
@@ -43,6 +60,37 @@ export default function CustomerHistoryPage() {
 
   return (
     <div className="space-y-6">
+      {detail && (
+        <div className="bg-[var(--color-surface)] rounded-xl p-4 border border-[var(--color-border)] shadow-sm">
+          <div className="flex items-start justify-between">
+            <div>
+              <h2 className="text-lg font-semibold text-[var(--color-text-primary)]">{detail.name}</h2>
+              <p className="text-sm text-[var(--color-text-muted)]">{detail.phone}{detail.email ? ` · ${detail.email}` : ''}</p>
+            </div>
+            <div className="flex flex-col items-end gap-2">
+              {detail.portalEnabled ? (
+                <span className="inline-flex items-center gap-1.5 text-sm font-medium text-emerald-600"><ShieldCheck size={15} /> Portal Access: Enabled</span>
+              ) : (
+                <span className="inline-flex items-center gap-1.5 text-sm font-medium text-[var(--color-text-muted)]"><ShieldOff size={15} /> Portal Access: Not Enabled</span>
+              )}
+              {detail.portalEnabled ? (
+                <Button size="sm" variant="secondary" loading={invitationMutation.isPending} onClick={() => invitationMutation.mutate(undefined)}>
+                  <Send size={13} /> Send Portal Invitation
+                </Button>
+              ) : (
+                <Button
+                  size="sm"
+                  loading={invitationMutation.isPending}
+                  onClick={() => detail.email ? invitationMutation.mutate(undefined) : setShowAddEmail(true)}
+                >
+                  <ShieldCheck size={13} /> Enable Portal Access
+                </Button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="bg-[var(--color-surface)] rounded-xl p-4 border border-[var(--color-border)] shadow-sm">
         <div className="flex items-center justify-between mb-3">
           <h3 className="font-medium text-[var(--color-text-secondary)] flex items-center gap-1.5"><Box size={15} /> Customer Assets</h3>
@@ -76,6 +124,19 @@ export default function CustomerHistoryPage() {
         <h2 className="text-xl font-semibold text-[var(--color-text-primary)] mb-6">Customer Ticket History</h2>
         <DataTable data={history} columns={columns} isError={isError} error={error} onRetry={refetch} />
       </div>
+
+      <Modal open={showAddEmail} onClose={() => { setShowAddEmail(false); reset(); }} title="Enable Portal Access" size="sm">
+        <form onSubmit={handleSubmit(d => invitationMutation.mutate(d.email))} className="space-y-4">
+          <p className="text-sm text-[var(--color-text-muted)]">
+            This customer has no email on file. Add one to send them a portal setup invitation.
+          </p>
+          <Input label="Email" type="email" {...register('email', { required: 'Email is required' })} />
+          <div className="flex justify-end gap-3">
+            <Button variant="secondary" type="button" onClick={() => { setShowAddEmail(false); reset(); }}>Cancel</Button>
+            <Button type="submit" loading={isSubmitting || invitationMutation.isPending}>Send Invitation</Button>
+          </div>
+        </form>
+      </Modal>
     </div>
   );
 }

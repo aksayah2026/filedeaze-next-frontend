@@ -543,8 +543,8 @@ export default function ServiceCatalogPage() {
                           <div className="mt-3">
                             <div className="flex items-center justify-between mb-2">
                               <p className="text-[11px] font-semibold tracking-wider uppercase text-[var(--color-text-muted)]">Spare Parts</p>
-                              <Link href={`/${prefix}/service-catalog/spare-parts?subCategoryId=${sub.id}&subCategoryName=${encodeURIComponent(sub.name)}`} className="text-[11px] font-medium text-[var(--color-primary)] hover:underline">
-                                Manage
+                              <Link href={`/${prefix}/service-catalog/spare-parts?subCategoryId=${sub.id}&subCategoryName=${encodeURIComponent(sub.name)}`}>
+                                <Button variant="secondary" size="sm"><Wrench size={12} /> Manage</Button>
                               </Link>
                             </div>
                             {mappedParts.length > 0 ? (

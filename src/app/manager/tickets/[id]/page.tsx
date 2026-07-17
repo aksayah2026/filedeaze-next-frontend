@@ -6,7 +6,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import api from '@/lib/axios';
-import { Ticket, Technician, TicketImage, SparePart, PaymentMethod, BillingType } from '@/types';
+import { Ticket, Technician, TicketImage, SparePart, PaymentMethod } from '@/types';
 import { Select } from '@/components/ui/Select';
 import { TicketStatusBadge, PaymentStatusBadge, Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
@@ -101,15 +101,14 @@ function SparePartRow({ part, onEdit, onDelete }: { part: DraftPart; onEdit: () 
 }
 
 /** Interactive Payment card for a COMPLETED ticket with no payment yet — lets a manager collect
- * payment from the web dashboard, itemizing spare parts as Warranty (always ₹0) or Non-Warranty
- * (billed at quantity × unit price), matching the Warranty/Non-Warranty billing workflow. */
+ * payment from the web dashboard, itemizing spare parts as Warranty (always ₹0) or Out of Warranty
+ * (billed at quantity × unit price), matching the Warranty/Out of Warranty billing workflow. */
 function PaymentCollectionCard({ ticketId, subCategoryId, isAmcCovered, onCollected }: {
   ticketId: string;
   subCategoryId?: string;
   isAmcCovered: boolean;
   onCollected: () => void;
 }) {
-  const [billingType, setBillingType] = useState<BillingType>('NON_WARRANTY');
   const [serviceCharge, setServiceCharge] = useState('0');
   const [labourCharge, setLabourCharge] = useState('0');
   const [additionalCharge, setAdditionalCharge] = useState('0');
@@ -133,7 +132,7 @@ function PaymentCollectionCard({ ticketId, subCategoryId, isAmcCovered, onCollec
     onError: (err: any) => toast.error(err?.response?.data?.message ?? 'Failed to collect payment'),
   });
 
-  const serviceChargeWaived = isAmcCovered || billingType === 'WARRANTY';
+  const serviceChargeWaived = isAmcCovered;
   const effectiveService = serviceChargeWaived ? 0 : Number(serviceCharge) || 0;
   const effectiveLabour = serviceChargeWaived ? 0 : Number(labourCharge) || 0;
   const warrantyValue = warrantyParts.reduce((s, p) => s + p.quantity * p.unitPrice, 0);
@@ -181,7 +180,6 @@ function PaymentCollectionCard({ ticketId, subCategoryId, isAmcCovered, onCollec
 
   const handleSubmit = () => {
     collectMutation.mutate({
-      billingType,
       serviceCharge: Number(serviceCharge) || 0,
       labourCharge: Number(labourCharge) || 0,
       additionalCharge: Number(additionalCharge) || 0,
@@ -196,34 +194,27 @@ function PaymentCollectionCard({ ticketId, subCategoryId, isAmcCovered, onCollec
     <div className="bg-[var(--color-surface)] rounded-xl p-4 border border-[var(--color-border)] shadow-sm space-y-4">
       <h3 className="font-medium text-[var(--color-text-secondary)]">Payment Details</h3>
 
-      <div className="grid grid-cols-2 gap-3">
-        <Select
-          label="Billing Type" value={billingType}
-          onChange={e => setBillingType(e.target.value as BillingType)}
-          options={[
-            { value: 'NON_WARRANTY', label: 'Non-Warranty' },
-            { value: 'WARRANTY', label: 'Warranty' },
-            { value: 'PARTIAL_WARRANTY', label: 'Partial Warranty' },
-          ]}
-        />
-        <Select
-          label="Payment Method" value={method}
-          onChange={e => setMethod(e.target.value as PaymentMethod)}
-          options={[
-            { value: 'CASH', label: 'Cash' },
-            { value: 'UPI', label: 'UPI' },
-            { value: 'UPI_QR', label: 'UPI QR' },
-            { value: 'RAZORPAY', label: 'Razorpay' },
-            { value: 'CARD', label: 'Card' },
-            { value: 'NET_BANKING', label: 'Net Banking' },
-            { value: 'WALLET', label: 'Wallet' },
-          ]}
-        />
+      <div className="flex items-center justify-between">
+        {isAmcCovered ? (
+          <p className="text-xs text-emerald-600 flex items-center gap-1.5"><ShieldCheck size={13} /> AMC-covered ticket — service &amp; labour charge are automatically waived.</p>
+        ) : (
+          <p className="text-xs text-[var(--color-text-muted)]">Non-AMC ticket — service &amp; labour charge billed normally.</p>
+        )}
       </div>
 
-      {isAmcCovered && (
-        <p className="text-xs text-emerald-600 flex items-center gap-1.5"><ShieldCheck size={13} /> AMC-covered visit — service &amp; labour charge are waived regardless of billing type.</p>
-      )}
+      <Select
+        label="Payment Method" value={method}
+        onChange={e => setMethod(e.target.value as PaymentMethod)}
+        options={[
+          { value: 'CASH', label: 'Cash' },
+          { value: 'UPI', label: 'UPI' },
+          { value: 'UPI_QR', label: 'UPI QR' },
+          { value: 'RAZORPAY', label: 'Razorpay' },
+          { value: 'CARD', label: 'Card' },
+          { value: 'NET_BANKING', label: 'Net Banking' },
+          { value: 'WALLET', label: 'Wallet' },
+        ]}
+      />
 
       <div className="grid grid-cols-2 gap-3">
         <Input
@@ -253,14 +244,14 @@ function PaymentCollectionCard({ ticketId, subCategoryId, isAmcCovered, onCollec
 
       <div>
         <div className="flex items-center justify-between mb-2">
-          <p className="text-sm font-medium text-rose-600">🔴 Non-Warranty Spare Parts</p>
+          <p className="text-sm font-medium text-rose-600">🔴 Out of Warranty Spare Parts</p>
           <Button type="button" size="sm" variant="secondary" onClick={() => openAddDialog('nonWarranty')}><Plus size={13} /> Add Spare Part</Button>
         </div>
         <div className="space-y-2">
           {nonWarrantyParts.map((p, i) => (
             <SparePartRow key={i} part={p} onEdit={() => openEditDialog('nonWarranty', i)} onDelete={() => removePart('nonWarranty', i)} />
           ))}
-          {!nonWarrantyParts.length && <p className="text-xs text-[var(--color-text-muted)]">No non-warranty spare parts added.</p>}
+          {!nonWarrantyParts.length && <p className="text-xs text-[var(--color-text-muted)]">No out of warranty spare parts added.</p>}
         </div>
       </div>
 
@@ -523,11 +514,9 @@ export default function TicketDetailPage() {
             <div className="space-y-1 text-[var(--color-text-secondary)]">
               <div className="flex items-center gap-2 flex-wrap">
                 <PaymentStatusBadge status={ticket.payment.status} />
-                {ticket.payment.billingType && (
-                  <Badge variant={ticket.payment.billingType === 'WARRANTY' ? 'purple' : ticket.payment.billingType === 'PARTIAL_WARRANTY' ? 'orange' : 'info'} showDot={false}>
-                    {ticket.payment.billingType.replace('_', ' ')}
-                  </Badge>
-                )}
+                <Badge variant={ticket.isAmcCovered ? 'purple' : 'info'} showDot={false}>
+                  {ticket.isAmcCovered ? 'AMC Covered' : 'Non-AMC'}
+                </Badge>
               </div>
               {(ticket.payment.serviceCharge || ticket.payment.labourCharge || ticket.payment.sparePartsAmount || ticket.payment.additionalCharge) ? (
                 <>
@@ -601,7 +590,7 @@ export default function TicketDetailPage() {
               )}
               {!!chargeable.length && (
                 <div>
-                  <p className="text-[11px] font-semibold uppercase tracking-wide text-rose-600 mb-1.5">🔴 Non-Warranty Spare Parts</p>
+                  <p className="text-[11px] font-semibold uppercase tracking-wide text-rose-600 mb-1.5">🔴 Out of Warranty Spare Parts</p>
                   <div className="space-y-1.5">{chargeable.map(partRow)}</div>
                 </div>
               )}

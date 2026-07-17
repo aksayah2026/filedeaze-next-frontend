@@ -292,6 +292,7 @@ export interface Customer {
   email?: string;
   phone: string;
   address?: string;
+  portalEnabled?: boolean;
   createdAt: string;
 }
 
@@ -443,7 +444,7 @@ export interface SparePart {
   updatedAt: string;
 }
 
-export type SparePartCoverageType = 'WARRANTY' | 'NON_WARRANTY';
+export type SparePartCoverageType = 'WARRANTY' | 'OUT_OF_WARRANTY';
 
 export interface TicketSparePartUsage {
   id: string;
