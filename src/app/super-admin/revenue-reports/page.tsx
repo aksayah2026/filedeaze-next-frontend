@@ -227,7 +227,7 @@ export default function RevenueReportsPage() {
 
           {/* Revenue by Duration Chart */}
           {mounted && byDurationChart.length > 0 && (
-            <div className="bg-[var(--color-surface)] rounded-xl border border-[var(--color-border)] p-5 shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
+            <div className="min-w-0 bg-[var(--color-surface)] rounded-xl border border-[var(--color-border)] p-5 shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
               <div className="flex items-center gap-2 mb-4">
                 <Calendar size={15} className="text-[var(--color-text-muted)]" />
                 <h3 className="text-sm font-semibold text-[var(--color-text-primary)]">Revenue by Duration</h3>
@@ -260,7 +260,7 @@ export default function RevenueReportsPage() {
           {mounted && (byPlanChart.length > 0 || byTenantChart.length > 0) && (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
               {byPlanChart.length > 0 && (
-                <div className="bg-[var(--color-surface)] rounded-xl border border-[var(--color-border)] p-5 shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
+                <div className="min-w-0 bg-[var(--color-surface)] rounded-xl border border-[var(--color-border)] p-5 shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
                   <div className="flex items-center gap-2 mb-4">
                     <BarChart2 size={15} className="text-[var(--color-text-muted)]" />
                     <h3 className="text-sm font-semibold text-[var(--color-text-primary)]">Revenue by Plan</h3>
@@ -303,7 +303,7 @@ export default function RevenueReportsPage() {
               )}
 
               {byTenantChart.length > 0 && (
-                <div className="bg-[var(--color-surface)] rounded-xl border border-[var(--color-border)] p-5 shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
+                <div className="min-w-0 bg-[var(--color-surface)] rounded-xl border border-[var(--color-border)] p-5 shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
                   <div className="flex items-center gap-2 mb-4">
                     <BarChart2 size={15} className="text-[var(--color-text-muted)]" />
                     <h3 className="text-sm font-semibold text-[var(--color-text-primary)]">Top Tenants by Revenue</h3>

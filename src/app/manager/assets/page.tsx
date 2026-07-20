@@ -1,12 +1,12 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { usePathname, useSearchParams } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
-import { Eye, Pencil, Trash2, Plus, X as XIcon, Box } from 'lucide-react';
+import { Eye, Pencil, Trash2, Plus, X as XIcon, Box, ChevronDown, Layers, Sparkles } from 'lucide-react';
 import Link from 'next/link';
 import api from '@/lib/axios';
 import { CustomerAsset, Customer, ServiceCategory } from '@/types';
@@ -18,6 +18,7 @@ import { Textarea } from '@/components/ui/Textarea';
 import { Modal } from '@/components/ui/Modal';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { PaginationMeta } from '@/components/ui/Pagination';
+import { cn } from '@/lib/utils';
 import dayjs from 'dayjs';
 
 type AssetForm = {
@@ -37,6 +38,23 @@ const emptyForm: AssetForm = {
   serialNumber: '', purchaseDate: '', installationAddress: '', notes: '',
 };
 
+type BulkAssetRow = {
+  key: string;
+  name: string;
+  categoryId: string;
+  brand: string;
+  model: string;
+  serialNumber: string;
+  purchaseDate: string;
+};
+
+type BulkRowError = { row: number; field: string; message: string };
+
+const makeEmptyBulkRow = (): BulkAssetRow => ({
+  key: typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `row-${Date.now()}-${Math.random()}`,
+  name: '', categoryId: '', brand: '', model: '', serialNumber: '', purchaseDate: '',
+});
+
 export default function CustomerAssetsPage() {
   const qc = useQueryClient();
   const pathname = usePathname();
@@ -52,6 +70,23 @@ export default function CustomerAssetsPage() {
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<CustomerAsset | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<CustomerAsset | null>(null);
+
+  const [addMenuOpen, setAddMenuOpen] = useState(false);
+  const addMenuRef = useRef<HTMLDivElement>(null);
+  const [showMultiForm, setShowMultiForm] = useState(false);
+  const [multiCustomerId, setMultiCustomerId] = useState('');
+  const [multiRows, setMultiRows] = useState<BulkAssetRow[]>([]);
+  const [bulkErrors, setBulkErrors] = useState<BulkRowError[]>([]);
+  const [highlightedIds, setHighlightedIds] = useState<Set<string>>(new Set());
+
+  useEffect(() => {
+    if (!addMenuOpen) return;
+    const onClickOutside = (e: MouseEvent) => {
+      if (addMenuRef.current && !addMenuRef.current.contains(e.target as Node)) setAddMenuOpen(false);
+    };
+    document.addEventListener('mousedown', onClickOutside);
+    return () => document.removeEventListener('mousedown', onClickOutside);
+  }, [addMenuOpen]);
 
   const { register, handleSubmit, reset, formState: { errors, isSubmitting } } = useForm<AssetForm>({ defaultValues: emptyForm });
 
@@ -86,13 +121,13 @@ export default function CustomerAssetsPage() {
   const { data: customers = [] } = useQuery<Customer[]>({
     queryKey: ['customers-list'],
     queryFn: async () => (await api.get('/web/manager/customers')).data.data,
-    enabled: showForm,
+    enabled: showForm || showMultiForm,
   });
 
   const { data: categories = [] } = useQuery<ServiceCategory[]>({
     queryKey: ['service-categories'],
     queryFn: async () => (await api.get('/web/manager/service-categories')).data.data,
-    enabled: showForm,
+    enabled: showForm || showMultiForm,
   });
 
   const closeForm = () => { setShowForm(false); setEditing(null); reset(emptyForm); };
@@ -114,6 +149,36 @@ export default function CustomerAssetsPage() {
     });
     setShowForm(true);
   };
+
+  const openMultiCreate = () => {
+    setMultiCustomerId(lockedCustomerId);
+    setMultiRows([makeEmptyBulkRow(), makeEmptyBulkRow(), makeEmptyBulkRow()]);
+    setBulkErrors([]);
+    setShowMultiForm(true);
+  };
+
+  const closeMultiForm = () => {
+    setShowMultiForm(false);
+    setMultiCustomerId('');
+    setMultiRows([]);
+    setBulkErrors([]);
+  };
+
+  const addMultiRow = () => setMultiRows(rows => [...rows, makeEmptyBulkRow()]);
+
+  const removeMultiRow = (key: string) =>
+    setMultiRows(rows => (rows.length > 1 ? rows.filter(r => r.key !== key) : rows));
+
+  const updateMultiRow = (key: string, field: keyof Omit<BulkAssetRow, 'key'>, value: string) => {
+    const rowIndex = multiRows.findIndex(r => r.key === key);
+    setMultiRows(rows => rows.map(r => (r.key === key ? { ...r, [field]: value } : r)));
+    if (rowIndex !== -1) {
+      setBulkErrors(errs => errs.filter(e => !(e.row === rowIndex + 1 && e.field === field)));
+    }
+  };
+
+  const bulkErrorFor = (rowIndex: number, field: string) =>
+    bulkErrors.find(e => e.row === rowIndex + 1 && e.field === field)?.message;
 
   const createMutation = useMutation({
     mutationFn: (d: AssetForm) => api.post('/web/manager/customer-assets', {
@@ -167,8 +232,56 @@ export default function CustomerAssetsPage() {
       toast.error(err?.response?.data?.message ?? 'Failed to remove asset'),
   });
 
+  const bulkCreateMutation = useMutation({
+    mutationFn: () => api.post('/web/manager/customer-assets/bulk', {
+      customerId: multiCustomerId,
+      assets: multiRows.map(r => ({
+        name: r.name.trim(),
+        categoryId: r.categoryId || undefined,
+        brand: r.brand.trim() || undefined,
+        model: r.model.trim() || undefined,
+        serialNumber: r.serialNumber.trim() || undefined,
+        purchaseDate: r.purchaseDate || undefined,
+      })),
+    }),
+    onSuccess: (res) => {
+      const { createdCount, assets: created } = res.data.data as { createdCount: number; assets: CustomerAsset[] };
+      qc.invalidateQueries({ queryKey: ['customer-assets'] });
+      toast.success(`${createdCount} asset${createdCount === 1 ? '' : 's'} created successfully.`);
+      setHighlightedIds(new Set(created.map(a => a.id)));
+      setTimeout(() => setHighlightedIds(new Set()), 5000);
+      closeMultiForm();
+    },
+    onError: (err: { response?: { data?: { errors?: BulkRowError[]; message?: string } } }) => {
+      const rowErrors = err?.response?.data?.errors;
+      if (rowErrors && rowErrors.length > 0 && rowErrors[0]?.row !== undefined) {
+        setBulkErrors(rowErrors);
+        toast.error('Please fix the highlighted rows.');
+      } else {
+        toast.error(err?.response?.data?.message ?? 'Failed to create assets');
+      }
+    },
+  });
+
+  const handleBulkSave = () => {
+    if (!multiCustomerId) { toast.error('Select a customer'); return; }
+    bulkCreateMutation.mutate();
+  };
+
   const columns: ColumnDef<CustomerAsset, unknown>[] = [
-    { accessorKey: 'name', header: 'Asset' },
+    {
+      accessorKey: 'name', header: 'Asset',
+      cell: ({ row }) => (
+        <span className="inline-flex items-center gap-1.5">
+          {row.original.name}
+          {highlightedIds.has(row.original.id) && (
+            <span className="inline-flex items-center gap-1 rounded-full bg-[var(--color-success)]/15 text-[var(--color-success)] text-[10px] font-semibold px-1.5 py-0.5 uppercase tracking-wide">
+              <Sparkles size={10} /> New
+            </span>
+          )}
+        </span>
+      ),
+    },
     { accessorKey: 'customer.name', header: 'Customer', cell: ({ row }) => row.original.customer?.name ?? '—' },
     { accessorKey: 'category.name', header: 'Category', cell: ({ row }) => row.original.category?.name ?? '—' },
     { id: 'brandModel', header: 'Brand / Model', cell: ({ row }) => [row.original.brand, row.original.model].filter(Boolean).join(' / ') || '—' },
@@ -193,7 +306,38 @@ export default function CustomerAssetsPage() {
           <h2 className="text-xl font-semibold text-[var(--color-text-primary)]">Customer Assets</h2>
           <p className="text-sm text-[var(--color-text-muted)] mt-0.5">Track the equipment installed at each customer's premises</p>
         </div>
-        <Button onClick={openCreate}><Plus size={15} /> Add Asset</Button>
+        <div className="relative" ref={addMenuRef}>
+          <Button onClick={() => setAddMenuOpen(o => !o)}>
+            <Plus size={15} /> Add Asset
+            <ChevronDown size={14} className={cn('transition-transform duration-150', addMenuOpen && 'rotate-180')} />
+          </Button>
+          {addMenuOpen && (
+            <div className="absolute right-0 mt-2 w-60 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-[0_12px_32px_rgba(0,0,0,0.12)] z-20 overflow-hidden">
+              <button
+                type="button"
+                onClick={() => { setAddMenuOpen(false); openCreate(); }}
+                className="w-full text-left px-4 py-3 text-sm text-[var(--color-text-primary)] hover:bg-[var(--color-surface-elevated)] flex items-center gap-2.5 transition-colors"
+              >
+                <Plus size={15} className="text-[var(--color-text-muted)]" />
+                <div>
+                  <div className="font-medium">Add Single Asset</div>
+                  <div className="text-xs text-[var(--color-text-muted)]">Create one asset at a time</div>
+                </div>
+              </button>
+              <button
+                type="button"
+                onClick={() => { setAddMenuOpen(false); openMultiCreate(); }}
+                className="w-full text-left px-4 py-3 text-sm text-[var(--color-text-primary)] hover:bg-[var(--color-surface-elevated)] flex items-center gap-2.5 border-t border-[var(--color-border)] transition-colors"
+              >
+                <Layers size={15} className="text-[var(--color-text-muted)]" />
+                <div>
+                  <div className="font-medium">Add Multiple Assets</div>
+                  <div className="text-xs text-[var(--color-text-muted)]">Create several assets at once</div>
+                </div>
+              </button>
+            </div>
+          )}
+        </div>
       </div>
 
       {lockedCustomerId && (
@@ -269,6 +413,122 @@ export default function CustomerAssetsPage() {
             <Button variant="secondary" type="button" onClick={closeForm}>Cancel</Button>
             <Button type="submit" loading={isSubmitting || createMutation.isPending || updateMutation.isPending}>
               {editing ? 'Save Changes' : <><Plus size={14} /> Add Asset</>}
+            </Button>
+          </div>
+        </form>
+      </Modal>
+
+      <Modal open={showMultiForm} onClose={closeMultiForm} title="Add Multiple Assets" size="xl">
+        <form onSubmit={e => { e.preventDefault(); handleBulkSave(); }} className="space-y-4">
+          {lockedCustomerId ? (
+            <div className="flex items-center gap-2 text-sm text-[var(--color-text-secondary)] bg-[var(--color-surface-elevated)] rounded-lg px-3 py-2">
+              <Box size={14} className="text-[var(--color-text-muted)]" />
+              Customer: <span className="font-medium">{customers.find(c => c.id === lockedCustomerId)?.name ?? '—'}</span>
+            </div>
+          ) : (
+            <Select
+              label="Customer *"
+              options={customers.map(c => ({ value: c.id, label: `${c.name} — ${c.phone ?? ''}` }))}
+              placeholder="Select customer"
+              value={multiCustomerId}
+              onChange={e => setMultiCustomerId(e.target.value)}
+            />
+          )}
+
+          <div className="overflow-x-auto rounded-xl border border-[var(--color-border)]">
+            <table className="min-w-full divide-y divide-[var(--color-border)]">
+              <thead className="bg-[var(--color-surface-elevated)]/80">
+                <tr>
+                  <th className="px-3 py-2.5 text-left text-[11px] font-semibold text-[var(--color-text-muted)] uppercase tracking-wider min-w-[160px]">Asset Name *</th>
+                  <th className="px-3 py-2.5 text-left text-[11px] font-semibold text-[var(--color-text-muted)] uppercase tracking-wider min-w-[140px]">Category</th>
+                  <th className="px-3 py-2.5 text-left text-[11px] font-semibold text-[var(--color-text-muted)] uppercase tracking-wider min-w-[130px]">Brand</th>
+                  <th className="px-3 py-2.5 text-left text-[11px] font-semibold text-[var(--color-text-muted)] uppercase tracking-wider min-w-[130px]">Model</th>
+                  <th className="px-3 py-2.5 text-left text-[11px] font-semibold text-[var(--color-text-muted)] uppercase tracking-wider min-w-[150px]">Serial Number</th>
+                  <th className="px-3 py-2.5 text-left text-[11px] font-semibold text-[var(--color-text-muted)] uppercase tracking-wider min-w-[150px]">Purchase Date</th>
+                  <th className="px-3 py-2.5 w-10" />
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-[var(--color-border)] bg-[var(--color-surface)]">
+                {multiRows.map((row, idx) => (
+                  <tr key={row.key} className={idx % 2 === 0 ? 'bg-[var(--color-surface)]' : 'bg-[var(--color-surface-elevated)]/40'}>
+                    <td className="px-3 py-2 align-top">
+                      <Input
+                        placeholder="e.g. Living Room AC"
+                        value={row.name}
+                        onChange={e => updateMultiRow(row.key, 'name', e.target.value)}
+                        error={bulkErrorFor(idx, 'name')}
+                        autoFocus={idx === 0}
+                      />
+                    </td>
+                    <td className="px-3 py-2 align-top">
+                      <Select
+                        options={categories.map(c => ({ value: c.id, label: c.name }))}
+                        placeholder="Select"
+                        value={row.categoryId}
+                        onChange={e => updateMultiRow(row.key, 'categoryId', e.target.value)}
+                        error={bulkErrorFor(idx, 'categoryId')}
+                      />
+                    </td>
+                    <td className="px-3 py-2 align-top">
+                      <Input
+                        placeholder="e.g. Daikin"
+                        value={row.brand}
+                        onChange={e => updateMultiRow(row.key, 'brand', e.target.value)}
+                        error={bulkErrorFor(idx, 'brand')}
+                      />
+                    </td>
+                    <td className="px-3 py-2 align-top">
+                      <Input
+                        placeholder="e.g. FTKF50"
+                        value={row.model}
+                        onChange={e => updateMultiRow(row.key, 'model', e.target.value)}
+                        error={bulkErrorFor(idx, 'model')}
+                      />
+                    </td>
+                    <td className="px-3 py-2 align-top">
+                      <Input
+                        placeholder="e.g. SN-2024-00123"
+                        value={row.serialNumber}
+                        onChange={e => updateMultiRow(row.key, 'serialNumber', e.target.value)}
+                        error={bulkErrorFor(idx, 'serialNumber')}
+                      />
+                    </td>
+                    <td className="px-3 py-2 align-top">
+                      <Input
+                        type="date"
+                        autoComplete="off"
+                        max={dayjs().format('YYYY-MM-DD')}
+                        value={row.purchaseDate}
+                        onChange={e => updateMultiRow(row.key, 'purchaseDate', e.target.value)}
+                        error={bulkErrorFor(idx, 'purchaseDate')}
+                      />
+                    </td>
+                    <td className="px-3 py-2 align-top">
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="text-red-500 hover:text-red-600"
+                        disabled={multiRows.length === 1}
+                        onClick={() => removeMultiRow(row.key)}
+                      >
+                        <Trash2 size={14} />
+                      </Button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          <Button type="button" variant="secondary" size="sm" onClick={addMultiRow}>
+            <Plus size={14} /> Add Another Row
+          </Button>
+
+          <div className="flex justify-end gap-3 pt-2">
+            <Button variant="secondary" type="button" onClick={closeMultiForm}>Cancel</Button>
+            <Button type="submit" loading={bulkCreateMutation.isPending} disabled={bulkCreateMutation.isPending}>
+              Save All ({multiRows.length} Asset{multiRows.length === 1 ? '' : 's'})
             </Button>
           </div>
         </form>

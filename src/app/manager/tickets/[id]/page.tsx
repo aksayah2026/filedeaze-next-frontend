@@ -21,6 +21,47 @@ import dayjs from 'dayjs';
 
 const BUSY_STATUSES = ['ASSIGNED', 'ACCEPTED', 'TRAVELLING', 'REACHED_LOCATION', 'IN_PROGRESS', 'PENDING'];
 
+/** Defaults the Scheduled At field to the ticket's raised/current schedule — but never to a past
+ * moment, since the backend rejects past dates. Most tickets are raised "ASAP" and auto-stamped
+ * at raise time, so by the time a manager assigns them that timestamp is already in the past;
+ * in that case fall back to "now" instead of a value that would fail validation on submit. */
+function defaultScheduleValue(scheduledAt?: string): string {
+  const candidate = scheduledAt && dayjs(scheduledAt).isAfter(dayjs()) ? dayjs(scheduledAt) : dayjs();
+  return candidate.format('YYYY-MM-DDTHH:mm');
+}
+
+
+/** Read-only reference showing what the customer originally asked for, next to the (editable)
+ * Scheduled At field above it — so a manager who nudges the schedule can still see the customer's
+ * original request. Always sourced from the immutable requestedScheduleAt, never from the
+ * mutable scheduledAt (which assign/reassign overwrite with the current technician schedule).
+ * Renders nothing at all when the customer never specified one — not even a "Not specified"
+ * placeholder — so the modal stays uncluttered for ASAP/no-preference requests.
+ *
+ * The two fields can legitimately diverge after a first assignment — e.g. a ticket first raised
+ * for "yesterday 10am" (now-past requestedScheduleAt) that already has a valid, future scheduledAt
+ * from its last assignment. So `scheduledAtFellBackToNow` — whether Scheduled At's own pre-fill
+ * above had to fall back to "now" — is passed in separately from the caller (mirroring the
+ * condition inside defaultScheduleValue(), kept separate so that function stays untouched) rather
+ * than derived from requestedScheduleAt's own past/future status: the helper text below describes
+ * what happened to the Scheduled At field, so it must track scheduledAt's fallback, not the
+ * requested date's. */
+function CustomerRequestedSchedule({ requestedScheduleAt, scheduledAtFellBackToNow }: { requestedScheduleAt?: string | null; scheduledAtFellBackToNow: boolean }) {
+  if (!requestedScheduleAt) return null;
+
+  return (
+    <div className="rounded-lg bg-[var(--color-surface-elevated)] px-3 py-2.5 space-y-1">
+      <p className="text-[11px] font-semibold text-[var(--color-text-muted)] uppercase tracking-wide">Customer Requested</p>
+      <p className="text-sm text-[var(--color-text-secondary)]">{dayjs(requestedScheduleAt).format('DD MMM YYYY, h:mm A')}</p>
+      {scheduledAtFellBackToNow && (
+        <p className="text-xs text-[var(--color-text-muted)] italic">
+          The requested time has already passed. The schedule has been initialized to the current time.
+        </p>
+      )}
+    </div>
+  );
+}
+
 interface SkillMatch { matchedSkillCount: number; matchedSkillNames: string[]; fullMatch: boolean }
 
 function TechnicianPicker({ techs, busyIds, value, onChange, skillMatches, requiredSkillCount }: {
@@ -424,9 +465,9 @@ export default function TicketDetailPage() {
         <div className="flex flex-col items-end gap-2">
           <TicketStatusBadge status={ticket.status} />
           <div className="flex gap-2">
-            {canAssign && <Button size="sm" onClick={() => { setAssignMode('assign'); setShowAssign(true); }}><UserCheck size={13} /> Assign</Button>}
-            {canReassign && <Button size="sm" variant="secondary" onClick={() => { setAssignMode('reassign'); setShowAssign(true); }}><RefreshCw size={13} /> Reassign</Button>}
-            {canReschedule && <Button size="sm" variant="secondary" onClick={() => { setAssignMode('reschedule'); setShowAssign(true); }}><CalendarClock size={13} /> Reschedule</Button>}
+            {canAssign && <Button size="sm" onClick={() => { setAssignMode('assign'); resetA({ scheduledAt: defaultScheduleValue(ticket.scheduledAt) }); setShowAssign(true); }}><UserCheck size={13} /> Assign</Button>}
+            {canReassign && <Button size="sm" variant="secondary" onClick={() => { setAssignMode('reassign'); resetA({ scheduledAt: defaultScheduleValue(ticket.scheduledAt) }); setShowAssign(true); }}><RefreshCw size={13} /> Reassign</Button>}
+            {canReschedule && <Button size="sm" variant="secondary" onClick={() => { setAssignMode('reschedule'); resetA({ scheduledAt: defaultScheduleValue(ticket.scheduledAt) }); setShowAssign(true); }}><CalendarClock size={13} /> Reschedule</Button>}
             {canActOnPending && (
               <>
                 <Button size="sm" variant="secondary" className="text-emerald-600 border-emerald-200 hover:bg-emerald-50" loading={approvePendingMutation.isPending} onClick={() => approvePendingMutation.mutate()}><ThumbsUp size={13} /> Approve</Button>
@@ -714,6 +755,11 @@ export default function TicketDetailPage() {
             label="Scheduled At"
             type="datetime-local"
             {...ra('scheduledAt', { required: 'Pick a date & time first' })}
+          />
+
+          <CustomerRequestedSchedule
+            requestedScheduleAt={ticket.requestedScheduleAt}
+            scheduledAtFellBackToNow={!(ticket.scheduledAt && dayjs(ticket.scheduledAt).isAfter(dayjs()))}
           />
 
           <div>

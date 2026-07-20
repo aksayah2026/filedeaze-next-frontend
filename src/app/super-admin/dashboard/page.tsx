@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Building2, CheckCircle, XCircle, AlertCircle, DollarSign, Users } from 'lucide-react';
 import api from '@/lib/axios';
@@ -23,6 +24,9 @@ const mockTrendData = [
 
 export default function SuperAdminDashboardPage() {
   const ACCENT = useRoleAccent();
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+
   const { data, isLoading, isError, error, refetch, isFetching } = useQuery<SuperAdminDashboard>({
     queryKey: ['super-admin-dashboard'],
     queryFn: async () => (await api.get('/web/super-admin/dashboard')).data.data,
@@ -138,13 +142,14 @@ export default function SuperAdminDashboardPage() {
           </div>
 
           {/* Revenue & Tenant Growth Charts */}
+          {mounted && (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-8">
-            <div className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl p-5 shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
+            <div className="min-w-0 bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl p-5 shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
               <div className="flex items-center gap-2 mb-6">
                 <div className="h-1.5 w-5 rounded-full bg-blue-500" />
                 <h3 className="text-[13px] font-bold tracking-wide uppercase text-[var(--color-text-muted)]">Revenue Trend</h3>
               </div>
-              <div className="h-64">
+              <div className="h-64 min-w-0">
                 <ResponsiveContainer width="100%" height="100%">
                   <AreaChart data={mockTrendData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                     <defs>
@@ -167,12 +172,12 @@ export default function SuperAdminDashboardPage() {
               </div>
             </div>
 
-            <div className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl p-5 shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
+            <div className="min-w-0 bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl p-5 shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
               <div className="flex items-center gap-2 mb-6">
                 <div className="h-1.5 w-5 rounded-full bg-emerald-500" />
                 <h3 className="text-[13px] font-bold tracking-wide uppercase text-[var(--color-text-muted)]">Tenant Growth</h3>
               </div>
-              <div className="h-64">
+              <div className="h-64 min-w-0">
                 <ResponsiveContainer width="100%" height="100%">
                   <AreaChart data={mockTrendData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                     <defs>
@@ -195,6 +200,7 @@ export default function SuperAdminDashboardPage() {
               </div>
             </div>
           </div>
+          )}
         </>
       )}
     </div>

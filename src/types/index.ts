@@ -508,6 +508,10 @@ export interface Ticket {
   isAmcCovered?: boolean;
   spareParts?: TicketSparePartUsage[];
   scheduledAt?: string;
+  /** Immutable snapshot of what the customer originally asked for — set once at creation, never
+   * changed by assign/reassign. Null if the customer didn't request a specific time, or on
+   * tickets created before this field existed. */
+  requestedScheduleAt?: string | null;
   workStartedAt?: string;
   workEndedAt?: string;
   serviceDurationMinutes?: number | null;

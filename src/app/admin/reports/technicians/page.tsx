@@ -176,9 +176,9 @@ export default function TechniciansReportPage() {
 
               {/* ── LEFT: Primary Chart — Top Technicians (8 cols) ── */}
               {performanceData.length > 0 && (
-                <div className="lg:col-span-8 bg-[var(--color-surface)] rounded-2xl border border-[var(--color-border)] p-4 shadow-sm flex flex-col">
+                <div className="lg:col-span-8 min-w-0 bg-[var(--color-surface)] rounded-2xl border border-[var(--color-border)] p-4 shadow-sm flex flex-col">
                   <h3 className="text-sm font-semibold text-[var(--color-text-primary)] mb-4">Performance Comparison</h3>
-                  <div className="flex-1 min-h-[300px]">
+                  <div className="flex-1 min-w-0 min-h-[300px]">
                     <ResponsiveContainer width="100%" height="100%">
                       <BarChart data={performanceData} layout="vertical" margin={{ top: 10, right: 16, left: 0, bottom: 0 }}>
                         <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="var(--color-border)" opacity={0.5} />
