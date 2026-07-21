@@ -54,25 +54,13 @@ export default function NotificationsPage() {
   });
 
   const clearAllMutation = useMutation({
-    // If there isn't a dedicated endpoint, we could loop over ids.
-    // We'll try calling an assumed clear endpoint, fallback to mapping if needed.
-    mutationFn: async () => {
-      try {
-        await api.delete('/mobile/notifications/clear');
-      } catch (err: any) {
-        if (err?.response?.status === 404) {
-          await Promise.all(notifications.map(n => api.delete(`/mobile/notifications/${n.id}`)));
-        } else {
-          throw err;
-        }
-      }
-    },
+    mutationFn: () => api.delete('/mobile/notifications/clear-all'),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['notifications'] });
       toast.success('All notifications cleared');
       setShowClearConfirm(false);
     },
-    onError: () => toast.error('Failed to clear notifications'),
+    onError: (err: any) => toast.error(err?.response?.data?.message ?? 'Failed to clear notifications'),
   });
 
   if (isLoading) return <PageSpinner />;

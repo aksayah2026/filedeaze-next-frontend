@@ -31,33 +31,52 @@ function defaultScheduleValue(scheduledAt?: string): string {
 }
 
 
+/** Shown directly under the editable Scheduled At field whenever its pre-fill (see
+ * defaultScheduleValue() above) had to fall back to "now" because the ticket's own scheduledAt
+ * was already in the past — independent of whether the customer ever specified a
+ * requestedScheduleAt, so the manager always sees *why* "now" appears instead of the ticket's
+ * stored value, not only on the subset of tickets that happen to have a requested schedule.
+ *
+ * Shows both the original (now-past) scheduled time and the substituted current time, reusing the
+ * exact date format CustomerRequestedSchedule below already uses ("DD MMM YYYY, h:mm A") rather
+ * than introducing a new one. "Current Schedule" is recomputed from dayjs() on every render —
+ * same as the `show` condition itself — rather than frozen at modal-open time, so it stays
+ * accurate for as long as the dialog stays open; purely informational, never written back into
+ * the form, so it has no bearing on what the manager can still type into the field above. */
+function ScheduleFallbackNotice({ originalScheduledAt, show }: { originalScheduledAt?: string; show: boolean }) {
+  if (!show || !originalScheduledAt) return null;
+  return (
+    <div className="rounded-lg bg-[var(--color-surface-elevated)] border border-[var(--color-border)] px-3 py-2.5 space-y-2 -mt-2">
+      <div className="flex items-center justify-between gap-3 text-sm">
+        <span className="text-[11px] font-semibold text-[var(--color-text-muted)] uppercase tracking-wide">Original Schedule</span>
+        <span className="text-[var(--color-text-secondary)] font-medium text-right">{dayjs(originalScheduledAt).format('DD MMM YYYY, h:mm A')}</span>
+      </div>
+      <div className="flex items-center justify-between gap-3 text-sm">
+        <span className="text-[11px] font-semibold text-[var(--color-text-muted)] uppercase tracking-wide">Current Schedule</span>
+        <span className="text-[var(--color-text-secondary)] font-medium text-right">{dayjs().format('DD MMM YYYY, h:mm A')}</span>
+      </div>
+      <p className="text-xs text-[var(--color-text-muted)] italic pt-2 border-t border-[var(--color-border)]">
+        The original scheduled time has already passed, so the system has automatically pre-filled the current time. You can change it before assigning the technician.
+      </p>
+    </div>
+  );
+}
+
 /** Read-only reference showing what the customer originally asked for, next to the (editable)
  * Scheduled At field above it — so a manager who nudges the schedule can still see the customer's
  * original request. Always sourced from the immutable requestedScheduleAt, never from the
  * mutable scheduledAt (which assign/reassign overwrite with the current technician schedule).
  * Renders nothing at all when the customer never specified one — not even a "Not specified"
- * placeholder — so the modal stays uncluttered for ASAP/no-preference requests.
- *
- * The two fields can legitimately diverge after a first assignment — e.g. a ticket first raised
- * for "yesterday 10am" (now-past requestedScheduleAt) that already has a valid, future scheduledAt
- * from its last assignment. So `scheduledAtFellBackToNow` — whether Scheduled At's own pre-fill
- * above had to fall back to "now" — is passed in separately from the caller (mirroring the
- * condition inside defaultScheduleValue(), kept separate so that function stays untouched) rather
- * than derived from requestedScheduleAt's own past/future status: the helper text below describes
- * what happened to the Scheduled At field, so it must track scheduledAt's fallback, not the
- * requested date's. */
-function CustomerRequestedSchedule({ requestedScheduleAt, scheduledAtFellBackToNow }: { requestedScheduleAt?: string | null; scheduledAtFellBackToNow: boolean }) {
+ * placeholder — so the modal stays uncluttered for ASAP/no-preference requests. Whether Scheduled
+ * At's own pre-fill fell back to "now" is a separate concern, surfaced unconditionally by
+ * ScheduleFallbackNotice above regardless of whether this panel renders at all. */
+function CustomerRequestedSchedule({ requestedScheduleAt }: { requestedScheduleAt?: string | null }) {
   if (!requestedScheduleAt) return null;
 
   return (
     <div className="rounded-lg bg-[var(--color-surface-elevated)] px-3 py-2.5 space-y-1">
       <p className="text-[11px] font-semibold text-[var(--color-text-muted)] uppercase tracking-wide">Customer Requested</p>
       <p className="text-sm text-[var(--color-text-secondary)]">{dayjs(requestedScheduleAt).format('DD MMM YYYY, h:mm A')}</p>
-      {scheduledAtFellBackToNow && (
-        <p className="text-xs text-[var(--color-text-muted)] italic">
-          The requested time has already passed. The schedule has been initialized to the current time.
-        </p>
-      )}
     </div>
   );
 }
@@ -757,10 +776,12 @@ export default function TicketDetailPage() {
             {...ra('scheduledAt', { required: 'Pick a date & time first' })}
           />
 
-          <CustomerRequestedSchedule
-            requestedScheduleAt={ticket.requestedScheduleAt}
-            scheduledAtFellBackToNow={!(ticket.scheduledAt && dayjs(ticket.scheduledAt).isAfter(dayjs()))}
+          <ScheduleFallbackNotice
+            originalScheduledAt={ticket.scheduledAt}
+            show={!(ticket.scheduledAt && dayjs(ticket.scheduledAt).isAfter(dayjs()))}
           />
+
+          <CustomerRequestedSchedule requestedScheduleAt={ticket.requestedScheduleAt} />
 
           <div>
             <label className="text-sm font-medium text-[var(--color-text-secondary)] block mb-2">Technician</label>
