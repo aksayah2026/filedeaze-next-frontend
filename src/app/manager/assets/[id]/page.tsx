@@ -1,12 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useParams, usePathname, useRouter } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import { toast } from 'sonner';
 import Link from 'next/link';
-import { ChevronLeft, Pencil, Trash2, ShieldCheck, ShieldOff, Eye } from 'lucide-react';
+import { ChevronLeft, Pencil, Trash2, ShieldCheck, ShieldOff, Eye, ImagePlus, X } from 'lucide-react';
 import api from '@/lib/axios';
 import { CustomerAsset, AmcSubscription, Ticket } from '@/types';
 import { PageSpinner } from '@/components/ui/Spinner';
@@ -24,6 +24,7 @@ export default function AssetDetailPage() {
   const prefix = pathname.startsWith('/admin/') ? 'admin' : 'manager';
   const qc = useQueryClient();
   const [showDelete, setShowDelete] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { data: asset, isLoading, isError, error, refetch, isFetching } = useQuery<CustomerAsset>({
     queryKey: ['customer-asset', id],
@@ -51,6 +52,30 @@ export default function AssetDetailPage() {
     },
     onError: (err: { response?: { data?: { message?: string } } }) =>
       toast.error(err?.response?.data?.message ?? 'Failed to remove asset'),
+  });
+
+  const uploadImagesMutation = useMutation({
+    mutationFn: (files: FileList) => {
+      const fd = new FormData();
+      Array.from(files).forEach((file) => fd.append('images', file));
+      return api.post(`/web/manager/customer-assets/${id}/images`, fd, { headers: { 'Content-Type': 'multipart/form-data' } });
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['customer-asset', id] });
+      toast.success('Photos uploaded');
+    },
+    onError: (err: { response?: { data?: { message?: string } } }) =>
+      toast.error(err?.response?.data?.message ?? 'Failed to upload photos'),
+  });
+
+  const removeImageMutation = useMutation({
+    mutationFn: (imageId: string) => api.delete(`/web/manager/customer-assets/${id}/images/${imageId}`),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['customer-asset', id] });
+      toast.success('Photo removed');
+    },
+    onError: (err: { response?: { data?: { message?: string } } }) =>
+      toast.error(err?.response?.data?.message ?? 'Failed to remove photo'),
   });
 
   if (isLoading) return <PageSpinner />;
@@ -123,6 +148,45 @@ export default function AssetDetailPage() {
             </div>
           )}
         </div>
+      </div>
+
+      <div className="bg-[var(--color-surface)] rounded-xl p-4 border border-[var(--color-border)] shadow-sm text-sm space-y-3">
+        <div className="flex items-center justify-between">
+          <h3 className="font-medium text-[var(--color-text-secondary)]">Photos</h3>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            multiple
+            className="hidden"
+            onChange={(e) => {
+              if (e.target.files?.length) uploadImagesMutation.mutate(e.target.files);
+              e.target.value = '';
+            }}
+          />
+          <Button size="sm" variant="secondary" onClick={() => fileInputRef.current?.click()} loading={uploadImagesMutation.isPending}>
+            <ImagePlus size={13} /> Add Photos
+          </Button>
+        </div>
+        {asset.images?.length ? (
+          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-3">
+            {asset.images.map((img) => (
+              <div key={img.id} className="relative group aspect-square rounded-lg overflow-hidden border border-[var(--color-border)]">
+                <img src={img.imageUrl} alt="Asset" className="h-full w-full object-cover" />
+                <button
+                  type="button"
+                  onClick={() => removeImageMutation.mutate(img.id)}
+                  className="absolute top-1 right-1 bg-black/60 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                  aria-label="Remove photo"
+                >
+                  <X size={12} />
+                </button>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="text-[var(--color-text-muted)]">No photos uploaded yet</p>
+        )}
       </div>
 
       <div>

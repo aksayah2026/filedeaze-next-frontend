@@ -364,8 +364,16 @@ export interface CustomerAsset {
   isActive: boolean;
   ticketCount?: number;
   hasActiveAmc?: boolean;
+  images?: CustomerAssetImage[];
   createdAt: string;
   updatedAt: string;
+}
+
+export interface CustomerAssetImage {
+  id: string;
+  imageUrl: string;
+  uploadedBy: string;
+  createdAt: string;
 }
 
 export interface AmcPlan {
