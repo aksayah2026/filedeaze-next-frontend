@@ -222,7 +222,12 @@ export default function CustomerAssetsPage() {
     mutationFn: ({ assetId, files }: { assetId: string; files: File[] }) => {
       const fd = new FormData();
       files.forEach((file) => fd.append('images', file));
-      return api.post(`/web/manager/customer-assets/${assetId}/images`, fd, { headers: { 'Content-Type': 'multipart/form-data' } });
+      // 'Content-Type': false (not undefined!) — axios's dispatchRequest.js unconditionally defaults
+      // Content-Type to 'application/x-www-form-urlencoded' for every POST/PUT/PATCH request whose
+      // header is currently undefined; `false` is axios's real "never auto-fill this" sentinel, which
+      // survives that check and still gets stripped from the final request so the browser computes
+      // the actual multipart boundary itself. Confirmed via runtime logging — see detail page.
+      return api.post(`/web/manager/customer-assets/${assetId}/images`, fd, { headers: { 'Content-Type': false } });
     },
   });
 
