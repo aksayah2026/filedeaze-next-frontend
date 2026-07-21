@@ -6,7 +6,7 @@ import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tansta
 import { ColumnDef } from '@tanstack/react-table';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
-import { Eye, Pencil, Trash2, Plus, X as XIcon, Box, ChevronDown, Layers, Sparkles } from 'lucide-react';
+import { Eye, Pencil, Trash2, Plus, X as XIcon, Box, ChevronDown, Layers, Sparkles, ImagePlus } from 'lucide-react';
 import Link from 'next/link';
 import api from '@/lib/axios';
 import { CustomerAsset, Customer, ServiceCategory } from '@/types';
@@ -71,6 +71,12 @@ export default function CustomerAssetsPage() {
   const [editing, setEditing] = useState<CustomerAsset | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<CustomerAsset | null>(null);
 
+  // Photos on the Add/Edit Asset form: staged locally (with preview URLs) until the asset exists,
+  // then uploaded via the same endpoint the asset detail page uses. In edit mode the asset already
+  // has an id, so new files upload immediately instead of staging.
+  const photoInputRef = useRef<HTMLInputElement>(null);
+  const [stagedPhotos, setStagedPhotos] = useState<{ file: File; previewUrl: string }[]>([]);
+
   const [addMenuOpen, setAddMenuOpen] = useState(false);
   const addMenuRef = useRef<HTMLDivElement>(null);
   const [showMultiForm, setShowMultiForm] = useState(false);
@@ -130,9 +136,14 @@ export default function CustomerAssetsPage() {
     enabled: showForm || showMultiForm,
   });
 
-  const closeForm = () => { setShowForm(false); setEditing(null); reset(emptyForm); };
+  const clearStagedPhotos = () => {
+    stagedPhotos.forEach(p => URL.revokeObjectURL(p.previewUrl));
+    setStagedPhotos([]);
+  };
 
-  const openCreate = () => { reset({ ...emptyForm, customerId: lockedCustomerId }); setEditing(null); setShowForm(true); };
+  const closeForm = () => { setShowForm(false); setEditing(null); reset(emptyForm); clearStagedPhotos(); };
+
+  const openCreate = () => { reset({ ...emptyForm, customerId: lockedCustomerId }); setEditing(null); clearStagedPhotos(); setShowForm(true); };
 
   const openEdit = (asset: CustomerAsset) => {
     setEditing(asset);
@@ -147,7 +158,34 @@ export default function CustomerAssetsPage() {
       installationAddress: asset.installationAddress ?? '',
       notes: asset.notes ?? '',
     });
+    clearStagedPhotos();
     setShowForm(true);
+  };
+
+  const onPhotoFilesSelected = async (files: FileList) => {
+    const fileArray = Array.from(files);
+    if (editing) {
+      // Asset already exists — upload immediately, same as the detail page's "Add Photos".
+      try {
+        await uploadPhotosMutation.mutateAsync({ assetId: editing.id, files: fileArray });
+        await refreshEditingAsset();
+        toast.success('Photos uploaded');
+      } catch (err) {
+        const e = err as { response?: { data?: { message?: string } } };
+        toast.error(e?.response?.data?.message ?? 'Failed to upload photos');
+      }
+    } else {
+      // No asset yet — stage locally, uploaded once the asset is created on submit.
+      setStagedPhotos(prev => [...prev, ...fileArray.map(file => ({ file, previewUrl: URL.createObjectURL(file) }))]);
+    }
+  };
+
+  const removeStagedPhoto = (previewUrl: string) => {
+    setStagedPhotos(prev => {
+      const target = prev.find(p => p.previewUrl === previewUrl);
+      if (target) URL.revokeObjectURL(target.previewUrl);
+      return prev.filter(p => p.previewUrl !== previewUrl);
+    });
   };
 
   const openMultiCreate = () => {
@@ -180,6 +218,30 @@ export default function CustomerAssetsPage() {
   const bulkErrorFor = (rowIndex: number, field: string) =>
     bulkErrors.find(e => e.row === rowIndex + 1 && e.field === field)?.message;
 
+  const uploadPhotosMutation = useMutation({
+    mutationFn: ({ assetId, files }: { assetId: string; files: File[] }) => {
+      const fd = new FormData();
+      files.forEach((file) => fd.append('images', file));
+      return api.post(`/web/manager/customer-assets/${assetId}/images`, fd, { headers: { 'Content-Type': 'multipart/form-data' } });
+    },
+  });
+
+  const removePhotoMutation = useMutation({
+    mutationFn: (imageId: string) => api.delete(`/web/manager/customer-assets/${editing!.id}/images/${imageId}`),
+    onSuccess: async () => { await refreshEditingAsset(); },
+    onError: (err: { response?: { data?: { message?: string } } }) =>
+      toast.error(err?.response?.data?.message ?? 'Failed to remove photo'),
+  });
+
+  // `editing` is a local snapshot taken when the modal opened, not a live query result — after
+  // adding/removing a photo it needs to be re-fetched so the modal reflects the change immediately.
+  const refreshEditingAsset = async () => {
+    if (!editing) return;
+    const res = await api.get(`/web/manager/customer-assets/${editing.id}`);
+    setEditing(res.data.data);
+    qc.invalidateQueries({ queryKey: ['customer-asset', editing.id] });
+  };
+
   const createMutation = useMutation({
     mutationFn: (d: AssetForm) => api.post('/web/manager/customer-assets', {
       customerId: d.customerId,
@@ -192,7 +254,15 @@ export default function CustomerAssetsPage() {
       installationAddress: d.installationAddress.trim() || undefined,
       notes: d.notes.trim() || undefined,
     }),
-    onSuccess: () => {
+    onSuccess: async (res) => {
+      const newAssetId = res.data.data.id as string;
+      if (stagedPhotos.length) {
+        try {
+          await uploadPhotosMutation.mutateAsync({ assetId: newAssetId, files: stagedPhotos.map(p => p.file) });
+        } catch {
+          toast.error('Asset saved, but photo upload failed — add photos from the asset detail page.');
+        }
+      }
       qc.invalidateQueries({ queryKey: ['customer-assets'] });
       toast.success('Asset added successfully');
       closeForm();
@@ -408,6 +478,64 @@ export default function CustomerAssetsPage() {
 
           <Textarea label="Installation Address" placeholder="Where this asset is installed" rows={2} {...register('installationAddress')} />
           <Textarea label="Notes" placeholder="Any additional notes" rows={2} {...register('notes')} />
+
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <label className="text-xs font-medium text-[var(--color-text-secondary)]">Photos</label>
+              <input
+                ref={photoInputRef}
+                type="file"
+                accept="image/*"
+                multiple
+                className="hidden"
+                onChange={(e) => {
+                  if (e.target.files?.length) onPhotoFilesSelected(e.target.files);
+                  e.target.value = '';
+                }}
+              />
+              <Button
+                size="sm"
+                variant="secondary"
+                type="button"
+                onClick={() => photoInputRef.current?.click()}
+                loading={uploadPhotosMutation.isPending}
+              >
+                <ImagePlus size={13} /> Add Photos
+              </Button>
+            </div>
+            {(editing?.images?.length || stagedPhotos.length) ? (
+              <div className="grid grid-cols-4 sm:grid-cols-6 gap-2">
+                {editing?.images?.map((img) => (
+                  <div key={img.id} className="relative group aspect-square rounded-lg overflow-hidden border border-[var(--color-border)]">
+                    <img src={img.imageUrl} alt="Asset" className="h-full w-full object-cover" />
+                    <button
+                      type="button"
+                      onClick={() => removePhotoMutation.mutate(img.id)}
+                      className="absolute top-1 right-1 bg-black/60 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                      aria-label="Remove photo"
+                    >
+                      <XIcon size={12} />
+                    </button>
+                  </div>
+                ))}
+                {stagedPhotos.map((p) => (
+                  <div key={p.previewUrl} className="relative group aspect-square rounded-lg overflow-hidden border border-[var(--color-border)]">
+                    <img src={p.previewUrl} alt="Pending upload" className="h-full w-full object-cover" />
+                    <button
+                      type="button"
+                      onClick={() => removeStagedPhoto(p.previewUrl)}
+                      className="absolute top-1 right-1 bg-black/60 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                      aria-label="Remove photo"
+                    >
+                      <XIcon size={12} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-xs text-[var(--color-text-muted)]">No photos added yet</p>
+            )}
+          </div>
 
           <div className="flex justify-end gap-3 pt-2">
             <Button variant="secondary" type="button" onClick={closeForm}>Cancel</Button>
