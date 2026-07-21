@@ -16,7 +16,7 @@ export default function InvoiceDetailPage() {
 
   const { data: invoice, isLoading, isError, error, refetch, isFetching } = useQuery<Invoice>({
     queryKey: ['invoice', id],
-    queryFn: async () => (await api.get(`/web/manager/invoices/${id}`)).data.data,
+    queryFn: async () => (await api.get(`/web/manager/invoices/${id}`)).data.data.invoice,
   });
 
   if (isLoading) return <PageSpinner />;
@@ -38,14 +38,14 @@ export default function InvoiceDetailPage() {
         <div className="grid grid-cols-2 gap-4 text-sm">
           <div><span className="text-[var(--color-text-muted)]">Ticket:</span> <span className="font-medium">{invoice.ticket?.ticketNumber ?? invoice.ticketId}</span></div>
           <div><span className="text-[var(--color-text-muted)]">Date:</span> <span className="font-medium">{formatDate(invoice.createdAt)}</span></div>
-          <div><span className="text-[var(--color-text-muted)]">Base Amount:</span> <span className="font-medium">₹{invoice.amount?.toLocaleString() ?? '0'}</span></div>
-          {invoice.gstAmount != null && (
-            <div><span className="text-[var(--color-text-muted)]">GST:</span> <span className="font-medium">₹{invoice.gstAmount.toLocaleString()}</span></div>
+          <div><span className="text-[var(--color-text-muted)]">Subtotal:</span> <span className="font-medium">₹{invoice.subtotal?.toLocaleString() ?? '0'}</span></div>
+          {!!invoice.gstAmount && (
+            <div><span className="text-[var(--color-text-muted)]">GST{invoice.gstPercent ? ` (${invoice.gstPercent}%)` : ''}:</span> <span className="font-medium">₹{invoice.gstAmount.toLocaleString()}</span></div>
           )}
         </div>
         <div className="mt-4 pt-4 border-t border-[var(--color-border)] flex justify-between items-center">
-          <span className="font-semibold text-[var(--color-text-secondary)]">Total Amount</span>
-          <span className="text-xl font-bold text-emerald-600">₹{invoice.totalAmount?.toLocaleString() ?? '0'}</span>
+          <span className="font-semibold text-[var(--color-text-secondary)]">Grand Total</span>
+          <span className="text-xl font-bold text-emerald-600">₹{invoice.total?.toLocaleString() ?? '0'}</span>
         </div>
       </div>
     </div>

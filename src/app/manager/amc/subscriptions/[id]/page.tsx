@@ -17,6 +17,7 @@ import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
 import { Textarea } from '@/components/ui/Textarea';
 import { AmcSubscriptionStatusBadge, AmcVisitStatusBadge } from '@/components/ui/Badge';
+import { getMinimumSelectableDate, isPastSchedule } from '@/lib/utils';
 import dayjs from 'dayjs';
 
 type ScheduleForm = { categoryId: string; subCategoryId: string; scheduledDate: string; description: string };
@@ -45,7 +46,7 @@ export default function AmcSubscriptionDetailPage() {
     queryFn: async () => (await api.get(`/web/manager/amc/subscriptions/${id}/visits`)).data.data,
   });
 
-  const { register: rs, handleSubmit: hs, reset: resetS, watch: watchS, formState: { isSubmitting: ss } } = useForm<ScheduleForm>();
+  const { register: rs, handleSubmit: hs, reset: resetS, watch: watchS, formState: { isSubmitting: ss, errors: errorsS } } = useForm<ScheduleForm>();
   const selectedCategoryId = watchS('categoryId');
   const { data: categories = [] } = useQuery<ServiceCategory[]>({
     queryKey: ['service-categories'],
@@ -58,7 +59,7 @@ export default function AmcSubscriptionDetailPage() {
     enabled: showSchedule && !!selectedCategoryId,
   });
 
-  const { register: rr, handleSubmit: hr, reset: resetR, formState: { isSubmitting: sr } } = useForm<RescheduleForm>();
+  const { register: rr, handleSubmit: hr, reset: resetR, formState: { isSubmitting: sr, errors: errorsR } } = useForm<RescheduleForm>();
   const { register: rn, handleSubmit: hn, reset: resetN, formState: { isSubmitting: sn } } = useForm<RenewForm>({ defaultValues: { planId: sub?.planId ?? '' } });
   const { register: rc, handleSubmit: hc, reset: resetC, formState: { isSubmitting: sc } } = useForm<CancelForm>();
 
@@ -185,7 +186,16 @@ export default function AmcSubscriptionDetailPage() {
         <form onSubmit={hs(d => scheduleMutation.mutate(d))} className="space-y-4">
           <Select label="Category *" options={categories.map(c => ({ value: c.id, label: c.name }))} placeholder="Select category" {...rs('categoryId', { required: true })} />
           <Select label="Sub-Category *" options={subCategories.map(s => ({ value: s.id, label: s.name }))} placeholder={selectedCategoryId ? 'Select sub-category' : 'Select category first'} {...rs('subCategoryId', { required: true })} />
-          <Input label="Scheduled Date *" type="date" {...rs('scheduledDate', { required: true })} />
+          <Input
+            label="Scheduled Date *"
+            type="date"
+            min={getMinimumSelectableDate()}
+            error={errorsS.scheduledDate?.message}
+            {...rs('scheduledDate', {
+              required: 'Pick a date',
+              validate: (v) => !isPastSchedule(v) || 'This date has already passed — please pick today or a future date',
+            })}
+          />
           <Textarea label="Description" rows={2} placeholder="Routine AMC maintenance visit" {...rs('description')} />
           <div className="flex justify-end gap-3"><Button variant="secondary" type="button" onClick={() => { setShowSchedule(false); resetS(); }}>Cancel</Button><Button type="submit" loading={ss}>Schedule</Button></div>
         </form>
@@ -193,7 +203,16 @@ export default function AmcSubscriptionDetailPage() {
 
       <Modal open={!!rescheduleVisitId} onClose={() => { setRescheduleVisitId(null); resetR(); }} title="Reschedule Visit" size="sm">
         <form onSubmit={hr(d => rescheduleMutation.mutate(d))} className="space-y-4">
-          <Input label="New Scheduled Date *" type="date" {...rr('scheduledDate', { required: true })} />
+          <Input
+            label="New Scheduled Date *"
+            type="date"
+            min={getMinimumSelectableDate()}
+            error={errorsR.scheduledDate?.message}
+            {...rr('scheduledDate', {
+              required: 'Pick a date',
+              validate: (v) => !isPastSchedule(v) || 'This date has already passed — please pick today or a future date',
+            })}
+          />
           <div className="flex justify-end gap-3"><Button variant="secondary" type="button" onClick={() => { setRescheduleVisitId(null); resetR(); }}>Cancel</Button><Button type="submit" loading={sr}>Reschedule</Button></div>
         </form>
       </Modal>

@@ -18,6 +18,7 @@ import { ErrorState } from '@/components/ui/ErrorState';
 import Link from 'next/link';
 import { Star, CheckCircle, XCircle, RefreshCw, UserCheck, ChevronLeft, CalendarClock, ThumbsUp, ThumbsDown, AlertTriangle, Box, ShieldCheck, ShieldOff, Plus, Pencil, Trash2 } from 'lucide-react';
 import dayjs from 'dayjs';
+import { getMinimumSelectableDateTime, isPastSchedule } from '@/lib/utils';
 
 const BUSY_STATUSES = ['ASSIGNED', 'ACCEPTED', 'TRAVELLING', 'REACHED_LOCATION', 'IN_PROGRESS', 'PENDING'];
 
@@ -406,14 +407,21 @@ export default function TicketDetailPage() {
       .map(t => t.technician!.id)
   ), [allTickets]);
 
-  const { register: ra, handleSubmit: ha, reset: resetA, setValue: setAssignValue, watch: watchAssign, formState: { isSubmitting: sa } } = useForm<{ technicianId: string; scheduledAt: string }>();
+  const { register: ra, handleSubmit: ha, reset: resetA, setValue: setAssignValue, watch: watchAssign, formState: { isSubmitting: sa, errors: errorsA } } = useForm<{ technicianId: string; scheduledAt: string }>();
   const selectedTechId = watchAssign('technicianId') ?? '';
   const selectedSchedule = watchAssign('scheduledAt') ?? '';
   const { register: rc, handleSubmit: hc, reset: resetC, formState: { isSubmitting: sc } } = useForm<{ notes: string }>();
   const { register: rx, handleSubmit: hx, reset: resetX, formState: { isSubmitting: sx } } = useForm<{ reason: string }>();
 
   const assignMutation = useMutation({
-    mutationFn: (d: { technicianId: string; scheduledAt: string }) => api.patch(`/web/manager/tickets/${id}/${assignMode === 'reschedule' ? 'reassign' : assignMode}`, d),
+    // The datetime-local input's raw value has no timezone marker — converting to a full UTC ISO
+    // string here (using the manager's own browser timezone) before it leaves the client means
+    // the backend's parsing is unambiguous regardless of what timezone the server itself runs in,
+    // rather than relying on server-OS-timezone === browser-timezone by coincidence.
+    mutationFn: (d: { technicianId: string; scheduledAt: string }) => api.patch(`/web/manager/tickets/${id}/${assignMode === 'reschedule' ? 'reassign' : assignMode}`, {
+      ...d,
+      scheduledAt: dayjs(d.scheduledAt).toISOString(),
+    }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['ticket', id] });
       toast.success(assignMode === 'reassign' ? 'Reassigned' : assignMode === 'reschedule' ? 'Rescheduled' : 'Assigned');
@@ -595,7 +603,21 @@ export default function TicketDetailPage() {
                   {!!ticket.payment.discount && (
                     <p><span className="text-[var(--color-text-muted)]">Discount:</span> -₹{ticket.payment.discount.toLocaleString()}</p>
                   )}
-                  <p className="border-t border-[var(--color-border)] pt-1 mt-1 font-semibold text-[var(--color-text-primary)]">Total: ₹{ticket.payment.amount.toLocaleString()}</p>
+                  {ticket.paymentSummary ? (
+                    <>
+                      <p className="border-t border-[var(--color-border)] pt-1 mt-1">
+                        <span className="text-[var(--color-text-muted)]">Subtotal:</span> ₹{ticket.paymentSummary.subtotal.toLocaleString()}
+                      </p>
+                      {ticket.paymentSummary.gstEnabled && (
+                        <p>
+                          <span className="text-[var(--color-text-muted)]">GST ({ticket.paymentSummary.gstPercent}%):</span> ₹{ticket.paymentSummary.gstAmount.toLocaleString()}
+                        </p>
+                      )}
+                      <p className="font-semibold text-[var(--color-text-primary)]">Grand Total: ₹{ticket.paymentSummary.grandTotal.toLocaleString()}</p>
+                    </>
+                  ) : (
+                    <p className="border-t border-[var(--color-border)] pt-1 mt-1 font-semibold text-[var(--color-text-primary)]">Total: ₹{ticket.payment.amount.toLocaleString()}</p>
+                  )}
                 </>
               ) : (
                 <p><span className="text-[var(--color-text-muted)]">Amount:</span> ₹{ticket.payment.amount.toLocaleString()}</p>
@@ -773,7 +795,12 @@ export default function TicketDetailPage() {
           <Input
             label="Scheduled At"
             type="datetime-local"
-            {...ra('scheduledAt', { required: 'Pick a date & time first' })}
+            min={getMinimumSelectableDateTime()}
+            error={errorsA.scheduledAt?.message}
+            {...ra('scheduledAt', {
+              required: 'Pick a date & time first',
+              validate: (v) => !isPastSchedule(v) || 'This date/time has already passed — please pick a current or future time',
+            })}
           />
 
           <ScheduleFallbackNotice

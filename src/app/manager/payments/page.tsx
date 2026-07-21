@@ -58,10 +58,28 @@ export default function PaymentsPage() {
     },
     {
       accessorKey: 'amount',
-      header: 'Amount',
+      header: 'Subtotal',
       cell: ({ row }) => (
         <span className="tabular-nums font-semibold text-[var(--color-text-primary)]">
           ₹{Number(row.original.amount).toLocaleString()}
+        </span>
+      ),
+    },
+    {
+      accessorKey: 'invoice.gstAmount',
+      header: 'GST',
+      cell: ({ row }) => (
+        <span className="tabular-nums text-[var(--color-text-secondary)]">
+          {row.original.invoice?.gstAmount ? `₹${Number(row.original.invoice.gstAmount).toLocaleString()}` : '—'}
+        </span>
+      ),
+    },
+    {
+      accessorKey: 'invoice.total',
+      header: 'Grand Total',
+      cell: ({ row }) => (
+        <span className="tabular-nums font-semibold text-[var(--color-text-primary)]">
+          {row.original.invoice ? `₹${Number(row.original.invoice.total).toLocaleString()}` : `₹${Number(row.original.amount).toLocaleString()}`}
         </span>
       ),
     },

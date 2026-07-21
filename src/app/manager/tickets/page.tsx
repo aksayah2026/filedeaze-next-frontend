@@ -19,6 +19,7 @@ import { Textarea } from '@/components/ui/Textarea';
 import { TicketStatusBadge, Badge } from '@/components/ui/Badge';
 import { FilterCard } from '@/components/ui/FilterCard';
 import { PaginationMeta } from '@/components/ui/Pagination';
+import { getMinimumSelectableDateTime, isPastSchedule } from '@/lib/utils';
 import dayjs from 'dayjs';
 
 const STATUS_OPTIONS = [
@@ -127,7 +128,11 @@ export default function TicketsPage() {
       subCategoryId: d.subCategoryId,
       description: d.description,
       priority: d.priority || undefined,
-      scheduledAt: d.serviceMode === 'SCHEDULED' ? (d.scheduledAt || undefined) : undefined,
+      // The datetime-local input's raw value has no timezone marker — converting to a full UTC
+      // ISO string here (using the manager's own browser timezone) before it leaves the client
+      // means the backend's parsing is unambiguous regardless of what timezone the server itself
+      // runs in, rather than relying on server-OS-timezone === browser-timezone by coincidence.
+      scheduledAt: d.serviceMode === 'SCHEDULED' && d.scheduledAt ? dayjs(d.scheduledAt).toISOString() : undefined,
       serviceAddress: d.serviceAddress || undefined,
     }),
     onSuccess: () => {
@@ -384,8 +389,12 @@ export default function TicketsPage() {
             <Input
               label="Requested Date *"
               type="datetime-local"
+              min={getMinimumSelectableDateTime()}
               error={errors.scheduledAt?.message}
-              {...register('scheduledAt', { required: serviceMode === 'SCHEDULED' ? 'Pick the date & time the customer requested' : false })}
+              {...register('scheduledAt', {
+                required: serviceMode === 'SCHEDULED' ? 'Pick the date & time the customer requested' : false,
+                validate: (v) => !isPastSchedule(v) || 'This date/time has already passed — please pick a current or future time',
+              })}
             />
           )}
 

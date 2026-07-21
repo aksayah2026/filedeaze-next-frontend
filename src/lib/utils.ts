@@ -24,6 +24,35 @@ export function formatCurrency(amount: number | string | null | undefined): stri
   return `₹${(Number.isFinite(n) ? n : 0).toLocaleString()}`;
 }
 
+/** Today's local date as 'YYYY-MM-DD' — the `min` value for a plain `<input type="date">` whose
+ * backend field is guarded by `@IsNotPastDate()` (see is-not-past-date.validator.ts on the
+ * backend: date-level only — rejects any date before today, accepts any time on today's date).
+ * Call it fresh at render time rather than caching, so "today" stays correct if a form is left
+ * open across midnight. */
+export function getMinimumSelectableDate(): string {
+  return dayjs().format('YYYY-MM-DD');
+}
+
+/** The current moment as 'YYYY-MM-DDTHH:mm' — the `min` value for an
+ * `<input type="datetime-local">` whose backend field is guarded by `@IsNotPastDate()`. Note this
+ * is deliberately *stricter* than the backend check itself, which only rejects dates before today
+ * and would accept e.g. "8:00 AM today" even at 2:00 PM — letting a manager pick an already-passed
+ * time today is still a real UX problem the backend alone won't catch, so the picker enforces the
+ * tighter, moment-level rule here. */
+export function getMinimumSelectableDateTime(): string {
+  return dayjs().format('YYYY-MM-DDTHH:mm');
+}
+
+/** Mirrors the backend's `@IsNotPastDate()` validator exactly (date-level: true only if `value`
+ * falls before the start of today) — for pre-submit react-hook-form `validate` rules, so an
+ * invalid date is caught with a clear message before the API call, not after. Returns false (not
+ * past) for empty/invalid input — required-ness and format are separate concerns for the caller. */
+export function isPastSchedule(value: string | Date | null | undefined): boolean {
+  if (!value) return false;
+  const d = dayjs(value);
+  return d.isValid() && d.isBefore(dayjs().startOf('day'));
+}
+
 /** Extracts a user-friendly message from an Axios/fetch error, with a status-aware fallback. */
 export function getErrorMessage(error: unknown): string {
   const err = error as { response?: { status?: number; data?: { message?: string } }; message?: string; code?: string } | undefined;

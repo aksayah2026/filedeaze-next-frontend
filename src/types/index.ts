@@ -522,6 +522,7 @@ export interface Ticket {
   images?: TicketImage[];
   payment?: Payment;
   invoice?: Invoice;
+  paymentSummary?: PaymentSummary | null;
   feedback?: Feedback;
   createdAt: string;
   updatedAt: string;
@@ -551,6 +552,7 @@ export interface Payment {
   collectedAt?: string;
   verifiedAt?: string;
   createdAt: string;
+  invoice?: { gstPercent: number; gstAmount: number; total: number } | null;
 }
 
 export interface Invoice {
@@ -558,17 +560,30 @@ export interface Invoice {
   ticketId: string;
   ticket?: Ticket;
   invoiceNumber: string;
-  amount: number;
   billingType?: BillingType;
   serviceCharge?: number;
   labourCharge?: number;
   sparePartsAmount?: number;
   additionalCharge?: number;
   discount?: number;
+  subtotal: number;
+  gstPercent?: number;
   gstAmount?: number;
-  totalAmount: number;
+  total: number;
   pdfUrl?: string;
   createdAt: string;
+}
+
+/** GST breakdown for a ticket's payment, derived from its persisted Invoice — the single
+ * source of truth for billing display. Never recompute GST from these values on the client. */
+export interface PaymentSummary {
+  invoiceId: string;
+  invoiceNumber: string;
+  subtotal: number;
+  gstEnabled: boolean;
+  gstPercent: number;
+  gstAmount: number;
+  grandTotal: number;
 }
 
 // ─── Feedback / Attendance ────────────────────────────────────────────────────

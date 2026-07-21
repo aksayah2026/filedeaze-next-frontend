@@ -16,6 +16,7 @@ import { Button } from '@/components/ui/Button';
 import { Modal } from '@/components/ui/Modal';
 import { Input } from '@/components/ui/Input';
 import { AmcVisitStatusBadge } from '@/components/ui/Badge';
+import { getMinimumSelectableDate, isPastSchedule } from '@/lib/utils';
 
 type EnrichedVisit = AmcVisit & { subscription: AmcSubscription };
 type RescheduleForm = { scheduledDate: string };
@@ -25,7 +26,7 @@ export default function AmcUpcomingVisitsPage() {
   const prefix = pathname.startsWith('/admin/') ? 'admin' : 'manager';
   const qc = useQueryClient();
   const [rescheduling, setRescheduling] = useState<EnrichedVisit | null>(null);
-  const { register, handleSubmit, reset, formState: { isSubmitting } } = useForm<RescheduleForm>();
+  const { register, handleSubmit, reset, formState: { isSubmitting, errors } } = useForm<RescheduleForm>();
 
   const { data: activeSubs = [], isLoading: loadingSubs } = useQuery<AmcSubscription[]>({
     queryKey: ['amc-active-subscriptions'],
@@ -92,7 +93,16 @@ export default function AmcUpcomingVisitsPage() {
 
       <Modal open={!!rescheduling} onClose={() => { setRescheduling(null); reset(); }} title="Reschedule Visit" size="sm">
         <form onSubmit={handleSubmit(d => rescheduleMutation.mutate(d))} className="space-y-4">
-          <Input label="New Scheduled Date *" type="date" {...register('scheduledDate', { required: true })} />
+          <Input
+            label="New Scheduled Date *"
+            type="date"
+            min={getMinimumSelectableDate()}
+            error={errors.scheduledDate?.message}
+            {...register('scheduledDate', {
+              required: 'Pick a date',
+              validate: (v) => !isPastSchedule(v) || 'This date has already passed — please pick today or a future date',
+            })}
+          />
           <div className="flex justify-end gap-3">
             <Button variant="secondary" type="button" onClick={() => { setRescheduling(null); reset(); }}>Cancel</Button>
             <Button type="submit" loading={isSubmitting || rescheduleMutation.isPending}>Reschedule</Button>
