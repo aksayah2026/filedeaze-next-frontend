@@ -15,6 +15,7 @@ import { PaginationMeta } from '@/components/ui/Pagination';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Modal } from '@/components/ui/Modal';
+import { getErrorMessage } from '@/lib/utils';
 import dayjs from 'dayjs';
 
 interface CreateCustomerForm { name: string; phone: string; email?: string; address?: string }
@@ -48,7 +49,7 @@ export default function CustomersPage() {
       toast.success('Customer created');
       setShowCreate(false); reset();
     },
-    onError: (err: any) => toast.error(err?.response?.data?.message ?? 'Something went wrong'),
+    onError: (err) => toast.error(getErrorMessage(err, 'Failed to create customer')),
   });
 
   const columns: ColumnDef<Customer, unknown>[] = [

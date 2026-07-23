@@ -51,18 +51,20 @@ export function Modal({ open, onClose, title, children, size = 'md' }: ModalProp
       {/* Backdrop blur */}
       <div className="absolute inset-0 backdrop-blur-[2px]" />
 
-      {/* Dialog */}
+      {/* Dialog — capped to the viewport height with the body scrolling internally, so tall
+          forms never push the close button or footer buttons off-screen on short viewports. */}
       <div
         className={cn(
           'relative w-full rounded-2xl bg-[var(--color-surface)] animate-fe-scale-in',
           'shadow-[0_20px_60px_rgba(0,0,0,0.12),0_8px_24px_rgba(0,0,0,0.06)]',
           'transition-colors duration-250',
+          'max-h-[90vh] flex flex-col',
           sizes[size]
         )}
       >
         {/* Header */}
         {title && (
-          <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--color-border)]">
+          <div className="flex items-center justify-between px-4 sm:px-6 py-4 border-b border-[var(--color-border)] shrink-0">
             <div className="flex items-center gap-3">
               <div className="h-1.5 w-4 rounded-full bg-[var(--color-primary)]" />
               <h2 className="text-sm font-bold text-[var(--color-text-primary)] uppercase tracking-wide">{title}</h2>
@@ -75,7 +77,7 @@ export function Modal({ open, onClose, title, children, size = 'md' }: ModalProp
             </button>
           </div>
         )}
-        <div className="px-6 py-5">{children}</div>
+        <div className="px-4 sm:px-6 py-5 overflow-y-auto">{children}</div>
       </div>
     </div>
   );

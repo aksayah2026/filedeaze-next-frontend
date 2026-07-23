@@ -23,6 +23,7 @@ import { DataTable } from '@/components/ui/DataTable';
 import { ColumnDef } from '@tanstack/react-table';
 import dayjs from 'dayjs';
 import { Pagination } from '@/components/ui/Pagination';
+import { getErrorMessage } from '@/lib/utils';
 
 // ── Constants ──────────────────────────────────────────────────────────────────
 
@@ -83,7 +84,7 @@ function PlanPreview({ plan }: { plan: Plan }) {
           <p className="font-bold text-indigo-800">{days} days</p>
         </div>
       </div>
-      <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs text-indigo-800">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1 text-xs text-indigo-800">
         {[
           ['Managers', plan.managerLimit >= 99999 ? 'Unlimited' : plan.managerLimit],
           ['Technicians', plan.technicianLimit >= 99999 ? 'Unlimited' : plan.technicianLimit],
@@ -149,7 +150,7 @@ function RenewModal({ onClose, tenants, plans, defaultTenantId }: { onClose: () 
       qc.invalidateQueries({ queryKey: ['tenants'] });
       onClose();
     },
-    onError: (err: any) => toast.error(err?.response?.data?.message ?? 'Failed to renew'),
+    onError: (err) => toast.error(getErrorMessage(err, 'Failed to renew subscription')),
   });
 
   return (
@@ -173,7 +174,7 @@ function RenewModal({ onClose, tenants, plans, defaultTenantId }: { onClose: () 
             {/* Renewal Summary Card */}
             <div className="rounded-xl border border-indigo-200 bg-indigo-50 p-4 space-y-3">
               <p className="text-xs font-bold uppercase tracking-wide text-indigo-500">Renewal Summary</p>
-              <div className="grid grid-cols-2 gap-x-6 gap-y-2 text-xs text-indigo-800">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2 text-xs text-indigo-800">
                 <div><p className="text-indigo-400">Tenant</p><p className="font-semibold">{selectedTenant?.companyName}</p></div>
                 <div><p className="text-indigo-400">Current Plan</p><p className="font-semibold">{existingSub.plan?.name ?? '—'}</p></div>
                 <div>
@@ -220,7 +221,7 @@ function RenewModal({ onClose, tenants, plans, defaultTenantId }: { onClose: () 
           </>
         )}
 
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <Select
             label="Payment Status *"
             options={[{ value: 'PAID', label: 'Paid' }, { value: 'PENDING', label: 'Pending' }]}
@@ -270,7 +271,7 @@ function UpgradeDowngradeModal({ sub, plans, onClose }: { sub: SubscriptionWithM
       qc.invalidateQueries({ queryKey: ['tenants'] });
       onClose();
     },
-    onError: (err: any) => toast.error(err?.response?.data?.message ?? 'Failed'),
+    onError: (err) => toast.error(getErrorMessage(err, 'Failed to change plan')),
   });
 
   return (
@@ -304,7 +305,7 @@ function UpgradeDowngradeModal({ sub, plans, onClose }: { sub: SubscriptionWithM
               This is a{direction === 'upgrade' ? 'n upgrade' : ' downgrade'} — plan limits update immediately and the subscription&apos;s new duration ({planDuration(selectedPlan)} days) extends from its current end date.
             </div>
             <PlanPreview plan={selectedPlan} />
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <Select label="Payment Status *" options={[{ value: 'PAID', label: 'Paid' }, { value: 'PENDING', label: 'Pending' }]} value={paymentStatus} onChange={e => setPaymentStatus(e.target.value)} />
               <Select label="Payment Method" options={[{ value: '', label: 'None' }, ...PAYMENT_METHODS.map(m => ({ value: m, label: m.replace('_', ' ') }))]} value={paymentMethod} onChange={e => setPaymentMethod(e.target.value)} />
             </div>
@@ -414,7 +415,7 @@ function DetailModal({ sub, onClose }: { sub: SubscriptionWithMeta; onClose: () 
             </div>
 
             {/* Plan limits */}
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
               {[
                 ['Managers', plan.managerLimit >= 99999 ? 'Unlimited' : plan.managerLimit],
                 ['Technicians', plan.technicianLimit >= 99999 ? 'Unlimited' : plan.technicianLimit],
@@ -569,17 +570,17 @@ export default function SubscriptionsPage() {
   const cancelMutation = useMutation({
     mutationFn: (id: string) => api.patch(`/web/super-admin/subscriptions/${id}/cancel`),
     onSuccess: () => { toast.success('Subscription cancelled'); qc.invalidateQueries({ queryKey: ['subscriptions'] }); qc.invalidateQueries({ queryKey: ['subscription-dashboard'] }); qc.invalidateQueries({ queryKey: ['tenants'] }); },
-    onError: (err: any) => toast.error(err?.response?.data?.message ?? 'Failed'),
+    onError: (err) => toast.error(getErrorMessage(err, 'Failed to cancel subscription')),
   });
   const suspendMutation = useMutation({
     mutationFn: (id: string) => api.patch(`/web/super-admin/subscriptions/${id}/suspend`),
     onSuccess: () => { toast.success('Subscription suspended'); qc.invalidateQueries({ queryKey: ['subscriptions'] }); qc.invalidateQueries({ queryKey: ['tenants'] }); },
-    onError: (err: any) => toast.error(err?.response?.data?.message ?? 'Failed to suspend'),
+    onError: (err) => toast.error(getErrorMessage(err, 'Failed to suspend subscription')),
   });
   const resumeMutation = useMutation({
     mutationFn: (id: string) => api.patch(`/web/super-admin/subscriptions/${id}/resume`),
     onSuccess: (res) => { toast.success(res.data.message ?? 'Subscription resumed'); qc.invalidateQueries({ queryKey: ['subscriptions'] }); qc.invalidateQueries({ queryKey: ['tenants'] }); },
-    onError: (err: any) => toast.error(err?.response?.data?.message ?? 'Failed to resume'),
+    onError: (err) => toast.error(getErrorMessage(err, 'Failed to resume subscription')),
   });
 
   const subs = listData?.subscriptions ?? [];

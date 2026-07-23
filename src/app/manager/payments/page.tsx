@@ -15,6 +15,7 @@ import { PaymentStatusBadge } from '@/components/ui/Badge';
 import { FilterCard } from '@/components/ui/FilterCard';
 import { ErrorState } from '@/components/ui/ErrorState';
 import { CheckCircle, DollarSign } from 'lucide-react';
+import { getErrorMessage } from '@/lib/utils';
 import dayjs from 'dayjs';
 
 export default function PaymentsPage() {
@@ -41,7 +42,7 @@ export default function PaymentsPage() {
   const verifyMutation = useMutation({
     mutationFn: (id: string) => api.patch(`/web/manager/payments/${id}/verify`),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['payments'] }); toast.success('Payment verified'); },
-    onError: () => toast.error('Failed'),
+    onError: (err) => toast.error(getErrorMessage(err, 'Failed to verify payment')),
   });
 
   const totalVerified = response?.totalVerified ?? 0;

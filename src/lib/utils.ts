@@ -53,8 +53,11 @@ export function isPastSchedule(value: string | Date | null | undefined): boolean
   return d.isValid() && d.isBefore(dayjs().startOf('day'));
 }
 
-/** Extracts a user-friendly message from an Axios/fetch error, with a status-aware fallback. */
-export function getErrorMessage(error: unknown): string {
+/** Extracts a user-friendly message from an Axios/fetch error, with a status-aware fallback.
+ * Pass `fallback` to override the final generic string with one specific to the action that
+ * failed (e.g. "Failed to create ticket") — it's only used once every other check (backend
+ * message, status code, timeout, network) has come up empty. */
+export function getErrorMessage(error: unknown, fallback = 'Something went wrong. Please try again.'): string {
   const err = error as { response?: { status?: number; data?: { message?: string } }; message?: string; code?: string } | undefined;
   const serverMessage = err?.response?.data?.message;
   if (serverMessage) return serverMessage;
@@ -66,5 +69,5 @@ export function getErrorMessage(error: unknown): string {
   if (status && status >= 500) return 'The server ran into a problem. Please try again in a moment.';
   if (err?.code === 'ECONNABORTED' || /timeout/i.test(err?.message ?? '')) return 'The request timed out. Please check your connection and try again.';
   if (err?.message === 'Network Error') return 'Unable to reach the server. Please check your internet connection.';
-  return 'Something went wrong. Please try again.';
+  return fallback;
 }

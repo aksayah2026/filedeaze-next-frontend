@@ -18,7 +18,7 @@ import { Textarea } from '@/components/ui/Textarea';
 import { Modal } from '@/components/ui/Modal';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { PaginationMeta } from '@/components/ui/Pagination';
-import { cn } from '@/lib/utils';
+import { cn, getErrorMessage } from '@/lib/utils';
 import dayjs from 'dayjs';
 
 type AssetForm = {
@@ -171,8 +171,7 @@ export default function CustomerAssetsPage() {
         await refreshEditingAsset();
         toast.success('Photos uploaded');
       } catch (err) {
-        const e = err as { response?: { data?: { message?: string } } };
-        toast.error(e?.response?.data?.message ?? 'Failed to upload photos');
+        toast.error(getErrorMessage(err, 'Failed to upload photos'));
       }
     } else {
       // No asset yet — stage locally, uploaded once the asset is created on submit.
@@ -234,8 +233,8 @@ export default function CustomerAssetsPage() {
   const removePhotoMutation = useMutation({
     mutationFn: (imageId: string) => api.delete(`/web/manager/customer-assets/${editing!.id}/images/${imageId}`),
     onSuccess: async () => { await refreshEditingAsset(); },
-    onError: (err: { response?: { data?: { message?: string } } }) =>
-      toast.error(err?.response?.data?.message ?? 'Failed to remove photo'),
+    onError: (err) =>
+      toast.error(getErrorMessage(err, 'Failed to remove photo')),
   });
 
   // `editing` is a local snapshot taken when the modal opened, not a live query result — after
@@ -264,16 +263,16 @@ export default function CustomerAssetsPage() {
       if (stagedPhotos.length) {
         try {
           await uploadPhotosMutation.mutateAsync({ assetId: newAssetId, files: stagedPhotos.map(p => p.file) });
-        } catch {
-          toast.error('Asset saved, but photo upload failed — add photos from the asset detail page.');
+        } catch (err) {
+          toast.error(getErrorMessage(err, 'Asset saved, but photo upload failed — add photos from the asset detail page.'));
         }
       }
       qc.invalidateQueries({ queryKey: ['customer-assets'] });
       toast.success('Asset added successfully');
       closeForm();
     },
-    onError: (err: { response?: { data?: { message?: string } } }) =>
-      toast.error(err?.response?.data?.message ?? 'Failed to add asset'),
+    onError: (err) =>
+      toast.error(getErrorMessage(err, 'Failed to add asset')),
   });
 
   const updateMutation = useMutation({
@@ -292,8 +291,8 @@ export default function CustomerAssetsPage() {
       toast.success('Asset updated successfully');
       closeForm();
     },
-    onError: (err: { response?: { data?: { message?: string } } }) =>
-      toast.error(err?.response?.data?.message ?? 'Failed to update asset'),
+    onError: (err) =>
+      toast.error(getErrorMessage(err, 'Failed to update asset')),
   });
 
   const deleteMutation = useMutation({
@@ -303,8 +302,8 @@ export default function CustomerAssetsPage() {
       toast.success('Asset removed');
       setDeleteTarget(null);
     },
-    onError: (err: { response?: { data?: { message?: string } } }) =>
-      toast.error(err?.response?.data?.message ?? 'Failed to remove asset'),
+    onError: (err) =>
+      toast.error(getErrorMessage(err, 'Failed to remove asset')),
   });
 
   const bulkCreateMutation = useMutation({
@@ -333,7 +332,7 @@ export default function CustomerAssetsPage() {
         setBulkErrors(rowErrors);
         toast.error('Please fix the highlighted rows.');
       } else {
-        toast.error(err?.response?.data?.message ?? 'Failed to create assets');
+        toast.error(getErrorMessage(err, 'Failed to create assets'));
       }
     },
   });
@@ -461,7 +460,7 @@ export default function CustomerAssetsPage() {
             />
           )}
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Input label="Asset Name *" placeholder="e.g. Living Room AC" error={errors.name?.message} {...register('name', { required: 'Name is required' })} />
             <Select
               label="Category"
@@ -471,12 +470,12 @@ export default function CustomerAssetsPage() {
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Input label="Brand" placeholder="e.g. Daikin" {...register('brand')} />
             <Input label="Model" placeholder="e.g. FTKF50" {...register('model')} />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Input label="Serial Number" placeholder="e.g. SN-2024-00123" {...register('serialNumber')} />
             <Input label="Purchase Date" type="date" autoComplete="off" max={dayjs().format('YYYY-MM-DD')} {...register('purchaseDate')} />
           </div>

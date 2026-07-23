@@ -11,6 +11,7 @@ import { Customer, CustomerAsset, AmcPlan } from '@/types';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
+import { getMinimumSelectableDate, isPastSchedule, getErrorMessage } from '@/lib/utils';
 
 type AssignForm = {
   customerId: string;
@@ -64,8 +65,8 @@ export default function AssignAmcPage() {
       toast.success('AMC assigned successfully');
       router.push(`/${prefix}/amc/subscriptions/${res.data.data.id}`);
     },
-    onError: (err: { response?: { data?: { message?: string } } }) =>
-      toast.error(err?.response?.data?.message ?? 'Failed to assign AMC'),
+    onError: (err) =>
+      toast.error(getErrorMessage(err, 'Failed to assign AMC')),
   });
 
   const selectedAsset = assets.find(a => a.id === watch('customerAssetId'));
@@ -105,7 +106,12 @@ export default function AssignAmcPage() {
           {...register('planId', { required: 'Plan is required' })}
         />
 
-        <Input label="Start Date" type="date" hint="Defaults to today if left blank" {...register('startDate')} />
+        <Input
+          label="Start Date" type="date" hint="Defaults to today if left blank"
+          min={getMinimumSelectableDate()}
+          error={errors.startDate?.message}
+          {...register('startDate', { validate: (v) => !isPastSchedule(v) || 'This date has already passed — please pick today or a future date' })}
+        />
 
         <div className="flex justify-end gap-3 pt-2">
           <Button type="submit" loading={isSubmitting || assignMutation.isPending}>

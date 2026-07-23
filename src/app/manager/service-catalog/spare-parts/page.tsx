@@ -18,6 +18,7 @@ import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { Badge } from '@/components/ui/Badge';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { PaginationMeta } from '@/components/ui/Pagination';
+import { getErrorMessage } from '@/lib/utils';
 
 // Backend requires a unitOfMeasure; the manager form no longer collects it, so every part defaults to this.
 const DEFAULT_UNIT_OF_MEASURE = 'unit';
@@ -72,7 +73,7 @@ export default function SparePartsPage() {
       unitOfMeasure: DEFAULT_UNIT_OF_MEASURE,
     }),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['spare-parts'] }); toast.success('Spare part added'); closeForm(); },
-    onError: (err: { response?: { data?: { message?: string } } }) => toast.error(err?.response?.data?.message ?? 'Failed to add spare part'),
+    onError: (err) => toast.error(getErrorMessage(err, 'Failed to add spare part')),
   });
 
   const updateMutation = useMutation({
@@ -81,13 +82,13 @@ export default function SparePartsPage() {
       unitPrice: Number(d.unitPrice),
     }),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['spare-parts'] }); toast.success('Spare part updated'); closeForm(); },
-    onError: (err: { response?: { data?: { message?: string } } }) => toast.error(err?.response?.data?.message ?? 'Failed to update spare part'),
+    onError: (err) => toast.error(getErrorMessage(err, 'Failed to update spare part')),
   });
 
   const deactivateMutation = useMutation({
     mutationFn: (id: string) => api.delete(`/web/manager/service-sub-categories/${subCategoryId}/spare-parts/${id}`),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['spare-parts'] }); toast.success('Spare part removed'); setDeactivateTarget(null); },
-    onError: (err: { response?: { data?: { message?: string } } }) => toast.error(err?.response?.data?.message ?? 'Failed to remove spare part'),
+    onError: (err) => toast.error(getErrorMessage(err, 'Failed to remove spare part')),
   });
 
   if (!subCategoryId) {

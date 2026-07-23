@@ -14,6 +14,7 @@ import { Button } from '@/components/ui/Button';
 import { Select } from '@/components/ui/Select';
 import { CheckCircle, QrCode, TrendingUp, Clock, Pencil } from 'lucide-react';
 import { FilterCard } from '@/components/ui/FilterCard';
+import { getErrorMessage } from '@/lib/utils';
 import dayjs from 'dayjs';
 
 export default function BillingPage() {
@@ -48,7 +49,7 @@ export default function BillingPage() {
   const markPaidMutation = useMutation({
     mutationFn: (id: string) => api.patch(`/web/super-admin/billing/${id}/mark-paid`),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['billing'] }); toast.success('Marked as paid'); },
-    onError: () => toast.error('Failed'),
+    onError: (err) => toast.error(getErrorMessage(err, 'Failed to mark as paid')),
   });
 
   const tenantOptions = [

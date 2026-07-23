@@ -384,6 +384,7 @@ export interface AmcPlan {
   category?: { id: string; name: string };
   durationMonths: number;
   visitCount: number;
+  visitIntervalMonths: number;
   price: number;
   isActive: boolean;
   createdAt: string;
@@ -613,27 +614,6 @@ export interface Attendance {
   checkOutTime?: string;
   checkInLat?: number;
   checkInLng?: number;
-}
-
-// ─── Offers ───────────────────────────────────────────────────────────────────
-export type DiscountType = 'PERCENTAGE' | 'FLAT';
-export type OfferType = 'SERVICE' | 'CATEGORY' | 'GENERAL';
-
-export interface Offer {
-  id: string;
-  title: string;
-  description?: string;
-  offerType: OfferType;
-  discountType: DiscountType;
-  discountValue: number;
-  serviceId?: string;
-  categoryId?: string;
-  startDate: string;
-  endDate: string;
-  isRecurring: boolean;
-  daysOfWeek?: string[];
-  isActive: boolean;
-  createdAt: string;
 }
 
 // ─── Dashboards ───────────────────────────────────────────────────────────────

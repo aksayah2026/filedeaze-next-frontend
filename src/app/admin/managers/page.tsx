@@ -19,7 +19,7 @@ import { Modal } from '@/components/ui/Modal';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { Badge } from '@/components/ui/Badge';
 import dayjs from 'dayjs';
-import { formatDate } from '@/lib/utils';
+import { formatDate, getErrorMessage } from '@/lib/utils';
 
 const schema = z.object({
   name: z.string().min(1, 'Name is required (e.g. Siva Kumar)'),
@@ -50,13 +50,13 @@ export default function ManagersPage() {
   const createMutation = useMutation({
     mutationFn: (d: Form) => api.post('/web/admin/managers', d),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['managers'] }); toast.success('Manager created'); setShowCreate(false); reset(); },
-    onError: (e: unknown) => toast.error((e as { response?: { data?: { message?: string } } })?.response?.data?.message ?? 'Error'),
+    onError: (err) => toast.error(getErrorMessage(err, 'Failed to create manager')),
   });
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) => api.delete(`/web/admin/managers/${id}`),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['managers'] }); toast.success('Manager deleted'); setDeleteId(null); },
-    onError: () => toast.error('Failed'),
+    onError: (err) => toast.error(getErrorMessage(err, 'Failed to delete manager')),
   });
 
   const columns: ColumnDef<Manager, unknown>[] = [

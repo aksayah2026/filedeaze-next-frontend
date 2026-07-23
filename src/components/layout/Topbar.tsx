@@ -6,7 +6,7 @@ import { useRouter, usePathname } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '@/lib/axios';
 import { toast } from 'sonner';
-import { cn } from '@/lib/utils';
+import { cn, getErrorMessage } from '@/lib/utils';
 import { RefreshButton } from '@/components/ui/RefreshButton';
 import { ThemeToggle } from '@/components/common/ThemeToggle';
 import { getPortalPrefix } from '@/lib/auth-helper';
@@ -69,7 +69,6 @@ const breadcrumbLabels: Record<string, string> = {
   'feedback': 'Feedback',
   'payments': 'Payments',
   'invoices': 'Invoices',
-  'offers': 'Offers',
 };
 
 function getInitials(name?: string) {
@@ -115,7 +114,7 @@ export function Topbar({ title, onMenuClick, isCollapsed, onToggleCollapse }: To
       );
     },
     onError: (err) => {
-      toast.error('Failed to mark notification as read');
+      toast.error(getErrorMessage(err, 'Failed to mark notification as read'));
     },
   });
 
@@ -128,7 +127,7 @@ export function Topbar({ title, onMenuClick, isCollapsed, onToggleCollapse }: To
       );
     },
     onError: (err) => {
-      toast.error('Failed to mark all notifications as read');
+      toast.error(getErrorMessage(err, 'Failed to mark all notifications as read'));
     },
   });
 
@@ -261,7 +260,7 @@ export function Topbar({ title, onMenuClick, isCollapsed, onToggleCollapse }: To
           </div>
 
           {showNotifications && (
-            <div className="absolute right-0 mt-2 w-80 max-h-96 overflow-y-auto rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-lg z-20">
+            <div className="fixed sm:absolute top-[68px] sm:top-auto left-4 right-4 sm:left-auto sm:right-0 sm:mt-2 w-auto sm:w-80 max-w-[calc(100vw-2rem)] max-h-96 overflow-y-auto rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-lg z-20">
               <div className="flex items-center justify-between px-3 py-2.5 border-b border-[var(--color-border)]">
                 <span className="text-xs font-semibold text-[var(--color-text-primary)]">Notifications</span>
                 <div className="flex items-center gap-3">

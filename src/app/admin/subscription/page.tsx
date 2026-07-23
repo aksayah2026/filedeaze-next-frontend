@@ -13,6 +13,7 @@ import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import { QRCodeCanvas } from 'qrcode.react';
 import { CheckCircle, Clock, QrCode, CreditCard, AlertCircle, Send, FileText, Gift } from 'lucide-react';
+import { getErrorMessage } from '@/lib/utils';
 import dayjs from 'dayjs';
 
 interface SubscriptionInfo {
@@ -69,8 +70,8 @@ export default function SubscriptionPage() {
       });
       setScreenshotUrl(res.data.data.url);
       toast.success('Screenshot uploaded');
-    } catch {
-      toast.error('Failed to upload screenshot');
+    } catch (err) {
+      toast.error(getErrorMessage(err, 'Failed to upload screenshot'));
       setScreenshotFile(null);
     } finally {
       setUploading(false);
@@ -88,8 +89,8 @@ export default function SubscriptionPage() {
       setScreenshotUrl('');
       qc.invalidateQueries({ queryKey: ['my-subscription'] });
     },
-    onError: (err: any) => {
-      toast.error(err?.response?.data?.message ?? 'Submission failed');
+    onError: (err) => {
+      toast.error(getErrorMessage(err, 'Failed to submit payment proof'));
     },
   });
 
@@ -99,7 +100,7 @@ export default function SubscriptionPage() {
       toast.success(res.data.message ?? 'Plan activated');
       qc.invalidateQueries({ queryKey: ['my-subscription'] });
     },
-    onError: (err: any) => toast.error(err?.response?.data?.message ?? 'Failed to activate plan'),
+    onError: (err) => toast.error(getErrorMessage(err, 'Failed to activate plan')),
   });
 
   if (isLoading) return <PageSpinner />;
@@ -137,7 +138,7 @@ export default function SubscriptionPage() {
           <CreditCard size={16} className="text-blue-500" /> Current Plan
         </h3>
         {currentPlan ? (
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <p className="text-2xl font-bold text-[var(--color-text-primary)]">{currentPlan.name}</p>
               <p className="text-sm text-[var(--color-text-muted)] mt-0.5">
@@ -197,7 +198,7 @@ export default function SubscriptionPage() {
               <p className="text-sm text-blue-700 mt-1">
                 Your payment proof has been submitted and is awaiting Super Admin approval.
               </p>
-              <div className="mt-3 grid grid-cols-2 gap-3 text-sm">
+              <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
                 <div>
                   <p className="text-xs text-blue-500">Reference</p>
                   <p className="font-mono font-medium text-blue-800">{latestPaymentRequest.paymentReference}</p>

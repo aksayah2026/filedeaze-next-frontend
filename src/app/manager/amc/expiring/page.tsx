@@ -16,6 +16,7 @@ import { Button } from '@/components/ui/Button';
 import { Modal } from '@/components/ui/Modal';
 import { Input } from '@/components/ui/Input';
 import { Badge } from '@/components/ui/Badge';
+import { getMinimumSelectableDate, isPastSchedule, getErrorMessage } from '@/lib/utils';
 
 type RenewForm = { startDate: string };
 
@@ -24,7 +25,7 @@ export default function AmcExpiringPage() {
   const prefix = pathname.startsWith('/admin/') ? 'admin' : 'manager';
   const qc = useQueryClient();
   const [renewing, setRenewing] = useState<AmcSubscription | null>(null);
-  const { register, handleSubmit, reset, formState: { isSubmitting } } = useForm<RenewForm>();
+  const { register, handleSubmit, reset, formState: { isSubmitting, errors } } = useForm<RenewForm>();
 
   const { data: activeSubs = [], isLoading, isError, error, refetch } = useQuery<AmcSubscription[]>({
     queryKey: ['amc-active-subscriptions'],
@@ -43,7 +44,7 @@ export default function AmcExpiringPage() {
       toast.success('AMC renewed');
       setRenewing(null); reset();
     },
-    onError: (err: { response?: { data?: { message?: string } } }) => toast.error(err?.response?.data?.message ?? 'Failed to renew AMC'),
+    onError: (err) => toast.error(getErrorMessage(err, 'Failed to renew AMC')),
   });
 
   const columns: ColumnDef<AmcSubscription, unknown>[] = [
@@ -81,7 +82,12 @@ export default function AmcExpiringPage() {
       <Modal open={!!renewing} onClose={() => { setRenewing(null); reset(); }} title="Renew AMC Subscription" size="sm">
         <form onSubmit={handleSubmit(d => renewMutation.mutate(d))} className="space-y-4">
           <p className="text-sm text-[var(--color-text-muted)]">Renews &quot;{renewing?.plan?.name}&quot; onto the same plan starting the day after the current contract ends, unless overridden below.</p>
-          <Input label="Start Date" type="date" hint="Leave blank to auto-continue from the current end date" {...register('startDate')} />
+          <Input
+            label="Start Date" type="date" hint="Leave blank to auto-continue from the current end date"
+            min={getMinimumSelectableDate()}
+            error={errors.startDate?.message}
+            {...register('startDate', { validate: (v) => !isPastSchedule(v) || 'This date has already passed — please pick today or a future date' })}
+          />
           <div className="flex justify-end gap-3">
             <Button variant="secondary" type="button" onClick={() => { setRenewing(null); reset(); }}>Cancel</Button>
             <Button type="submit" loading={isSubmitting || renewMutation.isPending}>Renew</Button>

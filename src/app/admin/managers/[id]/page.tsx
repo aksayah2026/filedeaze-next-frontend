@@ -15,7 +15,7 @@ import { ErrorState } from '@/components/ui/ErrorState';
 import Link from 'next/link';
 import { ChevronLeft, Star } from 'lucide-react';
 import dayjs from 'dayjs';
-import { formatDate } from '@/lib/utils';
+import { formatDate, getErrorMessage } from '@/lib/utils';
 
 type ManagerDetailResponse = {
   manager: Manager & { email: string; profileImageUrl?: string };
@@ -40,7 +40,7 @@ export default function ManagerDetailPage() {
   const updateMutation = useMutation({
     mutationFn: (d: Pick<Manager, 'name' | 'phone' | 'isActive'>) => api.patch(`/web/admin/managers/${id}`, d),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['manager', id] }); toast.success('Updated'); },
-    onError: () => toast.error('Failed'),
+    onError: (err) => toast.error(getErrorMessage(err, 'Failed to update manager')),
   });
 
   if (isLoading) return <PageSpinner />;

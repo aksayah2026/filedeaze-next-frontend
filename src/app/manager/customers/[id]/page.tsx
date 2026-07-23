@@ -16,6 +16,7 @@ import { Input } from '@/components/ui/Input';
 import Link from 'next/link';
 import { Button } from '@/components/ui/Button';
 import { Eye, Plus, Box, ShieldCheck, ShieldOff, Send } from 'lucide-react';
+import { getErrorMessage } from '@/lib/utils';
 import dayjs from 'dayjs';
 
 export default function CustomerHistoryPage() {
@@ -45,7 +46,7 @@ export default function CustomerHistoryPage() {
       toast.success(res.data?.data?.message ?? res.data?.message ?? 'Invitation sent');
       setShowAddEmail(false); reset();
     },
-    onError: (err: any) => toast.error(err?.response?.data?.message ?? 'Something went wrong'),
+    onError: (err) => toast.error(getErrorMessage(err, 'Failed to send portal invitation')),
   });
 
   const columns: ColumnDef<Ticket, unknown>[] = [

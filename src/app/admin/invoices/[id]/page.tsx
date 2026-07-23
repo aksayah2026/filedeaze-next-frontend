@@ -35,7 +35,7 @@ export default function AdminInvoiceDetailPage() {
             </div>
 
             <div className="bg-[var(--color-surface)] rounded-xl p-6 border border-[var(--color-border)] shadow-sm">
-                <div className="grid grid-cols-2 gap-4 text-sm">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
                     <div><span className="text-[var(--color-text-muted)]">Ticket:</span> <span className="font-medium">{invoice.ticket?.ticketNumber ?? invoice.ticketId}</span></div>
                     <div><span className="text-[var(--color-text-muted)]">Date:</span> <span className="font-medium">{formatDate(invoice.createdAt)}</span></div>
                     <div><span className="text-[var(--color-text-muted)]">Subtotal:</span> <span className="font-medium">₹{invoice.subtotal?.toLocaleString() ?? '0'}</span></div>

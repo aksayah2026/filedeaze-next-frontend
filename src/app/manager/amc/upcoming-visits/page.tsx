@@ -16,7 +16,7 @@ import { Button } from '@/components/ui/Button';
 import { Modal } from '@/components/ui/Modal';
 import { Input } from '@/components/ui/Input';
 import { AmcVisitStatusBadge } from '@/components/ui/Badge';
-import { getMinimumSelectableDate, isPastSchedule } from '@/lib/utils';
+import { getMinimumSelectableDate, isPastSchedule, getErrorMessage } from '@/lib/utils';
 
 type EnrichedVisit = AmcVisit & { subscription: AmcSubscription };
 type RescheduleForm = { scheduledDate: string };
@@ -56,7 +56,7 @@ export default function AmcUpcomingVisitsPage() {
       toast.success('Visit rescheduled');
       setRescheduling(null); reset();
     },
-    onError: (err: { response?: { data?: { message?: string } } }) => toast.error(err?.response?.data?.message ?? 'Failed to reschedule visit'),
+    onError: (err) => toast.error(getErrorMessage(err, 'Failed to reschedule visit')),
   });
 
   const columns: ColumnDef<EnrichedVisit, unknown>[] = [

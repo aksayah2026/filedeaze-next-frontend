@@ -59,7 +59,6 @@ const reportsNav: NavItemDef[] = [
 const financeNav: NavItemDef[] = [
     { href: '/manager/payments', label: 'Payments', icon: HandCoinsIcon },
     { href: '/manager/invoices', label: 'Invoices', icon: CreditCardIcon },
-    { href: '/manager/offers', label: 'Offers', icon: SparklesIcon },
 ];
 
 interface ManagerSidebarProps {
@@ -67,9 +66,17 @@ interface ManagerSidebarProps {
     isCollapsed?: boolean;
 }
 
+const allNavHrefs = [...overviewNav, ...operationsNav, ...amcNav, ...catalogNav, ...reportsNav, ...financeNav].map(i => i.href);
+
 export function ManagerSidebar({ onClose, isCollapsed = false }: ManagerSidebarProps) {
     const path = usePathname();
-    const isActive = (href: string) => path === href || path.startsWith(href + '/');
+    // A parent "index" route (e.g. /manager/amc) is also a path-prefix of every one of its own
+    // sibling routes (/manager/amc/plans, /manager/amc/assign, ...), so a naive per-item
+    // startsWith check matches both at once. Instead, find every href that matches the current
+    // path, then keep only the longest (most specific) one — exactly one item is ever active.
+    const matchingHrefs = allNavHrefs.filter(href => path === href || path.startsWith(href + '/'));
+    const activeHref = matchingHrefs.sort((a, b) => b.length - a.length)[0];
+    const isActive = (href: string) => href === activeHref;
 
     const renderSectionHeader = (label: string, showDivider: boolean) => {
         if (isCollapsed) {

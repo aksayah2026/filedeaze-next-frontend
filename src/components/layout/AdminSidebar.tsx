@@ -57,7 +57,6 @@ const operationsNav: NavItemDef[] = [
   { href: '/admin/feedback', label: 'Feedback', icon: StarIcon },
   { href: '/admin/payments', label: 'Payments', icon: HandCoinsIcon },
   { href: '/admin/invoices', label: 'Invoices', icon: CreditCardIcon },
-  { href: '/admin/offers', label: 'Offers', icon: SparklesIcon },
 ];
 
 const amcNav: NavItemDef[] = [
@@ -78,10 +77,18 @@ interface AdminSidebarProps {
   isCollapsed?: boolean;
 }
 
+const allNavHrefs = [...adminOnlyNav, ...reportsNav, ...adminMiscNav, ...operationsNav, ...amcNav, ...managerDashNav].map(i => i.href);
+
 export function AdminSidebar({ onClose, isCollapsed = false }: AdminSidebarProps) {
   const path = usePathname();
   const { role } = useAuth();
-  const isActive = (href: string) => path === href || path.startsWith(href + '/');
+  // A parent "index" route (e.g. /admin/amc) is also a path-prefix of every one of its own
+  // sibling routes (/admin/amc/plans, /admin/amc/assign, ...), so a naive per-item startsWith
+  // check matches both at once. Instead, find every href that matches the current path, then
+  // keep only the longest (most specific) one — exactly one item is ever active.
+  const matchingHrefs = allNavHrefs.filter(href => path === href || path.startsWith(href + '/'));
+  const activeHref = matchingHrefs.sort((a, b) => b.length - a.length)[0];
+  const isActive = (href: string) => href === activeHref;
 
   const renderSectionHeader = (label: string, showDivider: boolean) => {
     if (isCollapsed) {

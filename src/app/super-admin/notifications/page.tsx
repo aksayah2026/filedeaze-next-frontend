@@ -11,7 +11,7 @@ import { Bell, Check, Trash2, MailOpen } from 'lucide-react';
 import { toast } from 'sonner';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
-import { cn } from '@/lib/utils';
+import { cn, getErrorMessage } from '@/lib/utils';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 
 dayjs.extend(relativeTime);
@@ -31,7 +31,7 @@ export default function NotificationsPage() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['notifications'] });
     },
-    onError: () => toast.error('Failed to mark as read'),
+    onError: (err) => toast.error(getErrorMessage(err, 'Failed to mark as read')),
   });
 
   const markAllReadMutation = useMutation({
@@ -40,7 +40,7 @@ export default function NotificationsPage() {
       qc.invalidateQueries({ queryKey: ['notifications'] });
       toast.success('All marked as read');
     },
-    onError: () => toast.error('Failed to mark all as read'),
+    onError: (err) => toast.error(getErrorMessage(err, 'Failed to mark all as read')),
   });
 
   const deleteMutation = useMutation({
@@ -50,7 +50,7 @@ export default function NotificationsPage() {
       toast.success('Notification deleted');
       setDeleteId(null);
     },
-    onError: () => toast.error('Failed to delete notification'),
+    onError: (err) => toast.error(getErrorMessage(err, 'Failed to delete notification')),
   });
 
   const clearAllMutation = useMutation({
@@ -60,7 +60,7 @@ export default function NotificationsPage() {
       toast.success('All notifications cleared');
       setShowClearConfirm(false);
     },
-    onError: (err: any) => toast.error(err?.response?.data?.message ?? 'Failed to clear notifications'),
+    onError: (err) => toast.error(getErrorMessage(err, 'Failed to clear notifications')),
   });
 
   if (isLoading) return <PageSpinner />;

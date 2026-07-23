@@ -16,6 +16,7 @@ import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { PageSpinner } from '@/components/ui/Spinner';
 import { ErrorState } from '@/components/ui/ErrorState';
 import { MapPin, Route, Star, Trash2, Plus, Key, ChevronLeft } from 'lucide-react';
+import { getErrorMessage } from '@/lib/utils';
 import dayjs from 'dayjs';
 import Link from 'next/link';
 
@@ -42,17 +43,17 @@ export default function TechnicianDetailPage() {
 
   useEffect(() => { if (tech) resetI({ name: tech.name, phone: tech.phone, isActive: tech.isActive }); }, [tech, resetI]);
 
-  const updateMutation = useMutation({ mutationFn: (d: Pick<Technician, 'name' | 'phone' | 'isActive'>) => api.patch(`/web/manager/technicians/${id}`, d), onSuccess: () => { qc.invalidateQueries({ queryKey: ['technician', id] }); toast.success('Updated'); }, onError: () => toast.error('Failed') });
-  const resetPwMutation = useMutation({ mutationFn: (d: { newPassword: string }) => api.patch(`/web/manager/technicians/${id}/reset-password`, d), onSuccess: () => { toast.success('Password reset'); setShowResetPw(false); resetP(); }, onError: () => toast.error('Failed') });
+  const updateMutation = useMutation({ mutationFn: (d: Pick<Technician, 'name' | 'phone' | 'isActive'>) => api.patch(`/web/manager/technicians/${id}`, d), onSuccess: () => { qc.invalidateQueries({ queryKey: ['technician', id] }); toast.success('Updated'); }, onError: (err) => toast.error(getErrorMessage(err, 'Failed to update technician')) });
+  const resetPwMutation = useMutation({ mutationFn: (d: { newPassword: string }) => api.patch(`/web/manager/technicians/${id}/reset-password`, d), onSuccess: () => { toast.success('Password reset'); setShowResetPw(false); resetP(); }, onError: (err) => toast.error(getErrorMessage(err, 'Failed to reset password')) });
   const addSkillMutation = useMutation({
     mutationFn: (d: { skillId: string }) =>
       api.post(`/web/manager/technicians/${id}/skills`, {
         skillId: d.skillId,
       }),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['tech-skills', id] }); toast.success('Skill added'); resetS(); },
-    onError: (err: any) => toast.error(err?.response?.data?.message ?? 'Failed to add skill'),
+    onError: (err) => toast.error(getErrorMessage(err, 'Failed to add skill')),
   });
-  const removeSkillMutation = useMutation({ mutationFn: (skillId: string) => api.delete(`/web/manager/technicians/${id}/skills/${skillId}`), onSuccess: () => { qc.invalidateQueries({ queryKey: ['tech-skills', id] }); toast.success('Skill removed'); setRemoveSkillId(null); }, onError: () => toast.error('Failed') });
+  const removeSkillMutation = useMutation({ mutationFn: (skillId: string) => api.delete(`/web/manager/technicians/${id}/skills/${skillId}`), onSuccess: () => { qc.invalidateQueries({ queryKey: ['tech-skills', id] }); toast.success('Skill removed'); setRemoveSkillId(null); }, onError: (err) => toast.error(getErrorMessage(err, 'Failed to remove skill')) });
 
   if (isLoading) return <PageSpinner />;
   if (isError) return <ErrorState error={error} onRetry={refetch} isRetrying={isFetching} />;
@@ -79,7 +80,7 @@ export default function TechnicianDetailPage() {
 
       <div className="bg-[var(--color-surface)] rounded-xl p-5 border border-[var(--color-border)] shadow-sm">
         <h3 className="font-medium text-[var(--color-text-secondary)] mb-4">Edit Info</h3>
-        <form onSubmit={hi(d => updateMutation.mutate(d))} className="grid grid-cols-2 gap-4">
+        <form onSubmit={hi(d => updateMutation.mutate(d))} className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <Input label="Name" {...ri('name')} />
           <Input label="Phone" {...ri('phone')} />
           <div className="flex flex-col gap-1">

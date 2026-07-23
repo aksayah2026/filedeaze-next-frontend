@@ -17,6 +17,7 @@ import { Modal } from '@/components/ui/Modal';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { Badge } from '@/components/ui/Badge';
 import { PaginationMeta } from '@/components/ui/Pagination';
+import { getErrorMessage } from '@/lib/utils';
 
 type PlanForm = {
   name: string;
@@ -24,10 +25,11 @@ type PlanForm = {
   categoryId: string;
   durationMonths: number;
   visitCount: number;
+  visitIntervalMonths: number;
   price: number;
 };
 
-const emptyForm: PlanForm = { name: '', description: '', categoryId: '', durationMonths: 12, visitCount: 4, price: 0 };
+const emptyForm: PlanForm = { name: '', description: '', categoryId: '', durationMonths: 12, visitCount: 4, visitIntervalMonths: 3, price: 0 };
 
 export default function AmcPlansPage() {
   const qc = useQueryClient();
@@ -37,7 +39,26 @@ export default function AmcPlansPage() {
   const [editing, setEditing] = useState<AmcPlan | null>(null);
   const [deactivateTarget, setDeactivateTarget] = useState<AmcPlan | null>(null);
 
-  const { register, handleSubmit, reset, formState: { errors, isSubmitting } } = useForm<PlanForm>({ defaultValues: emptyForm });
+  const { register, handleSubmit, reset, watch, formState: { errors, isSubmitting } } = useForm<PlanForm>({ defaultValues: emptyForm });
+
+  // Cross-field validation, mirrored from the backend (amc-plan.service.ts's validateVisitInterval):
+  // the interval can't exceed the duration, and the last generated visit — (visitCount-1) intervals
+  // after the start date — can't fall after the contract ends either. Watches the same fields the
+  // form already tracks, so it re-validates live as Duration/Visit Count change too, not just on
+  // Visit Interval's own input.
+  const watchedDuration = Number(watch('durationMonths'));
+  const watchedVisitCount = Number(watch('visitCount'));
+  const validateVisitInterval = (value: number) => {
+    const v = Number(value);
+    if (!Number.isInteger(v)) return 'Must be a whole number';
+    if (v <= 0) return 'Must be a positive number';
+    if (watchedDuration > 0 && v > watchedDuration) return 'Cannot exceed the AMC duration';
+    const lastVisitMonth = v * (watchedVisitCount - 1);
+    if (watchedDuration > 0 && lastVisitMonth > watchedDuration) {
+      return `Last visit would fall at month ${lastVisitMonth}, after the ${watchedDuration}-month contract ends`;
+    }
+    return true;
+  };
 
   const { data, isLoading, isError, error, refetch } = useQuery<{ items: AmcPlan[]; meta: PaginationMeta }>({
     queryKey: ['amc-plans', page, limit],
@@ -62,6 +83,7 @@ export default function AmcPlansPage() {
       categoryId: plan.categoryId ?? '',
       durationMonths: plan.durationMonths,
       visitCount: plan.visitCount,
+      visitIntervalMonths: plan.visitIntervalMonths,
       price: plan.price,
     });
     setShowForm(true);
@@ -74,10 +96,11 @@ export default function AmcPlansPage() {
       categoryId: d.categoryId || undefined,
       durationMonths: Number(d.durationMonths),
       visitCount: Number(d.visitCount),
+      visitIntervalMonths: Number(d.visitIntervalMonths),
       price: Number(d.price),
     }),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['amc-plans'] }); toast.success('AMC plan created'); closeForm(); },
-    onError: (err: { response?: { data?: { message?: string } } }) => toast.error(err?.response?.data?.message ?? 'Failed to create plan'),
+    onError: (err) => toast.error(getErrorMessage(err, 'Failed to create plan')),
   });
 
   const updateMutation = useMutation({
@@ -87,16 +110,17 @@ export default function AmcPlansPage() {
       categoryId: d.categoryId || undefined,
       durationMonths: Number(d.durationMonths),
       visitCount: Number(d.visitCount),
+      visitIntervalMonths: Number(d.visitIntervalMonths),
       price: Number(d.price),
     }),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['amc-plans'] }); toast.success('AMC plan updated'); closeForm(); },
-    onError: (err: { response?: { data?: { message?: string } } }) => toast.error(err?.response?.data?.message ?? 'Failed to update plan'),
+    onError: (err) => toast.error(getErrorMessage(err, 'Failed to update plan')),
   });
 
   const deactivateMutation = useMutation({
     mutationFn: (id: string) => api.delete(`/web/manager/amc/plans/${id}`),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['amc-plans'] }); toast.success('AMC plan deactivated'); setDeactivateTarget(null); },
-    onError: (err: { response?: { data?: { message?: string } } }) => toast.error(err?.response?.data?.message ?? 'Failed to deactivate plan'),
+    onError: (err) => toast.error(getErrorMessage(err, 'Failed to deactivate plan')),
   });
 
   const columns: ColumnDef<AmcPlan, unknown>[] = [
@@ -139,7 +163,7 @@ export default function AmcPlansPage() {
         pagination={data?.meta ? { meta: data.meta, onPageChange: setPage, onLimitChange: (l) => { setPage(1); setLimit(l); } } : undefined}
       />
 
-      <Modal open={showForm} onClose={closeForm} title={editing ? 'Edit AMC Plan' : 'New AMC Plan'} size="md">
+      <Modal open={showForm} onClose={closeForm} title={editing ? 'Edit AMC Plan' : 'New AMC Plan'} size="lg">
         <form onSubmit={handleSubmit(d => editing ? updateMutation.mutate(d) : createMutation.mutate(d))} className="space-y-4">
           <Input label="Plan Name *" placeholder="e.g. Gold AC Care" error={errors.name?.message} {...register('name', { required: 'Name is required' })} />
           <Select
@@ -149,10 +173,26 @@ export default function AmcPlansPage() {
             {...register('categoryId')}
           />
           <Textarea label="Description" rows={2} {...register('description')} />
-          <div className="grid grid-cols-3 gap-4">
-            <Input label="Duration (months) *" type="number" min={1} error={errors.durationMonths?.message} {...register('durationMonths', { required: true, min: { value: 1, message: 'At least 1 month' } })} />
-            <Input label="Visit Count *" type="number" min={1} error={errors.visitCount?.message} {...register('visitCount', { required: true, min: { value: 1, message: 'At least 1 visit' } })} />
-            <Input label="Price (₹) *" type="number" min={0} error={errors.price?.message} {...register('price', { required: true, min: { value: 0, message: 'Cannot be negative' } })} />
+          {/* min-h reserves the same vertical space on every field whether or not its own
+              validation message is currently showing, so an error on one field never shifts its
+              siblings out of alignment — all four stay equal-height and level regardless. */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 items-start">
+            <div className="min-h-[86px]">
+              <Input label="Duration (months) *" type="number" min={1} step={1} error={errors.durationMonths?.message} {...register('durationMonths', { required: true, min: { value: 1, message: 'At least 1 month' } })} />
+            </div>
+            <div className="min-h-[86px]">
+              <Input label="Visit Count *" type="number" min={1} step={1} error={errors.visitCount?.message} {...register('visitCount', { required: true, min: { value: 1, message: 'At least 1 visit' } })} />
+            </div>
+            <div className="min-h-[86px]">
+              <Input
+                label="Interval (months) *" type="number" min={1} step={1}
+                error={errors.visitIntervalMonths?.message}
+                {...register('visitIntervalMonths', { required: 'Required', min: { value: 1, message: 'Must be at least 1' }, validate: validateVisitInterval })}
+              />
+            </div>
+            <div className="min-h-[86px]">
+              <Input label="Price (₹) *" type="number" min={0} error={errors.price?.message} {...register('price', { required: true, min: { value: 0, message: 'Cannot be negative' } })} />
+            </div>
           </div>
           <div className="flex justify-end gap-3 pt-2">
             <Button variant="secondary" type="button" onClick={closeForm}>Cancel</Button>

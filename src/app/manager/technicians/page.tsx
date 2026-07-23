@@ -20,6 +20,7 @@ import { Modal } from '@/components/ui/Modal';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { Badge } from '@/components/ui/Badge';
 import { Star } from 'lucide-react';
+import { getErrorMessage } from '@/lib/utils';
 import dayjs from 'dayjs';
 
 const schema = z.object({
@@ -83,7 +84,7 @@ export default function TechniciansPage() {
       }
       closeCreate();
     },
-    onError: (e: unknown) => toast.error((e as { response?: { data?: { message?: string } } })?.response?.data?.message ?? 'Error'),
+    onError: (err) => toast.error(getErrorMessage(err, 'Failed to add technician')),
   });
 
   const toggleSkill = (id: string) => {
@@ -93,7 +94,7 @@ export default function TechniciansPage() {
   const deleteMutation = useMutation({
     mutationFn: (id: string) => api.delete(`/web/manager/technicians/${id}`),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['technicians'] }); toast.success('Deleted'); setDeleteId(null); },
-    onError: () => toast.error('Failed'),
+    onError: (err) => toast.error(getErrorMessage(err, 'Failed to delete technician')),
   });
 
   const columns: ColumnDef<Technician, unknown>[] = [

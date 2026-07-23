@@ -15,7 +15,7 @@ import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { Badge } from '@/components/ui/Badge';
 import { ErrorState } from '@/components/ui/ErrorState';
 import { useRoleAccent } from '@/lib/useRoleAccent';
-import { cn } from '@/lib/utils';
+import { cn, getErrorMessage } from '@/lib/utils';
 import Select from 'react-select'; // They use react-select for multi-select
 
 // ─── Inline Drawer Wrapper ──────────────────────────────────────────────────
@@ -177,7 +177,7 @@ export default function ServiceCatalogPage() {
       setDeleteCatId(null);
       if (selectedCatId === deleteCatId) setSelectedCatId(null);
     },
-    onError: () => toast.error('Failed to delete category'),
+    onError: (err) => toast.error(getErrorMessage(err, 'Failed to delete category')),
   });
 
   // ── Actions
@@ -666,7 +666,7 @@ export default function ServiceCatalogPage() {
                       />
                     </div>
 
-                    <div className="grid grid-cols-3 gap-3 mb-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
                       <div>
                         <label className="block text-[11px] font-semibold text-[var(--color-text-secondary)] mb-1.5">Service Charge (₹)</label>
                         <input

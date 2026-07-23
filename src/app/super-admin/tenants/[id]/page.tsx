@@ -32,7 +32,7 @@ import { DataTable } from '@/components/ui/DataTable';
 import dayjs from 'dayjs';
 import { Users, CreditCard, Calendar, Download, QrCode, Building2, ChevronLeft, Clock } from 'lucide-react';
 import Link from 'next/link';
-import { cn } from '@/lib/utils';
+import { cn, getErrorMessage } from '@/lib/utils';
 
 export default function TenantDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -84,7 +84,7 @@ export default function TenantDetailPage() {
   const updateMutation = useMutation({
     mutationFn: (data: Partial<Tenant>) => api.patch(`/web/super-admin/tenants/${id}`, data),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['tenant', id] }); toast.success('Tenant updated'); },
-    onError: () => toast.error('Update failed'),
+    onError: (err) => toast.error(getErrorMessage(err, 'Failed to update tenant')),
   });
 
   const currentSub = tenant?.subscription ?? null;
@@ -100,7 +100,7 @@ export default function TenantDetailPage() {
   const renewMutation = useMutation({
     mutationFn: () => api.post('/web/super-admin/subscriptions/renew', { tenantId: id, paymentStatus: 'PENDING' }),
     onSuccess: (res) => { toast.success(res.data.message ?? 'Subscription renewed'); invalidateAll(); },
-    onError: (err: any) => toast.error(err?.response?.data?.message ?? 'Failed to renew'),
+    onError: (err) => toast.error(getErrorMessage(err, 'Failed to renew subscription')),
   });
 
   const upgradeDowngradeMutation = useMutation({
@@ -110,25 +110,25 @@ export default function TenantDetailPage() {
       return api.patch(`/web/super-admin/subscriptions/${currentSub!.id}/${direction}`, { planId: newPlanId, paymentStatus: udPaymentStatus });
     },
     onSuccess: (res) => { toast.success(res.data.message ?? 'Plan changed'); setNewPlanId(''); invalidateAll(); },
-    onError: (err: any) => toast.error(err?.response?.data?.message ?? 'Failed to change plan'),
+    onError: (err) => toast.error(getErrorMessage(err, 'Failed to change plan')),
   });
 
   const suspendSubMutation = useMutation({
     mutationFn: () => api.patch(`/web/super-admin/subscriptions/${currentSub!.id}/suspend`),
     onSuccess: () => { toast.success('Subscription suspended'); invalidateAll(); },
-    onError: (err: any) => toast.error(err?.response?.data?.message ?? 'Failed to suspend'),
+    onError: (err) => toast.error(getErrorMessage(err, 'Failed to suspend subscription')),
   });
 
   const resumeSubMutation = useMutation({
     mutationFn: () => api.patch(`/web/super-admin/subscriptions/${currentSub!.id}/resume`),
     onSuccess: (res) => { toast.success(res.data.message ?? 'Subscription resumed'); invalidateAll(); },
-    onError: (err: any) => toast.error(err?.response?.data?.message ?? 'Failed to resume'),
+    onError: (err) => toast.error(getErrorMessage(err, 'Failed to resume subscription')),
   });
 
   const cancelSubMutation = useMutation({
     mutationFn: () => api.patch(`/web/super-admin/subscriptions/${currentSub!.id}/cancel`),
     onSuccess: () => { toast.success('Subscription cancelled'); invalidateAll(); },
-    onError: (err: any) => toast.error(err?.response?.data?.message ?? 'Failed to cancel'),
+    onError: (err) => toast.error(getErrorMessage(err, 'Failed to cancel subscription')),
   });
 
   const billingColumns: ColumnDef<Billing, unknown>[] = [

@@ -19,6 +19,7 @@ import { Input } from '@/components/ui/Input';
 import { Textarea } from '@/components/ui/Textarea';
 import { AmcSubscriptionStatusBadge } from '@/components/ui/Badge';
 import { PaginationMeta } from '@/components/ui/Pagination';
+import { getMinimumSelectableDate, isPastSchedule, getErrorMessage } from '@/lib/utils';
 
 const STATUS_OPTIONS = [
   { value: '', label: 'All Status' },
@@ -43,7 +44,7 @@ export default function AmcHistoryPage() {
   const [renewing, setRenewing] = useState<AmcSubscription | null>(null);
   const [cancelling, setCancelling] = useState<AmcSubscription | null>(null);
 
-  const { register: rn, handleSubmit: hn, reset: resetN, formState: { isSubmitting: sn } } = useForm<RenewForm>();
+  const { register: rn, handleSubmit: hn, reset: resetN, formState: { isSubmitting: sn, errors: errorsN } } = useForm<RenewForm>();
   const { register: rc, handleSubmit: hc, reset: resetC, formState: { isSubmitting: sc } } = useForm<CancelForm>();
 
   const { data, isLoading, isError, error, refetch } = useQuery<{ items: AmcSubscription[]; meta: PaginationMeta }>({
@@ -56,13 +57,13 @@ export default function AmcHistoryPage() {
   const renewMutation = useMutation({
     mutationFn: (d: RenewForm) => api.post(`/web/manager/amc/subscriptions/${renewing!.id}/renew`, { startDate: d.startDate || undefined }),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['amc-history'] }); toast.success('AMC renewed'); setRenewing(null); resetN(); },
-    onError: (err: { response?: { data?: { message?: string } } }) => toast.error(err?.response?.data?.message ?? 'Failed to renew AMC'),
+    onError: (err) => toast.error(getErrorMessage(err, 'Failed to renew AMC')),
   });
 
   const cancelMutation = useMutation({
     mutationFn: (d: CancelForm) => api.post(`/web/manager/amc/subscriptions/${cancelling!.id}/cancel`, d),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['amc-history'] }); toast.success('AMC subscription cancelled'); setCancelling(null); resetC(); },
-    onError: (err: { response?: { data?: { message?: string } } }) => toast.error(err?.response?.data?.message ?? 'Failed to cancel AMC'),
+    onError: (err) => toast.error(getErrorMessage(err, 'Failed to cancel AMC')),
   });
 
   const columns: ColumnDef<AmcSubscription, unknown>[] = [
@@ -115,7 +116,12 @@ export default function AmcHistoryPage() {
 
       <Modal open={!!renewing} onClose={() => { setRenewing(null); resetN(); }} title="Renew AMC Subscription" size="sm">
         <form onSubmit={hn(d => renewMutation.mutate(d))} className="space-y-4">
-          <Input label="Start Date" type="date" hint="Leave blank to auto-continue from the current end date" {...rn('startDate')} />
+          <Input
+            label="Start Date" type="date" hint="Leave blank to auto-continue from the current end date"
+            min={getMinimumSelectableDate()}
+            error={errorsN.startDate?.message}
+            {...rn('startDate', { validate: (v) => !isPastSchedule(v) || 'This date has already passed — please pick today or a future date' })}
+          />
           <div className="flex justify-end gap-3">
             <Button variant="secondary" type="button" onClick={() => { setRenewing(null); resetN(); }}>Cancel</Button>
             <Button type="submit" loading={sn}>Renew</Button>

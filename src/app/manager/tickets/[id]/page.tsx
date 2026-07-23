@@ -18,7 +18,7 @@ import { ErrorState } from '@/components/ui/ErrorState';
 import Link from 'next/link';
 import { Star, CheckCircle, XCircle, RefreshCw, UserCheck, ChevronLeft, CalendarClock, ThumbsUp, ThumbsDown, AlertTriangle, Box, ShieldCheck, ShieldOff, Plus, Pencil, Trash2 } from 'lucide-react';
 import dayjs from 'dayjs';
-import { getMinimumSelectableDateTime, isPastSchedule } from '@/lib/utils';
+import { getMinimumSelectableDateTime, isPastSchedule, getErrorMessage } from '@/lib/utils';
 
 const BUSY_STATUSES = ['ASSIGNED', 'ACCEPTED', 'TRAVELLING', 'REACHED_LOCATION', 'IN_PROGRESS', 'PENDING'];
 
@@ -190,7 +190,7 @@ function PaymentCollectionCard({ ticketId, subCategoryId, isAmcCovered, onCollec
   const collectMutation = useMutation({
     mutationFn: (payload: unknown) => api.post(`/web/manager/tickets/${ticketId}/collect-payment`, payload),
     onSuccess: () => { toast.success('Payment collected and invoice generated'); onCollected(); },
-    onError: (err: any) => toast.error(err?.response?.data?.message ?? 'Failed to collect payment'),
+    onError: (err) => toast.error(getErrorMessage(err, 'Failed to collect payment')),
   });
 
   const serviceChargeWaived = isAmcCovered;
@@ -277,7 +277,7 @@ function PaymentCollectionCard({ ticketId, subCategoryId, isAmcCovered, onCollec
         ]}
       />
 
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <Input
           label="Service Charge" type="number" min={0} value={serviceCharge}
           onChange={e => setServiceCharge(e.target.value)} disabled={serviceChargeWaived}
@@ -316,7 +316,7 @@ function PaymentCollectionCard({ ticketId, subCategoryId, isAmcCovered, onCollec
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <Input label="Additional Charge" type="number" min={0} value={additionalCharge} onChange={e => setAdditionalCharge(e.target.value)} />
         <Input label="Discount" type="number" min={0} value={discount} onChange={e => setDiscount(e.target.value)} />
       </div>
@@ -427,31 +427,31 @@ export default function TicketDetailPage() {
       toast.success(assignMode === 'reassign' ? 'Reassigned' : assignMode === 'reschedule' ? 'Rescheduled' : 'Assigned');
       setShowAssign(false); resetA();
     },
-    onError: (err: any) => toast.error(err?.response?.data?.message ?? 'Something went wrong'),
+    onError: (err) => toast.error(getErrorMessage(err, assignMode === 'reassign' ? 'Failed to reassign ticket' : assignMode === 'reschedule' ? 'Failed to reschedule ticket' : 'Failed to assign ticket')),
   });
 
   const closeMutation = useMutation({
     mutationFn: (d: { notes: string }) => api.patch(`/web/manager/tickets/${id}/close`, d),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['ticket', id] }); toast.success('Ticket closed'); setShowClose(false); resetC(); },
-    onError: (err: any) => toast.error(err?.response?.data?.message ?? 'Something went wrong'),
+    onError: (err) => toast.error(getErrorMessage(err, 'Failed to close ticket')),
   });
 
   const cancelMutation = useMutation({
     mutationFn: (d: { reason: string }) => api.patch(`/web/manager/tickets/${id}/cancel`, d),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['ticket', id] }); toast.success('Ticket cancelled'); setShowCancel(false); resetX(); },
-    onError: (err: any) => toast.error(err?.response?.data?.message ?? 'Something went wrong'),
+    onError: (err) => toast.error(getErrorMessage(err, 'Failed to cancel ticket')),
   });
 
   const approvePendingMutation = useMutation({
     mutationFn: () => api.patch(`/web/manager/tickets/${id}/approve-pending`),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['ticket', id] }); toast.success('Pending approved — technician notified'); },
-    onError: (err: any) => toast.error(err?.response?.data?.message ?? 'Failed'),
+    onError: (err) => toast.error(getErrorMessage(err, 'Failed to approve pending ticket')),
   });
 
   const rejectPendingMutation = useMutation({
     mutationFn: () => api.patch(`/web/manager/tickets/${id}/reject-pending`),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['ticket', id] }); toast.success('Pending rejected — ticket resumed'); },
-    onError: (err: any) => toast.error(err?.response?.data?.message ?? 'Failed'),
+    onError: (err) => toast.error(getErrorMessage(err, 'Failed to reject pending ticket')),
   });
 
   if (isLoading) return <PageSpinner />;
@@ -519,7 +519,7 @@ export default function TicketDetailPage() {
         </div>
       )}
 
-      <div className={ticket.customerAsset ? 'grid grid-cols-2 gap-4' : ''}>
+      <div className={ticket.customerAsset ? 'grid grid-cols-1 sm:grid-cols-2 gap-4' : ''}>
         <div className="bg-[var(--color-surface)] rounded-xl p-4 border border-[var(--color-border)] shadow-sm text-sm space-y-2">
           <h3 className="font-medium text-[var(--color-text-secondary)]">Service Description</h3>
           <div className="text-[var(--color-text-secondary)] space-y-1">
@@ -565,7 +565,7 @@ export default function TicketDetailPage() {
         )}
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div className="bg-[var(--color-surface)] rounded-xl p-4 border border-[var(--color-border)] shadow-sm text-sm space-y-2">
           <h3 className="font-medium text-[var(--color-text-secondary)]">Details</h3>
           <div className="text-[var(--color-text-secondary)] space-y-1">
@@ -747,7 +747,7 @@ export default function TicketDetailPage() {
       {ticket.images && ticket.images.some(i => i.type === 'RAISED') && (
         <div className="bg-[var(--color-surface)] rounded-xl p-4 border border-[var(--color-border)] shadow-sm">
           <h3 className="font-medium text-[var(--color-text-secondary)] mb-3">Customer Photos</h3>
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
             {ticket.images.filter(i => i.type === 'RAISED').map(img => (
               <a key={img.id} href={img.imageUrl} target="_blank" rel="noopener noreferrer">
                 <img src={img.imageUrl} alt="Customer upload" className="rounded-lg w-full object-cover aspect-video border border-[var(--color-border)] hover:opacity-90 transition-opacity" />
@@ -760,7 +760,7 @@ export default function TicketDetailPage() {
       {ticket.images && ticket.images.length > 0 && (
         <div className="bg-[var(--color-surface)] rounded-xl p-4 border border-[var(--color-border)] shadow-sm">
           <h3 className="font-medium text-[var(--color-text-secondary)] mb-3">Work Photos</h3>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {(['BEFORE', 'AFTER'] as TicketImage['type'][]).map(type => {
               const img = ticket.images!.find(i => i.type === type);
               return (

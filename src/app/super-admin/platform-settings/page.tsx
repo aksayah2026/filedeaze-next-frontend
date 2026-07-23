@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/Button';
 import { PageSpinner } from '@/components/ui/Spinner';
 import { ErrorState } from '@/components/ui/ErrorState';
 import { QrCode, Smartphone, Settings2, CheckCircle2, UploadCloud } from 'lucide-react';
+import { getErrorMessage } from '@/lib/utils';
 
 interface UpiForm {
   upiId: string;
@@ -48,7 +49,7 @@ export default function PlatformSettingsPage() {
       toast.success('UPI settings saved');
       reset(dto);
     },
-    onError: (err: any) => toast.error(err?.response?.data?.message ?? 'Failed to save UPI settings'),
+    onError: (err) => toast.error(getErrorMessage(err, 'Failed to save UPI settings')),
   });
 
   const uploadQrMutation = useMutation({
@@ -64,7 +65,7 @@ export default function PlatformSettingsPage() {
       reset({ ...watch(), upiQrImageUrl: res.data.data.upiQrImageUrl });
       toast.success('QR code uploaded');
     },
-    onError: (err: any) => toast.error(err?.response?.data?.message ?? 'Failed to upload QR code'),
+    onError: (err) => toast.error(getErrorMessage(err, 'Failed to upload QR code')),
   });
 
   async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {

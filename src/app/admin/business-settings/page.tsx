@@ -17,7 +17,7 @@ import { Button } from '@/components/ui/Button';
 import { FileUpload } from '@/components/ui/FileUpload';
 import { PageSpinner } from '@/components/ui/Spinner';
 import { ErrorState } from '@/components/ui/ErrorState';
-import { cn } from '@/lib/utils';
+import { cn, getErrorMessage } from '@/lib/utils';
 
 // ─── Sections definition ─────────────────────────────────────────────────────
 const SECTIONS = [
@@ -133,6 +133,7 @@ export default function BusinessSettingsPage() {
       qc.invalidateQueries({ queryKey: ['company-settings'] });
       companyForm.reset(companyForm.getValues());
     },
+    onError: (err) => toast.error(getErrorMessage(err, 'Failed to save company profile')),
   });
 
   const tenantMutation = useMutation({
@@ -142,6 +143,7 @@ export default function BusinessSettingsPage() {
       qc.invalidateQueries({ queryKey: ['tenant-settings'] });
       tenantForm.reset(tenantForm.getValues());
     },
+    onError: (err) => toast.error(getErrorMessage(err, 'Failed to save tax & payment settings')),
   });
 
   const platformMutation = useMutation({
@@ -151,6 +153,7 @@ export default function BusinessSettingsPage() {
       qc.invalidateQueries({ queryKey: ['app-settings'] });
       platformForm.reset(platformForm.getValues());
     },
+    onError: (err) => toast.error(getErrorMessage(err, 'Failed to save business charges')),
   });
 
   const logoMutation = useMutation({
@@ -165,7 +168,7 @@ export default function BusinessSettingsPage() {
       qc.invalidateQueries({ queryKey: ['company-settings'] });
       toast.success('Company logo updated successfully');
     },
-    onError: () => toast.error('Logo upload failed'),
+    onError: (err) => toast.error(getErrorMessage(err, 'Failed to upload company logo')),
   });
 
   const _upiQrMutation = useMutation({
@@ -180,7 +183,7 @@ export default function BusinessSettingsPage() {
       qc.invalidateQueries({ queryKey: ['tenant-settings'] });
       toast.success('UPI QR Image updated successfully');
     },
-    onError: () => toast.error('UPI QR upload failed'),
+    onError: (err) => toast.error(getErrorMessage(err, 'Failed to upload UPI QR image')),
   });
 
   // ─── Change Detection ───────────────────────────────────────────────────────
@@ -228,7 +231,7 @@ export default function BusinessSettingsPage() {
       }
       toast.success('All settings saved successfully');
     } catch {
-      toast.error('Failed to save some settings');
+      // Each mutation's own onError already surfaced the specific section and reason that failed.
     }
   };
 

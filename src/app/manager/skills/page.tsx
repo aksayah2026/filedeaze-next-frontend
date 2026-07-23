@@ -18,6 +18,7 @@ import { Textarea } from '@/components/ui/Textarea';
 import { Modal } from '@/components/ui/Modal';
 import { Badge } from '@/components/ui/Badge';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
+import { getErrorMessage } from '@/lib/utils';
 
 type Form = { name: string; description: string; isActive: boolean };
 
@@ -48,7 +49,7 @@ export default function SkillsPage() {
   const saveMutation = useMutation({
     mutationFn: (d: Form) => editing ? api.patch(`/web/manager/skills/${editing.id}`, d) : api.post('/web/manager/skills', d),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['skills'] }); toast.success(editing ? 'Skill updated' : 'Skill created'); setEditing(null); setShowCreate(false); reset(); },
-    onError: (err: any) => toast.error(err?.response?.data?.message ?? (editing ? 'Failed to update skill' : 'Failed to create skill')),
+    onError: (err) => toast.error(getErrorMessage(err, editing ? 'Failed to update skill' : 'Failed to create skill')),
   });
 
   const deleteMutation = useMutation({
@@ -56,7 +57,7 @@ export default function SkillsPage() {
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['skills'] }); toast.success('Skill deleted'); setDeleteTarget(null); },
     // Backend blocks deletion while the skill is still mapped to a technician or sub-category —
     // surface that exact reason instead of a generic failure toast.
-    onError: (err: any) => toast.error(err?.response?.data?.message ?? 'Failed to delete skill'),
+    onError: (err) => toast.error(getErrorMessage(err, 'Failed to delete skill')),
   });
 
   const columns: ColumnDef<Skill, unknown>[] = [

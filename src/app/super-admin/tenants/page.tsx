@@ -21,6 +21,7 @@ import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { FilterCard } from '@/components/ui/FilterCard';
 import { DataTable } from '@/components/ui/DataTable';
 import { ColumnDef } from '@tanstack/react-table';
+import { getErrorMessage } from '@/lib/utils';
 import dayjs from 'dayjs';
 
 const schema = z.object({
@@ -123,7 +124,7 @@ export default function TenantsPage() {
       reset();
       setManualCode(false);
     },
-    onError: (e: unknown) => toast.error((e as { response?: { data?: { message?: string } } })?.response?.data?.message ?? 'Error'),
+    onError: (err) => toast.error(getErrorMessage(err, 'Failed to create tenant')),
   });
 
   const statusMutation = useMutation({
@@ -133,13 +134,13 @@ export default function TenantsPage() {
       qc.invalidateQueries({ queryKey: ['tenants'] });
       setTogglingId(null);
     },
-    onError: () => { toast.error('Failed to update status'); setTogglingId(null); },
+    onError: (err) => { toast.error(getErrorMessage(err, 'Failed to update status')); setTogglingId(null); },
   });
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) => api.delete(`/web/super-admin/tenants/${id}`),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['tenants'] }); toast.success('Tenant deleted'); setDeleteId(null); },
-    onError: () => toast.error('Delete failed'),
+    onError: (err) => toast.error(getErrorMessage(err, 'Failed to delete tenant')),
   });
 
   function handleToggle(id: string, next: TenantStatus) {

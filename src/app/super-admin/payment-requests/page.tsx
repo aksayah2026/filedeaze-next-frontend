@@ -12,6 +12,7 @@ import { PageSpinner } from '@/components/ui/Spinner';
 import { ErrorState } from '@/components/ui/ErrorState';
 import { Pagination, PaginationMeta } from '@/components/ui/Pagination';
 import { CheckCircle, XCircle, ExternalLink, Clock } from 'lucide-react';
+import { getErrorMessage } from '@/lib/utils';
 import dayjs from 'dayjs';
 
 interface PaymentRequest {
@@ -61,7 +62,7 @@ export default function PaymentRequestsPage() {
       toast.success('Payment approved — subscription activated.');
       qc.invalidateQueries({ queryKey: ['payment-requests'] });
     },
-    onError: (err: any) => toast.error(err?.response?.data?.message ?? 'Approval failed'),
+    onError: (err) => toast.error(getErrorMessage(err, 'Failed to approve payment')),
   });
 
   const { register, handleSubmit, reset, formState: { isSubmitting } } = useForm<{ rejectionNotes: string }>();
@@ -75,7 +76,7 @@ export default function PaymentRequestsPage() {
       reset();
       qc.invalidateQueries({ queryKey: ['payment-requests'] });
     },
-    onError: (err: any) => toast.error(err?.response?.data?.message ?? 'Rejection failed'),
+    onError: (err) => toast.error(getErrorMessage(err, 'Failed to reject payment')),
   });
 
   const filterOptions = [

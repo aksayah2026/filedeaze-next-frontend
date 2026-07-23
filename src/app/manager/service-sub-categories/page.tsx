@@ -16,6 +16,7 @@ import { Select } from '@/components/ui/Select';
 import { Modal } from '@/components/ui/Modal';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { Badge } from '@/components/ui/Badge';
+import { getErrorMessage } from '@/lib/utils';
 
 type SubForm = { categoryId: string; name: string; isActive?: boolean };
 type ChargesForm = { serviceCharge: number; inspectionCharge: number; emergencyCharge: number };
@@ -51,19 +52,19 @@ export default function ServiceSubCategoriesPage() {
       ? api.patch(`/web/manager/service-sub-categories/${editing.id}`, d)
       : api.post('/web/manager/service-sub-categories', { categoryId: d.categoryId, name: d.name }),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['sub-categories'] }); toast.success(editing ? 'Updated' : 'Created'); setEditing(null); setShowCreate(false); reset(); },
-    onError: () => toast.error('Failed'),
+    onError: (err) => toast.error(getErrorMessage(err, editing ? 'Failed to update sub-category' : 'Failed to create sub-category')),
   });
 
   const chargesMutation = useMutation({
     mutationFn: (d: ChargesForm) => api.post(`/web/manager/service-charges/${chargingId}`, d),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['sub-categories'] }); toast.success('Charges saved'); setChargingId(null); resetC(); },
-    onError: () => toast.error('Failed'),
+    onError: (err) => toast.error(getErrorMessage(err, 'Failed to save charges')),
   });
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) => api.delete(`/web/manager/service-sub-categories/${id}`),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['sub-categories'] }); toast.success('Deleted'); setDeleteId(null); },
-    onError: () => toast.error('Failed'),
+    onError: (err) => toast.error(getErrorMessage(err, 'Failed to delete sub-category')),
   });
 
   // ── Skill mapping — sub-categories select from the Master Skills list only ──
@@ -82,12 +83,12 @@ export default function ServiceSubCategoriesPage() {
   const mapSkillMutation = useMutation({
     mutationFn: (skillId: string) => api.post(`/web/manager/service-sub-categories/${skillsFor!.id}/skills`, { skillId }),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['sub-category-skills', skillsFor?.id] }); toast.success('Skill mapped'); setAddSkillId(''); },
-    onError: (err: any) => toast.error(err?.response?.data?.message ?? 'Failed to map skill'),
+    onError: (err) => toast.error(getErrorMessage(err, 'Failed to map skill')),
   });
   const unmapSkillMutation = useMutation({
     mutationFn: (skillId: string) => api.delete(`/web/manager/service-sub-categories/${skillsFor!.id}/skills/${skillId}`),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['sub-category-skills', skillsFor?.id] }); toast.success('Skill removed'); },
-    onError: (err: any) => toast.error(err?.response?.data?.message ?? 'Failed to remove skill'),
+    onError: (err) => toast.error(getErrorMessage(err, 'Failed to remove skill')),
   });
 
   const catOptions = categories.map(c => ({ value: c.id, label: c.name }));

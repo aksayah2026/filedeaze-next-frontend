@@ -15,7 +15,7 @@ import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { ErrorState } from '@/components/ui/ErrorState';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { Pagination, PaginationMeta } from '@/components/ui/Pagination';
-import { cn } from '@/lib/utils';
+import { cn, getErrorMessage } from '@/lib/utils';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { requiredString } from '@/lib/validations';
@@ -100,19 +100,19 @@ export default function PlansPage() {
       toast.success(editing ? 'Plan updated' : 'Plan created');
       setEditing(null); setShowCreate(false); reset();
     },
-    onError: (err: any) => toast.error(err?.response?.data?.message ?? 'Failed'),
+    onError: (err) => toast.error(getErrorMessage(err, editing ? 'Failed to update plan' : 'Failed to create plan')),
   });
 
   const toggleMutation = useMutation({
     mutationFn: (plan: Plan) => api.patch(`/web/super-admin/plans/${plan.id}`, { isActive: !plan.isActive }),
     onSuccess: () => { invalidate(); toast.success('Plan status updated'); },
-    onError: () => toast.error('Failed'),
+    onError: (err) => toast.error(getErrorMessage(err, 'Failed to update plan status')),
   });
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) => api.delete(`/web/super-admin/plans/${id}`),
     onSuccess: () => { invalidate(); toast.success('Plan deleted'); setDeleteTarget(null); },
-    onError: (err: any) => { toast.error(err?.response?.data?.message ?? 'Failed to delete plan'); setDeleteTarget(null); },
+    onError: (err) => { toast.error(getErrorMessage(err, 'Failed to delete plan')); setDeleteTarget(null); },
   });
 
   return (
@@ -289,7 +289,7 @@ export default function PlansPage() {
             />
           )}
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Input label="Price (₹) *" type="number" {...register('price', { valueAsNumber: true })} error={errors.price?.message} />
             <Input label="Manager Limit *" type="number" {...register('managerLimit', { valueAsNumber: true })} error={errors.managerLimit?.message} />
             <Input label="Technician Limit *" type="number" {...register('technicianLimit', { valueAsNumber: true })} error={errors.technicianLimit?.message} />
@@ -299,7 +299,7 @@ export default function PlansPage() {
           </div>
 
           {/* Make Active + Free Trial toggles — side by side */}
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="rounded-lg border border-[var(--color-border)] px-4 py-3 flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-[var(--color-text-primary)]">Make Active?</p>

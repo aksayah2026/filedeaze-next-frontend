@@ -17,7 +17,7 @@ import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
 import { Textarea } from '@/components/ui/Textarea';
 import { AmcSubscriptionStatusBadge, AmcVisitStatusBadge } from '@/components/ui/Badge';
-import { getMinimumSelectableDate, isPastSchedule } from '@/lib/utils';
+import { getMinimumSelectableDate, isPastSchedule, getErrorMessage } from '@/lib/utils';
 import dayjs from 'dayjs';
 
 type ScheduleForm = { categoryId: string; subCategoryId: string; scheduledDate: string; description: string };
@@ -60,7 +60,7 @@ export default function AmcSubscriptionDetailPage() {
   });
 
   const { register: rr, handleSubmit: hr, reset: resetR, formState: { isSubmitting: sr, errors: errorsR } } = useForm<RescheduleForm>();
-  const { register: rn, handleSubmit: hn, reset: resetN, formState: { isSubmitting: sn } } = useForm<RenewForm>({ defaultValues: { planId: sub?.planId ?? '' } });
+  const { register: rn, handleSubmit: hn, reset: resetN, formState: { isSubmitting: sn, errors: errorsN } } = useForm<RenewForm>({ defaultValues: { planId: sub?.planId ?? '' } });
   const { register: rc, handleSubmit: hc, reset: resetC, formState: { isSubmitting: sc } } = useForm<CancelForm>();
 
   const scheduleMutation = useMutation({
@@ -71,7 +71,7 @@ export default function AmcSubscriptionDetailPage() {
       toast.success('Visit scheduled');
       setShowSchedule(false); resetS();
     },
-    onError: (err: { response?: { data?: { message?: string } } }) => toast.error(err?.response?.data?.message ?? 'Failed to schedule visit'),
+    onError: (err) => toast.error(getErrorMessage(err, 'Failed to schedule visit')),
   });
 
   const rescheduleMutation = useMutation({
@@ -81,7 +81,7 @@ export default function AmcSubscriptionDetailPage() {
       toast.success('Visit rescheduled');
       setRescheduleVisitId(null); resetR();
     },
-    onError: (err: { response?: { data?: { message?: string } } }) => toast.error(err?.response?.data?.message ?? 'Failed to reschedule visit'),
+    onError: (err) => toast.error(getErrorMessage(err, 'Failed to reschedule visit')),
   });
 
   const renewMutation = useMutation({
@@ -91,7 +91,7 @@ export default function AmcSubscriptionDetailPage() {
       toast.success('AMC renewed');
       setShowRenew(false); resetN();
     },
-    onError: (err: { response?: { data?: { message?: string } } }) => toast.error(err?.response?.data?.message ?? 'Failed to renew AMC'),
+    onError: (err) => toast.error(getErrorMessage(err, 'Failed to renew AMC')),
   });
 
   const cancelMutation = useMutation({
@@ -101,7 +101,7 @@ export default function AmcSubscriptionDetailPage() {
       toast.success('AMC subscription cancelled');
       setShowCancel(false); resetC();
     },
-    onError: (err: { response?: { data?: { message?: string } } }) => toast.error(err?.response?.data?.message ?? 'Failed to cancel AMC'),
+    onError: (err) => toast.error(getErrorMessage(err, 'Failed to cancel AMC')),
   });
 
   if (isLoading) return <PageSpinner />;
@@ -133,7 +133,7 @@ export default function AmcSubscriptionDetailPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div className="bg-[var(--color-surface)] rounded-xl p-4 border border-[var(--color-border)] shadow-sm text-sm space-y-1.5">
           <h3 className="font-medium text-[var(--color-text-secondary)] mb-1">Contract</h3>
           <p><span className="text-[var(--color-text-muted)]">Start:</span> {dayjs(sub.startDate).format('DD MMM YYYY')}</p>
@@ -220,7 +220,12 @@ export default function AmcSubscriptionDetailPage() {
       <Modal open={showRenew} onClose={() => { setShowRenew(false); resetN(); }} title="Renew AMC Subscription" size="sm">
         <form onSubmit={hn(d => renewMutation.mutate(d))} className="space-y-4">
           <p className="text-sm text-[var(--color-text-muted)]">Renews onto the same plan starting the day after the current contract ends, unless overridden below.</p>
-          <Input label="Start Date" type="date" hint="Leave blank to auto-continue from the current end date" {...rn('startDate')} />
+          <Input
+            label="Start Date" type="date" hint="Leave blank to auto-continue from the current end date"
+            min={getMinimumSelectableDate()}
+            error={errorsN.startDate?.message}
+            {...rn('startDate', { validate: (v) => !isPastSchedule(v) || 'This date has already passed — please pick today or a future date' })}
+          />
           <div className="flex justify-end gap-3"><Button variant="secondary" type="button" onClick={() => { setShowRenew(false); resetN(); }}>Cancel</Button><Button type="submit" loading={sn}>Renew</Button></div>
         </form>
       </Modal>

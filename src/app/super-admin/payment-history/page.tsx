@@ -122,7 +122,7 @@ function BillingDetailModal({ billing, onClose }: { billing: Billing; onClose: (
   return (
     <Modal open onClose={onClose} title="Billing Detail" size="sm">
       <div className="space-y-4 text-sm">
-        <div className="grid grid-cols-2 gap-x-6 gap-y-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3">
           {row('Reference', <span className="font-mono">{billing.id.slice(0, 8).toUpperCase()}</span>)}
           {row('Status', (
             <Badge variant={billing.status === 'PAID' ? 'success' : billing.status === 'FAILED' ? 'danger' : 'warning'}>

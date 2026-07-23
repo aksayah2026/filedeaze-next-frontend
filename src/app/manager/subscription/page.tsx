@@ -67,7 +67,7 @@ export default function ManagerSubscriptionPage() {
           <CreditCard size={16} className="text-blue-500" /> Current Plan
         </h3>
         {currentPlan ? (
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <p className="text-2xl font-bold text-[var(--color-text-primary)]">{currentPlan.name}</p>
               <p className="text-sm text-[var(--color-text-muted)] mt-0.5">₹{Number(currentPlan.price).toLocaleString()} / year</p>

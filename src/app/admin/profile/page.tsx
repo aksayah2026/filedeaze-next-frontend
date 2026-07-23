@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/Button';
 import { FileUpload } from '@/components/ui/FileUpload';
 import { PageSpinner } from '@/components/ui/Spinner';
 import { ErrorState } from '@/components/ui/ErrorState';
+import { getErrorMessage } from '@/lib/utils';
 
 export default function ProfilePage() {
   const qc = useQueryClient();
@@ -26,13 +27,13 @@ export default function ProfilePage() {
   const updateMutation = useMutation({
     mutationFn: (d: Pick<User, 'name' | 'email' | 'phone'>) => api.patch('/web/admin/profile', d),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['admin-profile'] }); toast.success('Profile updated'); },
-    onError: () => toast.error('Failed'),
+    onError: (err) => toast.error(getErrorMessage(err, 'Failed to update profile')),
   });
 
   const photoMutation = useMutation({
     mutationFn: (file: File) => { const fd = new FormData(); fd.append('file', file); return api.post('/web/admin/profile/photo', fd, { headers: { 'Content-Type': 'multipart/form-data' } }); },
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['admin-profile'] }); toast.success('Photo updated'); },
-    onError: () => toast.error('Upload failed'),
+    onError: (err) => toast.error(getErrorMessage(err, 'Failed to upload photo')),
   });
 
   if (isLoading) return <PageSpinner />;

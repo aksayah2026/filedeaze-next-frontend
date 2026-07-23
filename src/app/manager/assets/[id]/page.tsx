@@ -15,6 +15,7 @@ import { Button } from '@/components/ui/Button';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { DataTable } from '@/components/ui/DataTable';
 import { TicketStatusBadge } from '@/components/ui/Badge';
+import { getErrorMessage } from '@/lib/utils';
 import dayjs from 'dayjs';
 
 export default function AssetDetailPage() {
@@ -50,8 +51,8 @@ export default function AssetDetailPage() {
       toast.success('Asset removed');
       router.push(`/${prefix}/assets`);
     },
-    onError: (err: { response?: { data?: { message?: string } } }) =>
-      toast.error(err?.response?.data?.message ?? 'Failed to remove asset'),
+    onError: (err) =>
+      toast.error(getErrorMessage(err, 'Failed to remove asset')),
   });
 
   const uploadImagesMutation = useMutation({
@@ -94,8 +95,8 @@ export default function AssetDetailPage() {
       qc.invalidateQueries({ queryKey: ['customer-asset', id] });
       toast.success('Photos uploaded');
     },
-    onError: (err: { response?: { data?: { message?: string } } }) =>
-      toast.error(err?.response?.data?.message ?? 'Failed to upload photos'),
+    onError: (err) =>
+      toast.error(getErrorMessage(err, 'Failed to upload photos')),
   });
 
   const removeImageMutation = useMutation({
@@ -104,8 +105,8 @@ export default function AssetDetailPage() {
       qc.invalidateQueries({ queryKey: ['customer-asset', id] });
       toast.success('Photo removed');
     },
-    onError: (err: { response?: { data?: { message?: string } } }) =>
-      toast.error(err?.response?.data?.message ?? 'Failed to remove photo'),
+    onError: (err) =>
+      toast.error(getErrorMessage(err, 'Failed to remove photo')),
   });
 
   if (isLoading) return <PageSpinner />;
@@ -139,7 +140,7 @@ export default function AssetDetailPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div className="bg-[var(--color-surface)] rounded-xl p-4 border border-[var(--color-border)] shadow-sm text-sm space-y-2">
           <h3 className="font-medium text-[var(--color-text-secondary)]">Asset Details</h3>
           <div className="text-[var(--color-text-secondary)] space-y-1">

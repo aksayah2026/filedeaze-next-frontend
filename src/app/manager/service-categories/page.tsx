@@ -15,6 +15,7 @@ import { Input } from '@/components/ui/Input';
 import { Modal } from '@/components/ui/Modal';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { Badge } from '@/components/ui/Badge';
+import { getErrorMessage } from '@/lib/utils';
 
 type Form = { name: string; isActive: boolean };
 
@@ -41,13 +42,13 @@ export default function ServiceCategoriesPage() {
   const saveMutation = useMutation({
     mutationFn: (d: Form) => editing ? api.patch(`/web/manager/service-categories/${editing.id}`, d) : api.post('/web/manager/service-categories', { name: d.name }),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['service-categories'] }); toast.success(editing ? 'Updated' : 'Created'); setEditing(null); setShowCreate(false); reset(); },
-    onError: () => toast.error('Failed'),
+    onError: (err) => toast.error(getErrorMessage(err, editing ? 'Failed to update category' : 'Failed to create category')),
   });
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) => api.delete(`/web/manager/service-categories/${id}`),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['service-categories'] }); toast.success('Deleted'); setDeleteId(null); },
-    onError: () => toast.error('Failed'),
+    onError: (err) => toast.error(getErrorMessage(err, 'Failed to delete category')),
   });
 
   const columns: ColumnDef<ServiceCategory, unknown>[] = [

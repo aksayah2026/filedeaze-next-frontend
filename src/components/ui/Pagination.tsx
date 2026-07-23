@@ -41,8 +41,8 @@ export function Pagination({ page, totalPages, total, limit, onPageChange, onLim
   });
 
   return (
-    <div className="flex items-center justify-between px-1 py-4 mt-1 select-none">
-      <div className="flex items-center gap-3">
+    <div className="flex flex-wrap items-center justify-between gap-3 px-1 py-4 mt-1 select-none">
+      <div className="flex flex-wrap items-center gap-3">
         <p className="text-xs text-[var(--color-text-muted)]">
           Showing{' '}
           <span className="font-semibold text-[var(--color-text-secondary)]">{from}–{to}</span>

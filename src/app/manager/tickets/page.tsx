@@ -19,7 +19,7 @@ import { Textarea } from '@/components/ui/Textarea';
 import { TicketStatusBadge, Badge } from '@/components/ui/Badge';
 import { FilterCard } from '@/components/ui/FilterCard';
 import { PaginationMeta } from '@/components/ui/Pagination';
-import { getMinimumSelectableDateTime, isPastSchedule } from '@/lib/utils';
+import { getMinimumSelectableDateTime, isPastSchedule, getErrorMessage } from '@/lib/utils';
 import dayjs from 'dayjs';
 
 const STATUS_OPTIONS = [
@@ -141,8 +141,8 @@ export default function TicketsPage() {
       setShowCreate(false);
       reset();
     },
-    onError: (err: { response?: { data?: { message?: string } } }) =>
-      toast.error(err?.response?.data?.message ?? 'Failed to create ticket'),
+    onError: (err) =>
+      toast.error(getErrorMessage(err, 'Failed to create ticket')),
   });
 
   const createCustomerMutation = useMutation({
@@ -162,8 +162,8 @@ export default function TicketsPage() {
       setNewCust({ name: '', phone: '', email: '', address: '' });
       toast.success(`Customer "${created.name}" added`);
     },
-    onError: (err: { response?: { data?: { message?: string } } }) =>
-      toast.error(err?.response?.data?.message ?? 'Failed to create customer'),
+    onError: (err) =>
+      toast.error(getErrorMessage(err, 'Failed to create customer')),
   });
 
   const closeModal = () => { setShowCreate(false); setShowNewCustomer(false); setNewCust({ name: '', phone: '', email: '', address: '' }); reset(); };
@@ -327,7 +327,7 @@ export default function TicketsPage() {
             </div>
           )}
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Select
               label="Service Category *"
               options={categories.map(c => ({ value: c.id, label: c.name }))}
@@ -349,7 +349,7 @@ export default function TicketsPage() {
             {...register('description', { required: true })}
           />
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Select
               label="Priority"
               options={[
